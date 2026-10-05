@@ -1,0 +1,8 @@
+# local backups and work files (not part of the live site)
+*.backup*.html
+index.backup.html
+portfolio-classic.html
+manuel.js
+3D-model-Three.js/
+.claude/
+*.zip
