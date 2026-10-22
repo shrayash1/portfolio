@@ -82,13 +82,19 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);font:400 15p
  #joy{background:linear-gradient(150deg,rgba(255,255,255,.14),rgba(255,255,255,.03));-webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%);border-color:rgba(255,255,255,.2);box-shadow:inset 1px 1px 0 rgba(255,255,255,.3)}
  #tb button{background:linear-gradient(150deg,rgba(255,255,255,.15),rgba(255,255,255,.04));-webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%);border-color:rgba(255,255,255,.2);box-shadow:inset 1px 1px 0 rgba(255,255,255,.3)}
 }
+/* gameplay board: the YouTube player is pinned onto the board's screen with a perspective transform */
+#tv{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+#ytw{position:absolute;left:0;top:0;width:640px;height:360px;transform-origin:0 0;visibility:hidden;background:#000}
+#ytw img,#ytw iframe{position:absolute;inset:0;width:100%;height:100%;border:0;object-fit:cover;pointer-events:none}
+#tvlb{pointer-events:auto;text-decoration:none;border-color:#ffb703aa;box-shadow:0 0 18px #ffb70344}
 </style>
 </head>
 <body>
 <canvas id="cv" aria-label="3D island you can walk around"></canvas><canvas id="gl" aria-hidden="true"></canvas>
+<div id="tv" aria-hidden="true"><div id="ytw"><img src="https://i.ytimg.com/vi/6bCW7ueh8qU/maxresdefault.jpg" alt=""><div id="ytv"></div></div></div>
 <div id="labels"></div>
 <div id="hud" class="panel"><b class="t">Shrayash's Island</b><div class="row">Stories found: <b id="cnt">0</b>/<span id="tot">9</span></div><div class="row">Next: <b id="nxt">-</b></div><div class="row">Blocks placed: <b id="blk">0</b> · colour <span id="bcol">■</span></div></div>
-<div id="top"><a class="b" href="index.html">← Home</a><a class="b" href="portfolio.html">Portfolio</a><button class="b" id="lite">Lite mode: off</button><canvas id="map" width="130" height="130" aria-hidden="true"></canvas></div>
+<div id="top"><a class="b" href="index.html">← Home</a><a class="b" href="portfolio.html">Portfolio</a><button class="b" id="lite">Lite mode: off</button><button class="b" id="snd">♪ Sound: on</button><canvas id="map" width="130" height="130" aria-hidden="true"></canvas></div>
 <div id="card" class="panel" hidden role="dialog" aria-live="polite"><button class="x" id="cx" aria-label="Close">×</button><div id="cbody"></div></div>
 <div id="help" class="panel"><kbd>W A S D</kbd> move · <kbd>Shift</kbd> run · <kbd>Space</kbd> jump · drag / <kbd>Q</kbd><kbd>E</kbd> turn camera · <kbd>F</kbd> place block · <kbd>G</kbd> undo · <kbd>C</kbd> colour</div>
 <div id="toast" class="panel" hidden><h3>Island complete! ★</h3><div>You found every story. Let's build something together.</div><p><a class="b" href="mailto:pradhan.shrayash677@gmail.com">Email me</a></p></div>
@@ -264,7 +270,7 @@ function GLR(canvas){
   if(trans.length){gl.enable(gl.BLEND);gl.depthMask(false);trans.forEach(([o,M])=>{if(o.material.noDepth)gl.disable(gl.DEPTH_TEST);draw(o,M);gl.enable(gl.DEPTH_TEST)});gl.depthMask(true);gl.disable(gl.BLEND);gl.uniform1f(U.uA,1)}
   function draw(o,M){const b=cache.get(o.geometry)||build(o.geometry),m=o.material;
    gl.uniformMatrix4fv(U.uM,false,col4(M));gl.uniformMatrix3fv(U.uNM,false,nmat(M));gl.uniform3f(U.uCol,m.color.r,m.color.g,m.color.b);
-   gl.uniform3f(U.uEm,m.emissive.r*m.emissiveIntensity,m.emissive.g*m.emissiveIntensity,m.emissive.b*m.emissiveIntensity);gl.uniform1f(U.uLit,m.lit?1:0);gl.uniform1f(U.uA,m.opacity!==undefined?m.opacity:1);
+   gl.uniform3f(U.uEm,m.emissive.r*m.emissiveIntensity,m.emissive.g*m.emissiveIntensity,m.emissive.b*m.emissiveIntensity);gl.uniform1f(U.uLit,m.lit?1:0);gl.uniform1f(U.uA,m.hole?0:m.opacity!==undefined?m.opacity:1);
    attrs(b);gl.drawArrays(gl.TRIANGLES,0,b.cnt)}
  }};return R}
 /* ---------- geometry ---------- */
@@ -366,6 +372,7 @@ const cv=$('cv'),ctx=cv.getContext('2d');
 /* smooth WebGL renderer when available (toy look); otherwise the flat Canvas 2D painter */
 let GR=null;try{if(!/lite/.test(location.hash))GR=TOON.GLR($('gl'))}catch(e){GR=null}
 const HQ=!!GR;if(!HQ)$('gl').style.display='none';
+(HQ?$('gl'):cv).before($('tv'));
 /* without WebGL the kid is drawn from a pre-rendered sprite sheet of the smooth model:
    8 view directions (rows) x idle, 8 walk frames, jump (columns); KS = frame size, feet anchor and pixels per world unit */
 const KS={FW:200,FH:340,DIRS:8,ax:100,ay:292.59,ppu:99.231,img:null};
@@ -415,7 +422,7 @@ const STATIONS=[];
 function segD(px,pz,ax,az,bx,bz){const dx=bx-ax,dz=bz-az,t=clamp(((px-ax)*dx+(pz-az)*dz)/(dx*dx+dz*dz),0,1);return Math.hypot(px-ax-dx*t,pz-az-dz*t)}
 function buildGround(){
  const st=5,N=30,h={};const H=(i,j)=>{const k=i+','+j;if(h[k]===undefined){const x=i*st,z=j*st,r=Math.hypot(x,z),e=ISL(Math.atan2(z,x));h[k]=r<e-6?(R()-.5)*.5:0}return h[k]};
- const paths=[[0,-32,0,0]].concat(STATIONS.map(s=>[0,0,s.x,s.z]));
+ const paths=[[0,-32,0,0]].concat(STATIONS.map(s=>[0,0,s.x,s.z]),[[0,0,TV.x,TV.z]]);
  const chunks={};
  for(let i=-N/2;i<N/2;i++)for(let j=-N/2;j<N/2;j++){
   const q=[[i,j],[i+1,j],[i+1,j+1],[i,j+1]].map(([a,b])=>[a*st,H(a,b),b*st]);
@@ -452,6 +459,14 @@ station({id:'campus',name:'Maryland campus',x:22,z:-38,ly:8.5,info:T("Grad schoo
 station({id:'arcade',name:'Side projects',x:0,z:9,ly:4.4,info:T("The arcade","Side projects","Rally Racer is a racing game prototype with its source on GitHub. Bot Runner is an endless runner you can download and play.",[["Rally Racer source","https://github.com/shrayash1/Rally-Racer"],["Bot Runner build","https://drive.google.com/file/d/1W56Yp-u8T3AsY9tYaU-vVLTNzuc3iCVC/view?usp=sharing"]])}),
 station({id:'contact',name:'Contact lighthouse',x:-24,z:-40,ly:12.5,info:T("Let's work together","Open to game development and software engineering roles","I'm based in Maryland, USA. References available on request.",[["pradhan.shrayash677@gmail.com","mailto:pradhan.shrayash677@gmail.com"],["LinkedIn","https://linkedin.com/in/shrayash-pradhan-17b905326"],["GitHub","https://github.com/shrayash1"]])})];
 const byId={};ST.forEach(s=>byId[s.id]=s);
+const TV={x:-18,z:31};TV.a=Math.atan2(-TV.x,-TV.z);
+function buildTV(){const s=TV;
+ L(s,box(12.8,.3,3.4,P.stone,.04),0,.15,.4);[-3.6,3.6].forEach(x=>L(s,box(.45,1.9,.45,P.navy),x,.95,-.4));
+ L(s,box(11.6,7,.5,[22,28,40],.04),0,5.1,-.3);L(s,box(11.9,.35,.7,P.gold),0,8.75,-.3);
+ /* the screen is punched out of the 3D view so the video behind it shows, covered by anything in front */
+ L(s,box(9.2,5.175,.08,[8,10,14]),0,4.9,0,{},1).hole=1;
+ [-1,1].forEach(x=>{L(s,box(.95,2.4,.8,[30,34,46],.05),x*6.65,1.5,-.2);[.6,1.6].forEach(y=>L(s,cyl(.3,.3,.06,10,[70,78,96]),x*6.65,y+.2,.22,{rx:Math.PI/2}))});
+ [-4.5,-2.25,0,2.25,4.5].forEach(x=>LC(s,x,-.3,1.2));[-1,1].forEach(x=>LC(s,x*6.65,-.2,.8))}
 function buildStations(){
  let s=byId.welcome;[-1.6,1.6].forEach(x=>{L(s,box(.25,3,.25,P.trunk),x,1.5,0)});L(s,box(4,1.6,.25,[232,206,150],.05),0,2.6,0);L(s,box(3.4,.18,.3,P.shirt),0,3.1,0);for(let i=0;i<6;i++)flower(s.x+(R()-.5)*7,s.z+(R()-.5)*4);LC(s,0,0,1.8);
  s=byId.nepal;L(s,box(8,.8,8,P.stone,.05),0,.4,0);[[5.4,2.4,2],[4,2,4.9],[2.8,1.8,7.5]].forEach(([w,h,y],i)=>{L(s,box(w,h,w,i%2?P.red:[150,40,36],.06),0,y,0);L(s,cyl(0,w*.95,1.4,4,P.roof,.08),0,y+h/2+.7,0,{ry:Math.PI/4})});L(s,cyl(.08,.18,1.6,6,P.gold),0,9.6,0);L(s,box(1,1.6,.1,P.dark),0,1.6,2.71);LC(s,0,0,4.6);
@@ -477,9 +492,9 @@ function buildStations(){
  L(s,box(.2,1.2,.2,P.trunk),2.6,.6,1.5);L(s,box(.7,.5,.9,P.blue),2.6,1.4,1.5);LC(s,0,0,1.9);
 }
 /* ---------- build world ---------- */
-buildStations();buildGround();
-const near=(x,z,d)=>STATIONS.some(s=>Math.hypot(x-s.x,z-s.z)<d)||Math.hypot(x,z+32)<6;
-const onPath=(x,z)=>[[0,-32,0,0]].concat(STATIONS.map(s=>[0,0,s.x,s.z])).some(p=>segD(x,z,...p)<3.5);
+buildStations();buildTV();buildGround();
+const near=(x,z,d)=>STATIONS.some(s=>Math.hypot(x-s.x,z-s.z)<d)||Math.hypot(x,z+32)<6||Math.hypot(x-TV.x,z-TV.z)<d+5;
+const onPath=(x,z)=>[[0,-32,0,0]].concat(STATIONS.map(s=>[0,0,s.x,s.z]),[[0,0,TV.x,TV.z]]).some(p=>segD(x,z,...p)<3.5);
 for(let n=0,k=0;n<80&&k<2000;k++){const a=R()*Math.PI*2,r=8+R()*52,x=Math.cos(a)*r,z=Math.sin(a)*r;if(r>ISL(a)-8||near(x,z,10)||onPath(x,z))continue;tree(x,z,.8+R()*.6);n++}
 for(let n=0,k=0;n<26&&k<2000;k++){const a=R()*Math.PI*2,r=10+R()*54,x=Math.cos(a)*r,z=Math.sin(a)*r;if(r>ISL(a)-3||near(x,z,8)||onPath(x,z))continue;rock(x,z,.4+R()*1.1);n++}
 for(let n=0;n<40;n++){const a=R()*Math.PI*2,r=6+R()*50,x=Math.cos(a)*r,z=Math.sin(a)*r;if(!near(x,z,6)&&!onPath(x,z))flower(x,z)}
@@ -517,8 +532,9 @@ if(HQ){
  G.water=toBatch([WATER],1);
  /* ground: average colours at shared corners so grass, paths and sand blend softly */
  {const key=p=>Math.round(p[0]*10)+','+Math.round(p[2]*10),acc={};GROUND.forEach(m=>m.f.forEach(f=>f.i.forEach(i=>{const k=key(m.wv[i]),a=acc[k]||(acc[k]=[0,0,0,0]);a[0]+=f.b[0];a[1]+=f.b[1];a[2]+=f.b[2];a[3]++})));
-  const Pp=[],Nn=[],Cc=[];GROUND.forEach(m=>GR.soup(m.wv,m.f.map(f=>f.i),1.2,(fi,vi)=>{const a=acc[key(m.wv[vi])];return[a[0]/a[3]/255,a[1]/a[3]/255,a[2]/a[3]/255]},Pp,Nn,Cc));G.ground=GR.batch(Pp,Nn,Cc)}G.stat=toBatch(STAT.filter(m=>!m.block),.85);G.blocks=null;
+  const Pp=[],Nn=[],Cc=[];GROUND.forEach(m=>GR.soup(m.wv,m.f.map(f=>f.i),1.2,(fi,vi)=>{const a=acc[key(m.wv[vi])];return[a[0]/a[3]/255,a[1]/a[3]/255,a[2]/a[3]/255]},Pp,Nn,Cc));G.ground=GR.batch(Pp,Nn,Cc)}G.stat=toBatch(STAT.filter(m=>!m.block&&!m.hole),.85);G.blocks=null;
  const sc=new THREE.Scene();sc.rim=[.04,.2,.2];G.sc=sc;
+ {const h=new THREE.Mesh(new THREE.BoxGeometry(9.2,5.175,.08),new THREE.MeshBasicMaterial({color:0}));h.material.hole=1;h.position.set(TV.x,4.9,TV.z);h.rotation.y=TV.a;sc.add(h)}
  sc.add(new THREE.AmbientLight(0xb4c8f0,.42));
  const key=new THREE.DirectionalLight(0xffe9d2,.62);key.position.set(SUN[0],SUN[1],SUN[2]);sc.add(key);
  const rim=new THREE.DirectionalLight(0x2dd4bf,.3);rim.position.set(-.6,.3,-.5);sc.add(rim);
@@ -559,7 +575,53 @@ jb.addEventListener('pointermove',e=>{if(e.pointerId===jid)jmove(e)});
 function jmove(e){const b=jb.getBoundingClientRect();let x=(e.clientX-b.left-b.width/2)/(b.width/2),y=(e.clientY-b.top-b.height/2)/(b.height/2);const l=Math.hypot(x,y);if(l>1){x/=l;y/=l}joy.x=x;joy.y=y;kn.style.transform=`translate(${x*35}px,${y*35}px)`;idle=0}
 const tap=(id,fn)=>$(id).addEventListener('pointerdown',e=>{e.preventDefault();fn()});
 tap('tbuild',placeBlock);tap('tundo',undoBlock);tap('tjump',()=>{keys[' ']=true;setTimeout(()=>keys[' ']=false,120)});
-$('go').onclick=()=>{$('intro').hidden=true;running=true;idle=0;cv.focus()};
+$('go').onclick=()=>{$('intro').hidden=true;running=true;idle=0;cv.focus();sndStart();ytLoad()};
+/* ---------- gameplay board: a 60 s loop of Super World Saga (Level 9, waterfall world) from Angry Emma's playthrough ---------- */
+const TVS=1462,TVE=1522,TVURL='https://www.youtube.com/watch?v=6bCW7ueh8qU&t='+TVS+'s';
+let TVP=null,tvReady=0,tvVol=-1;
+const tvw=(lx,y,lz)=>{const c=Math.cos(TV.a),s=Math.sin(TV.a);return[TV.x+lx*c+lz*s,y,TV.z-lx*s+lz*c]};
+const TVC=[[-5.58,8.4925],[5.58,8.4925],[5.58,2.2125],[-5.58,2.2125]].map(([x,y])=>tvw(x,y,.05));
+const tvlb=document.createElement('a');tvlb.className='lb';tvlb.id='tvlb';tvlb.href=TVURL;tvlb.target='_blank';tvlb.rel='noopener';tvlb.textContent='▶ Super World Saga · played by Angry Emma';$('labels').appendChild(tvlb);
+/* CSS matrix3d that maps a w x h box onto the screen quad P (tl,tr,br,bl): Heckbert's square-to-quad mapping */
+function quad(w,h,P){const[[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=P,dx1=x1-x2,dx2=x3-x2,dy1=y1-y2,dy2=y3-y2,sx=x0-x1+x2-x3,sy=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1||1e-9,
+ g=(sx*dy2-dx2*sy)/den,k=(dx1*sy-sx*dy1)/den,a=x1-x0+g*x1,b=x3-x0+k*x3,d=y1-y0+g*y1,e=y3-y0+k*y3;
+ return`matrix3d(${a/w},${d/w},0,${g/w},${b/h},${e/h},0,${k/h},0,0,1,0,${x0},${y0},0,1)`}
+/* YouTube refuses embeds without a referrer (error 153), so from disk (file://) the board keeps its poster and the label links out */
+function ytLoad(){if(location.protocol==='file:'||TVP)return;TVP=1;
+ window.onYouTubeIframeAPIReady=()=>{TVP=new YT.Player('ytv',{host:'https://www.youtube-nocookie.com',videoId:'6bCW7ueh8qU',width:640,height:360,
+  playerVars:{autoplay:1,mute:1,controls:0,disablekb:1,fs:0,iv_load_policy:3,modestbranding:1,rel:0,playsinline:1,cc_load_policy:0,start:TVS,end:TVE,origin:location.origin},
+  events:{onReady:e=>{tvReady=1;e.target.unloadModule('captions');e.target.playVideo();if(SND.on)e.target.unMute();e.target.setVolume(0);tvVol=0},
+   onStateChange:e=>{if(e.data===0){e.target.seekTo(TVS,true);e.target.playVideo()}},
+   /* captions load after playback starts (and follow the viewer's YouTube settings), so drop them whenever they appear */
+   onApiChange:e=>{e.target.unloadModule('captions');e.target.unloadModule('cc')}}})};
+ const sc=document.createElement('script');sc.src='https://www.youtube.com/iframe_api';document.head.appendChild(sc)}
+function updTV(){
+ const k=innerWidth/W,el=$('ytw'),d=Math.hypot(pl.x-TV.x,pl.z-TV.z),C=TVC.map(camv);
+ const front=(cam.p[0]-TV.x)*Math.sin(TV.a)+(cam.p[2]-TV.z)*Math.cos(TV.a)>0;
+ if(!front||C.some(c=>c[2]<NEAR))el.style.visibility='hidden';
+ else{el.style.transform=quad(640,360,C.map(c=>[(W/2+c[0]*FP/c[2])*k,(H/2-c[1]*FP/c[2])*k]));el.style.visibility='visible'}
+ const c=camv(tvw(0,9.3,0));if(c[2]<NEAR||d>60)tvlb.style.display='none';else{tvlb.style.display='';
+  tvlb.style.transform=`translate(${(W/2+c[0]*FP/c[2])*k}px,${(H/2-c[1]*FP/c[2])*k}px) translate(-50%,-100%) scale(${clamp(16/c[2],.6,1.1)})`;tvlb.style.opacity=clamp((60-d)/12,0,1)}
+ /* sound: the video fades in as you walk up to the board while the music steps back */
+ if(frameN%6===0){const v=clamp((28-d)/21,0,1);sndMix(v);const vol=SND.on?Math.round(v*v*100):0;
+  if(tvReady&&Math.abs(vol-tvVol)>=2){TVP.setVolume(vol);tvVol=vol}}
+ if(tvReady&&frameN%30===0&&TVP.getCurrentTime()>TVE-.4)TVP.seekTo(TVS,true)}
+/* ---------- island ambience: generated waves and soft music (no audio files), ducked near the board ---------- */
+const SND={on:true,ctx:null,out:null,v:0};try{SND.on=localStorage.getItem('islandSound')!=='off'}catch(e){}
+function sndMix(v){SND.v=v;if(SND.out)SND.out.gain.setTargetAtTime(SND.on?.55*(1-.85*v):0,SND.ctx.currentTime,.3)}
+function sndStart(){if(SND.ctx){SND.ctx.resume();return}const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+ const c=SND.ctx=new AC(),out=SND.out=c.createGain();out.gain.value=0;out.connect(c.destination);sndMix(SND.v);
+ /* waves: looping brown noise through a low-pass, swelling slowly */
+ const len=c.sampleRate*4,buf=c.createBuffer(1,len,c.sampleRate),ch=buf.getChannelData(0);let last=0;for(let i=0;i<len;i++){last=(last+.02*(Math.random()*2-1))/1.02;ch[i]=last*3.5}
+ const n=c.createBufferSource(),lp=c.createBiquadFilter(),wg=c.createGain(),lfo=c.createOscillator(),lg=c.createGain();n.buffer=buf;n.loop=true;lp.type='lowpass';lp.frequency.value=500;wg.gain.value=.22;lfo.frequency.value=.12;lg.gain.value=.15;
+ lfo.connect(lg);lg.connect(wg.gain);n.connect(lp);lp.connect(wg);wg.connect(out);n.start();lfo.start();
+ /* music: a slow chord every 2 s with a few pentatonic plucks on top, scheduled a second ahead */
+ const CH=[[220,277.2,329.6],[196,246.9,293.7],[174.6,220,261.6],[196,246.9,329.6]],SC=[440,493.9,554.4,659.3,740,880];let tn=c.currentTime+.1,bar=0;
+ const note=(f,t,dur,g,type)=>{const o=c.createOscillator(),e=c.createGain();o.type=type;o.frequency.value=f;e.gain.setValueAtTime(0,t);e.gain.linearRampToValueAtTime(g,t+.03);e.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(e);e.connect(out);o.start(t);o.stop(t+dur+.05)};
+ setInterval(()=>{while(tn<c.currentTime+1){CH[bar%4].forEach(f=>note(f,tn,3.8,.045,'triangle'));for(let q=0;q<4;q++)if(Math.random()<.65)note(SC[Math.random()*SC.length|0],tn+q*.5+(Math.random()<.3?.25:0),.9,.05,'sine');tn+=2;bar++}},250)}
+function sndLabel(){$('snd').textContent='♪ Sound: '+(SND.on?'on':'off')}sndLabel();
+$('snd').onclick=()=>{SND.on=!SND.on;try{localStorage.setItem('islandSound',SND.on?'on':'off')}catch(e){}sndLabel();sndMix(SND.v);if(SND.on)sndStart();
+ if(tvReady){if(SND.on)TVP.unMute();else TVP.mute();tvVol=-1}};
 $('cx').onclick=closeCard;
 $('lite').onclick=()=>{lite=!lite;$('lite').textContent='Lite mode: '+(lite?'on':'off');FAR=lite?55:78;FOG0=lite?22:32;scale=lite?.6:1;resize()};
 /* ---------- cards ---------- */
@@ -587,7 +649,7 @@ function emit(C,f,c,cache,out){let poly=f.i.map(k=>C[k]),bh=0,z=0;for(const p of
 function drawMesh(m,out){const C=m.wv.map(camv),P0=cam.p;for(const f of m.f){if(m.cull!==false){const q=f.q,n=f.n;if((P0[0]-q[0])*n[0]+(P0[1]-q[1])*n[1]+(P0[2]-q[2])*n[2]<0)continue}emit(C,f,f.c,f.s,out)}}
 function drawNode(nd,PM,out){const M=mul(PM,mat(nd.o));if(nd.g){const wv=nd.g.v.map(v=>tf(M,v)),C=wv.map(camv);for(const f of nd.g.f){const n=newell(f.i.map(k=>wv[k]));if(!n)continue;const q=wv[f.i[0]];
  if((cam.p[0]-q[0])*n[0]+(cam.p[1]-q[1])*n[1]+(cam.p[2]-q[2])*n[2]<0&&nd.g.cull)continue;emit(C,f,lit(f.c,n,nd.g.un),null,out)}}nd.k.forEach(k=>drawNode(k,M,out))}
-function paint(list){for(const it of list){if(it.spr){const q=it.spr;ctx.drawImage(KS.img,q.sx,q.sy,KS.FW,KS.FH,q.x,q.y,KS.FW*q.s,KS.FH*q.s);continue}const p=it.pts;ctx.fillStyle=ctx.strokeStyle=it.col;ctx.beginPath();ctx.moveTo(p[0],p[1]);for(let k=2;k<p.length;k+=2)ctx.lineTo(p[k],p[k+1]);ctx.closePath();ctx.fill();ctx.stroke()}}
+function paint(list){for(const it of list){if(it.spr){const q=it.spr;ctx.drawImage(KS.img,q.sx,q.sy,KS.FW,KS.FH,q.x,q.y,KS.FW*q.s,KS.FH*q.s);continue}const p=it.pts;if(it.hole)ctx.globalCompositeOperation='destination-out';ctx.fillStyle=ctx.strokeStyle=it.col;ctx.beginPath();ctx.moveTo(p[0],p[1]);for(let k=2;k<p.length;k+=2)ctx.lineTo(p[k],p[k+1]);ctx.closePath();ctx.fill();ctx.stroke();if(it.hole)ctx.globalCompositeOperation='source-over'}}
 function shadow(x,z,r,y0){const pts=[];for(let i=0;i<10;i++){const a=i/10*Math.PI*2;pts.push(camv([x+Math.cos(a)*r,y0+.03,z+Math.sin(a)*r*.8]))}let poly=pts;if(poly.some(p=>p[2]<=NEAR))poly=clip(poly);if(poly.length<3)return;
  ctx.fillStyle='rgba(20,40,20,.22)';ctx.beginPath();poly.forEach((p,k)=>{const sx=W/2+p[0]*FP/p[2],sy=H/2-p[1]*FP/p[2];k?ctx.lineTo(sx,sy):ctx.moveTo(sx,sy)});ctx.fill()}
 function render(t){
@@ -600,7 +662,7 @@ function render(t){
  if(HQ){renderGL(t);const dt=performance.now()-ts;ema=ema*.95+dt*.05;return}
  const g=[];drawMesh(WATER,g);GROUND.forEach(m=>{if(visible(m))drawMesh(m,g)});paint(g);
  shadow(pl.x,pl.z,.75,Math.max(0,topAt(pl.x,pl.z)));
- items=[];STAT.forEach(m=>{if(visible(m))drawMesh(m,items)});
+ items=[];STAT.forEach(m=>{if(visible(m)){const n0=items.length;drawMesh(m,items);if(m.hole)for(let i=n0;i<items.length;i++)items[i].hole=1}});
  if(KS.img){/* pick the view direction relative to the camera and the animation frame, then billboard it at the feet */
   const a=camv([pl.x,pl.y,pl.z]),mid=camv([pl.x,pl.y+1.3,pl.z]);
   if(a[2]>NEAR){const rel=pl.yaw-Math.atan2(cam.p[0]-pl.x,cam.p[2]-pl.z),k=((Math.round(rel/(Math.PI*2/KS.DIRS))%KS.DIRS)+KS.DIRS)%KS.DIRS;
@@ -680,12 +742,12 @@ function loop(now){
  const moving=step(dt,t);idle=moving?0:idle+dt;
  /* when nothing moves, redraw less often to save battery */
  const every=!running?2:idle>1.5?3:1;
- if(frameN%every===0){render(t);updLabels();if(frameN%6===0){updMap();updHud()}}
+ if(frameN%every===0){render(t);updLabels();updTV();if(frameN%6===0){updMap();updHud()}}
  if(frameN%90===0&&!lite){if(ema>14&&scale>.55){scale=Math.max(.55,scale-.15);resize()}else if(ema<6&&scale<1){scale=Math.min(1,scale+.15);resize()}}
  requestAnimationFrame(loop)}
 nextColour();bci=0;$('bcol').style.color='rgb('+BC[0]+')';
 requestAnimationFrame(loop);
-window.__world={HQ,pl,keys,ST,visited,get ema(){return ema},get scale(){return scale},stats:()=>({stat:STAT.length,ground:GROUND.length,items:items.length})};
+window.__world={HQ,pl,keys,ST,visited,setYaw:v=>{cyaw=v},TV,tv:()=>TVP,get ema(){return ema},get scale(){return scale},stats:()=>({stat:STAT.length,ground:GROUND.length,items:items.length})};
 })();
 </script>
 </body>
