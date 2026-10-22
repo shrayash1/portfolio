@@ -234,9 +234,9 @@ nav.sc{background:
 /* ===== art gallery (instagram.com/shr_vector_arts) ===== */
 .ph p a{color:var(--acc);text-decoration:none;border-bottom:1px solid #5eead455}
 .afil{display:flex;gap:8px;flex-wrap:wrap;margin:34px 0 26px}
-.afil button{font-family:inherit;font-size:13px;font-weight:500;letter-spacing:.06em;color:var(--muted);padding:9px 16px;border-radius:99px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);
+.afil button,.jump button{font-family:inherit;font-size:13px;font-weight:500;letter-spacing:.06em;color:var(--muted);padding:9px 16px;border-radius:99px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);
  -webkit-backdrop-filter:blur(14px) saturate(170%);backdrop-filter:blur(14px) saturate(170%);box-shadow:inset 1px 1px 0 rgba(255,255,255,.14);cursor:pointer;transition:color .2s,background .2s,border-color .2s}
-.afil button:hover{color:var(--ink);border-color:rgba(255,255,255,.26)}
+.afil button:hover,.jump button:hover{color:var(--ink);border-color:rgba(255,255,255,.26)}
 .afil button[aria-pressed="true"]{color:#0a0e17;background:var(--acc);border-color:var(--acc)}
 .afil button:focus-visible,.atile:focus-visible,.lbx button:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
 .agrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:start}
@@ -286,6 +286,26 @@ html{overflow-anchor:none}
 .atile{transition:transform .6s cubic-bezier(.2,.7,.2,1),opacity .45s,filter .45s,border-color .3s,box-shadow .3s}
 .atile.off{opacity:.14;filter:grayscale(1) blur(1px);pointer-events:none}
 @media(max-width:760px){.lbx{flex-direction:column;padding:10px}.lbx img{max-width:84vw;max-height:62vh}.lbx .lbp,.lbx .lbn{position:absolute;bottom:-62px}.lbx .lbp{left:calc(50% - 56px)}.lbx .lbn{right:calc(50% - 56px)}.lbx .lbc{top:-12px;right:-6px}}
+/* ===== gameplay video: YouTube loads only when played ===== */
+.yt{display:grid;grid-template-columns:2.4fr 1fr;gap:18px;margin-top:34px}
+.ytmain{display:flex;flex-direction:column;gap:14px}
+.ytp{position:relative;aspect-ratio:16/9;border-radius:26px;overflow:hidden}
+.ytp iframe,.ytbtn{position:absolute;inset:0;width:100%;height:100%;border:0}
+.ytbtn{padding:0;background:#000;cursor:pointer}
+.ytbtn img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .6s cubic-bezier(.2,.7,.2,1),filter .4s}
+.ytbtn:hover img{transform:scale(1.03);filter:brightness(1.08)}
+.ytbtn span{position:absolute;left:50%;top:50%;translate:-50% -50%;width:84px;height:84px;padding-left:6px;border-radius:50%;display:grid;place-items:center;font-size:28px;color:#fff;
+ background:rgba(255,255,255,.18);-webkit-backdrop-filter:blur(14px) saturate(180%);backdrop-filter:blur(14px) saturate(180%);border:1px solid rgba(255,255,255,.45);box-shadow:inset 1px 1px 0 rgba(255,255,255,.5),0 12px 30px rgba(0,0,0,.4);transition:scale .3s}
+.ytbtn:hover span{scale:1.08}
+.ytbtn:focus-visible,.jump button:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
+.jump{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
+.jump span{margin-right:4px;letter-spacing:.14em;text-transform:uppercase;font-size:11.5px}
+.glim{display:grid;grid-template-rows:repeat(3,1fr);gap:14px;min-height:0}
+.glim figure{margin:0;position:relative;min-height:0;border-radius:18px;overflow:hidden;border:1px solid rgba(255,255,255,.14);box-shadow:0 14px 34px rgba(0,0,0,.35)}
+/* the frames are 4:3 with black bars; cover-cropping to a wider box removes them */
+.glim img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.glim figcaption{position:absolute;left:10px;bottom:10px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;background:rgba(10,14,23,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.18)}
+@media(max-width:860px){.yt{grid-template-columns:1fr}.glim{grid-template-rows:none;grid-template-columns:repeat(3,1fr);gap:10px}.glim figure{aspect-ratio:16/9}.glim figcaption{font-size:10.5px;left:6px;bottom:6px;padding:3px 8px}}
 </style>
 </head>
 <body>
@@ -359,6 +379,15 @@ html{overflow-anchor:none}
   <div class="ph rv"><div><div class="eyebrow">Selected work</div><h2 style="margin:0">Games I've <em>built</em></h2></div><p>Mobile and web games for kids and casual players, published on Google Play, the App Store and the web.</p></div>
   <div class="carousel rv"><button class="arr p" id="prev" aria-label="Previous project">←</button><div class="track"><div class="slides" id="slides"></div></div><button class="arr n" id="next" aria-label="Next project">→</button></div>
   <div class="dots" id="dots"></div>
+ </div></section>
+
+ <section id="gameplay"><div class="wrap">
+  <div class="ph rv"><div><div class="eyebrow">In the wild</div><h2 style="margin:0">See it <em>played</em></h2></div><p>A full playthrough of Super World Saga, all 24 levels, recorded by <a href="https://www.youtube.com/@AngryEmma" target="_blank" rel="noopener">Angry Emma</a> on YouTube.</p></div>
+  <div class="yt rv">
+   <div class="ytmain"><div class="ytp lg" id="ytp"><button type="button" class="ytbtn" id="ytgo" aria-label="Play the Super World Saga playthrough video"><img src="https://i.ytimg.com/vi/6bCW7ueh8qU/maxresdefault.jpg" alt="" loading="lazy"><span aria-hidden="true">▶</span></button></div>
+    <div class="jump"><span>Jump to</span><button type="button" data-t="0">0:00</button><button type="button" data-t="1151">19:11</button><button type="button" data-t="2302">38:22</button><button type="button" data-t="3453">57:33</button><button type="button" data-t="4380">1:13:00</button></div></div>
+   <div class="glim" aria-label="Glimpses from the video"><figure><img src="https://i.ytimg.com/vi/6bCW7ueh8qU/sd1.jpg" alt="Super World Saga gameplay: Level 1" loading="lazy"><figcaption>Level 1</figcaption></figure><figure><img src="https://i.ytimg.com/vi/6bCW7ueh8qU/sd2.jpg" alt="Super World Saga gameplay: Level 5" loading="lazy"><figcaption>Level 5</figcaption></figure><figure><img src="https://i.ytimg.com/vi/6bCW7ueh8qU/sd3.jpg" alt="Super World Saga gameplay: Level 6 complete" loading="lazy"><figcaption>Level 6 complete</figcaption></figure></div>
+  </div>
  </div></section>
 
 <section id="art"><div class="wrap">
@@ -709,6 +738,12 @@ function parMeasure(){PAR.forEach(o=>{const r=(o.ref||o.el).getBoundingClientRec
 function par(){const mid=SY+innerHeight/2;
  for(const o of PAR){let v=o.hero?SY*o.k:(o.c-mid)*o.k;v=Math.max(-o.max,Math.min(o.max,v));if(Math.abs(v-o.ty)<.1)continue;o.ty=v;
   if(o.x)o.el.style.transform=`translateX(${v.toFixed(1)}px)`;else o.el.style.translate=`0 ${v.toFixed(1)}px`}}
+/* ---------- gameplay video: swap the poster for the YouTube player only when asked ---------- */
+/* YouTube refuses embeds without a referrer (error 153), and a page opened from disk (file://) sends none: open YouTube instead */
+function ytPlay(t){if(location.protocol==='file:'){open(`https://www.youtube.com/watch?v=6bCW7ueh8qU&t=${t}s`,'_blank','noopener');return}
+ $('ytp').innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/6bCW7ueh8qU?autoplay=1&rel=0&start=${t}" title="Super World Saga full playthrough by Angry Emma" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`}
+$('ytgo').onclick=()=>ytPlay(0);
+document.querySelectorAll('.jump [data-t]').forEach(b=>b.onclick=()=>ytPlay(+b.dataset.t));
 /* ---------- art gallery: pieces from instagram.com/shr_vector_arts ---------- */
 const IG='https://www.instagram.com/shr_vector_arts/';
 const ART=[
