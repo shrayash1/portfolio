@@ -192,7 +192,6 @@ label.btn.file { cursor: pointer; display: inline-block; }
       <button class="btn ghost" data-open="help">How to play</button>
       <button class="btn ghost" data-open="settings">Settings</button>
       <button class="btn ghost" data-open="credits">Credits</button>
-      <button class="btn ghost soundbtn">Sound: click to enable</button>
     </div>
     <span class="press">Press Enter to play</span>
   </div>
@@ -229,8 +228,8 @@ label.btn.file { cursor: pointer; display: inline-block; }
       <p>Your moves fire on their own. Walk over the glowing orbs to gain experience and pick a new move or trait each level. Your partner only learns moves of its own type. You heal slowly when you avoid damage for a few seconds.</p>
       <p><b>Radar.</b> The circle at the top right shows monsters (coloured by type), bosses (big red dots), crates (brown) and items (gold). The gold ring is the fence at the edge of the meadow.</p>
       <p><b>Crates and drops.</b> Break crates by attacking or walking into them. Crates and some monsters drop a Heal Berry, Magnet (pulls in every orb), Bomb (blasts everything nearby), Shield (6 seconds of safety) or Star Candy (an instant level).</p>
-      <p> Your partner evolves at level 7 and level 15. A boss shows up every 2:30.</p>
-      <p><b>Recruits.</b> Every wild monster you defeat counts toward recruiting its species, across all your runs. Reach the target and it joins you as a playable partner, even in the middle of a run. Bosses join after you beat them once. Trainer outfits unlock by surviving 5:00, beating a boss and winning a run.</p>
+      <p> Your partner evolves at level 7 and level 15. A boss shows up every 2:00. Beat a boss once and it joins you as a playable partner, including Boulderback, the ground-type boss.</p>
+      <p><b>Recruits.</b> Every wild monster you defeat counts toward recruiting its species, across all your runs. Reach the target and it joins you as a playable partner, even in the middle of a run. Bosses join after you beat them once.</p>
       <h3>Type matchups</h3>
       <div class="chart"><table>
         <thead><tr><th>Move type</th><th>vs Fire</th><th>vs Water</th><th>vs Grass</th><th>vs Rock</th></tr></thead>
@@ -259,14 +258,6 @@ label.btn.file { cursor: pointer; display: inline-block; }
       <h3>Sound</h3>
       <div class="set"><label for="sfxvol">Sound effects</label><input type="range" id="sfxvol" min="0" max="1" step="0.05"></div>
       <div class="set"><label for="musvol">Music</label><input type="range" id="musvol" min="0" max="1" step="0.05"></div>
-      <h3>Your sound pack</h3>
-      <p class="note">Choose your "Pokemon SFX Attack Moves" folder (or just its GEN 3 folder). The game picks the move and hit sounds it needs and keeps them in this browser only. Nothing is uploaded.</p>
-      <div class="row"><label class="btn ghost file">Choose folder<input type="file" id="sfxdir" webkitdirectory multiple hidden></label><label class="btn ghost file">Choose files<input type="file" id="sfxfiles" accept="audio/*" multiple hidden></label><button class="btn ghost" id="sfxclear">Use built-in sounds</button></div>
-      <p class="note" id="sfxstatus">Using built-in sounds.</p>
-      <h3>Trainer sprites</h3>
-      <p class="note">Choose trainer sheets such as PLAYER RED.png and PLAYER LEAF.png (16px cells; front, back and side walk frames along the top row of each of the four colour blocks). Your trainer walks with your partner. The sheets stay in this browser only.</p>
-      <div class="row"><label class="btn ghost file">Choose trainer sheets<input type="file" id="skinfiles" accept="image/png" multiple hidden></label><button class="btn ghost" id="skinclear">Remove trainers</button></div>
-      <p class="note" id="skinstatus">No trainer sheets loaded.</p>
       <div class="row"><button class="btn" data-close>Back</button></div>
     </div>
   </div>
@@ -278,7 +269,6 @@ label.btn.file { cursor: pointer; display: inline-block; }
       <h2>Credits</h2>
       <p>Wild monster sprites come from the <b>Mons 24</b> pixel pack you downloaded ("Free ver 2"), recoloured into fire, water, grass and rock types. The zip did not include a license file, so check the pack's itch.io page before sharing this game.</p>
       <p>Starters, the meadow, trees, effects, the built-in sound effects and the music are made in code for this game.</p>
-      <p>Sound packs and trainer sheets you load in Settings stay in your own browser. They are never uploaded with the game.</p>
       <p>A personal fan project made for fun. It is not affiliated with any game company.</p>
       <div class="row"><button class="btn" data-close>Back</button></div>
     </div>
@@ -301,7 +291,6 @@ label.btn.file { cursor: pointer; display: inline-block; }
       <button class="btn ghost" id="restartbtn">Restart run</button>
       <button class="btn ghost" data-open="help">How to play</button>
       <button class="btn ghost" data-open="settings">Settings</button>
-      <button class="btn ghost soundbtn">Sound: click to enable</button>
       <button class="btn ghost" id="quitbtn">Quit to title</button>
     </div>
     <span class="small">Esc resumes</span>
@@ -336,10 +325,9 @@ const loadImage = src => new Promise((res, rej) => { const i = new Image(); i.on
 const SET = Object.assign({ sens: 1, invertY: false, shake: !reduceMotion, popups: true, sfxVol: .8, musicVol: .6, muted: false }, readJSON('pocketwilds-settings'));
 
 // =====================================================================
-// Audio: original 8-bit synth sounds and music, optionally replaced by the
-// player's own sound pack (kept in IndexedDB on their device).
+// Audio: original 8-bit synth sounds and music.
 // =====================================================================
-const AUDIO = { ctx: null, sfx: null, music: null, custom: {}, raw: {}, last: {}, noise: null, step: 0, next: 0 };
+const AUDIO = { ctx: null, sfx: null, music: null, last: {}, noise: null, step: 0, next: 0 };
 function audioInit() {
   if (AUDIO.ctx) { if (AUDIO.ctx.state !== 'running') AUDIO.ctx.resume().then(soundBtn, soundBtn); return; }
   const C = window.AudioContext || window.webkitAudioContext;
@@ -359,7 +347,6 @@ function audioInit() {
   const b = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate), d = b.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
   AUDIO.noise = b;
-  for (const k in AUDIO.raw) decodeSlot(k, AUDIO.raw[k]);
   AUDIO.next = ctx.currentTime + .1;
   setInterval(musicTick, 50);
 }
@@ -379,7 +366,6 @@ function toggleMute() {
   // The click that first starts audio only switches sound on.
   if (performance.now() - (AUDIO.startedAt || 0) < 300) { SET.muted = false; applyVolumes(); soundBtn(); sfx('levelup'); return; }
   SET.muted = !SET.muted; writeJSON('pocketwilds-settings', SET); audioInit(); applyVolumes(); soundBtn(); if (!SET.muted) sfx('levelup'); }
-async function decodeSlot(k, buf) { try { AUDIO.custom[k] = await AUDIO.ctx.decodeAudioData(buf.slice(0)); } catch {} }
 function tone(t, { type = 'square', f = 440, f2 = f, dur = .12, vol = .25, out = AUDIO.sfx }) {
   const c = AUDIO.ctx, o = c.createOscillator(), g = c.createGain();
   o.type = type; o.frequency.setValueAtTime(f, t);
@@ -435,8 +421,6 @@ function sfx(name) {
   const now = c.currentTime;
   if (now - (AUDIO.last[name] || 0) < (SFX_GAP[name] ?? .03)) return;
   AUDIO.last[name] = now;
-  const buf = AUDIO.custom[name];
-  if (buf) { const s = c.createBufferSource(); s.buffer = buf; s.connect(AUDIO.sfx); s.start(); return; }
   SYNTH[name]?.(now);
 }
 // Original loop: bass on the beat, arpeggiated lead, soft hat. Faster during a run.
@@ -455,44 +439,6 @@ function musicTick() {
   }
 }
 
-// Tiny IndexedDB helper for the player's own sounds and trainer sheets.
-function idb() { return new Promise((res, rej) => { const r = indexedDB.open('pocketwilds', 1); r.onupgradeneeded = () => { r.result.createObjectStore('sounds'); r.result.createObjectStore('skins'); }; r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
-async function idbAll(store) {
-  const db = await idb();
-  return new Promise((res, rej) => { const out = {}, req = db.transaction(store).objectStore(store).openCursor(); req.onsuccess = () => { const c = req.result; if (c) { out[c.key] = c.value; c.continue(); } else res(out); }; req.onerror = () => rej(req.error); });
-}
-async function idbWrite(store, fn) { const db = await idb(); return new Promise((res, rej) => { const tx = db.transaction(store, 'readwrite'); fn(tx.objectStore(store)); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); }
-
-// Which file names in the user's pack feed each game sound (first name found wins; Gen 3 preferred).
-const SOUND_SLOTS = {
-  ember: ['ember'], flame: ['fire spin', 'flamethrower'], watergun: ['water gun'], bubble: ['bubble'], splash: ['bubble beam part 2', 'bubble part 2'],
-  vine: ['vine whip'], leaf: ['razor leaf'], stomp: ['stomp', 'mud slap'], hit: ['hit normal damage'], super: ['hit super effective'],
-  weak: ['hit weak not very effective'], hurt: ['tackle'], heal: ['in-battle heal hp restore'],
-  ult_fire: ['fire blast'], ult_water: ['hydro pump', 'surf'], ult_grass: ['ingrain', 'giga drain'], ult_ground: ['earthquake'],
-};
-const GEN_PREF = ['gen 3', 'gen 4', 'gen 5', 'gen 2', 'gen 1', 'gen 6', 'gen 7'];
-async function loadSoundFiles(files) {
-  const byStem = {};
-  for (const f of files) (byStem[f.name.replace(/\.[^.]+$/, '').toLowerCase().trim()] ||= []).push(f);
-  const rank = f => { const p = (f.webkitRelativePath || '').toLowerCase(), i = GEN_PREF.findIndex(g => p.includes(g)); return i < 0 ? 9 : i; };
-  $('#sfxstatus').textContent = 'Reading your sounds…';
-  for (const [slot, names] of Object.entries(SOUND_SLOTS)) {
-    const name = names.find(n => byStem[n]);
-    if (!name) continue;
-    const f = byStem[name].sort((a, b) => rank(a) - rank(b))[0];
-    if (f.size > 4e6) continue;
-    const buf = await f.arrayBuffer();
-    AUDIO.raw[slot] = buf;
-    try { await idbWrite('sounds', s => s.put(buf, slot)); } catch {}
-    if (AUDIO.ctx) await decodeSlot(slot, buf);
-  }
-  soundStatus();
-}
-function soundStatus(tried = true) {
-  const n = Object.keys(AUDIO.raw).length, total = Object.keys(SOUND_SLOTS).length;
-  $('#sfxstatus').textContent = n ? `${n} of ${total} game sounds come from your pack. The rest use built-in sounds.`
-    : tried ? 'No matching sound names were found in those files, so built-in sounds are used.' : 'Using built-in sounds.';
-}
 
 // =====================================================================
 // Pixel-art toolkit: draw on small canvases, then hard-edge and outline.
@@ -872,9 +818,10 @@ const WILD = {
   gloomhog: { name: 'Gloomhog', id: 16, el: 'rock', hp: 80, spd: 3.2, dmg: 15, xp: 6, r: .9, size: 2.7 },
   bramblegore: { name: 'Bramblegore', id: 12, el: 'grass', hp: 1800, spd: 2.9, dmg: 28, xp: 60, r: 2, size: 7, boss: true, hint: 'Fire and ground moves hit it twice as hard' },
   tidehorn: { name: 'Tidehorn', id: 18, el: 'water', tint: 'water', hp: 2000, spd: 3, dmg: 30, xp: 60, r: 2.2, size: 7.5, boss: true, hint: 'Grass moves hit it twice as hard' },
+  boulderback: { name: 'Boulderback', id: 15, el: 'rock', tint: 'rock', hp: 2100, spd: 2.8, dmg: 31, xp: 60, r: 2.2, size: 7.5, boss: true, hint: 'Water and grass moves hit it twice as hard' },
   magmaw: { name: 'Magmaw', id: 19, el: 'fire', hp: 2200, spd: 3.1, dmg: 32, xp: 60, r: 2.2, size: 7.5, boss: true, hint: 'Water and ground moves hit it twice as hard' },
 };
-const BOSS_ORDER = ['bramblegore', 'tidehorn', 'magmaw', 'bramblegore'];
+const BOSS_ORDER = ['bramblegore', 'boulderback', 'tidehorn', 'magmaw'];
 const ULTS = {
   fire: { name: 'Inferno', desc: 'Three rings of fire pillars erupt around you.' },
   water: { name: 'Tidal Wave', desc: 'A wall of water rolls outward and sweeps monsters away.' },
@@ -884,7 +831,7 @@ const ULTS = {
 const TYPE_MOVE = { fire: 'ember', water: 'watergun', grass: 'vinewhip', ground: 'stomp' };
 
 // Playable partners: the three starters plus recruits from the wild roster.
-const RECRUIT_NEED = { kindlit: 150, sprigcub: 150, puplash: 150, cinderpaw: 100, mossaur: 100, rippig: 100, pebblion: 60, gloomhog: 60, blazemane: 60, bramblegore: 1, tidehorn: 1, magmaw: 1 };
+const RECRUIT_NEED = { kindlit: 150, sprigcub: 150, puplash: 150, cinderpaw: 100, mossaur: 100, rippig: 100, pebblion: 60, gloomhog: 60, blazemane: 60, bramblegore: 1, boulderback: 1, tidehorn: 1, magmaw: 1 };
 const PARTNERS = {};
 for (const t in STARTERS) PARTNERS[t] = { ...STARTERS[t], type: t, art: 'starter' };
 for (const k in RECRUIT_NEED) {
@@ -907,26 +854,6 @@ let trainerId = null;
 try { trainerId = localStorage.getItem('pocketwilds-trainer'); } catch { trainerId = null; }
 const trainerOpen = tr => !tr.req || PROG[tr.req];
 const trainer = () => { const tr = TRAINERS[trainerId]; return tr && trainerOpen(tr) ? tr : null; };
-async function addTrainerSheet(name, blob) {
-  const url = URL.createObjectURL(blob), img = await loadImage(url);
-  URL.revokeObjectURL(url);
-  const bw = img.width / 2, bh = img.height / 2, cell = bw / 12;
-  if (cell < 8 || cell % 1) return false;
-  const title = name.replace(/\.[^.]+$/, '').toLowerCase().replace(/\b\w/g, m => m.toUpperCase());
-  [[0, 0], [1, 0], [0, 1], [1, 1]].forEach(([bx, by], i) => {
-    const grab = col => { const c = canvas(cell + 4); c.getContext('2d').drawImage(img, bx * bw + col * cell, by * bh, cell, cell, 2, 2, cell, cell); return c; };
-    const probe = grab(0).getContext('2d').getImageData(0, 0, cell + 4, cell + 4).data;
-    if (!probe.some((v, j) => j % 4 === 3 && v > 0)) return;
-    const frames = v => [0, 1, 2].map(j => matSet(finish(grab(v + j), { dark: false, white: true })));
-    TRAINERS[`${name}#${i}`] = { key: `${name}#${i}`, name: `${title} ${i + 1}`, cell, icon: finish(grab(0), { dark: false, white: true }).toDataURL(),
-      front: frames(0), back: frames(3), side: frames(6), ...OUTFITS[i] };
-  });
-  return true;
-}
-function skinStatus() {
-  const n = Object.keys(TRAINERS).length;
-  $('#skinstatus').textContent = n ? `${n} trainer outfits loaded. Pick one on the partner screen.` : 'No trainer sheets loaded.';
-}
 const CHART = { fire: { grass: 2, water: .5, fire: .5, rock: .5 }, water: { fire: 2, rock: 2, water: .5, grass: .5 }, grass: { water: 2, rock: 2, fire: .5, grass: .5 }, ground: { fire: 2, rock: 2, grass: .5 } };
 const eff = (atk, def) => CHART[atk]?.[def] ?? 1;
 const HIT_FX = { fire: 'flame', water: 'splash', grass: 'leafburst', ground: 'dust' };
@@ -967,7 +894,7 @@ function newRun(pid) {
     moves: { [a.move]: { l: 1, t: .5, a: 0 } }, traits: {},
     enemies: [], shots: [], gems: [], fx: [], anims: [], orbs: {}, whips: [], jets: [], cones: [], zones: [], falls: [], eshots: [], wave: null,
     lastHit: -9, shield: 0, lastSummon: -9, crateT: 0,
-    spawnT: 0, nextBoss: 150, bossN: 0, pendingLv: 0, boss: null, lastPop: 0,
+    spawnT: 0, nextBoss: 120, bossN: 0, pendingLv: 0, boss: null, lastPop: 0,
   };
   yaw = Math.PI; pitch = .36;
   for (let i = 0; i < 24; i++) spawnCrate();
@@ -1066,7 +993,7 @@ function spawnTick(dt) {
   if (t > 340) pool.push('pebblion', 'blazemane', 'gloomhog');
   const n = 1 + Math.floor(t / 150) + (t > 60 && Math.random() < .3 ? 1 : 0);
   for (let i = 0; i < n; i++) spawn(pool[Math.floor(Math.random() * pool.length)]);
-  if (t >= S.nextBoss) { S.nextBoss += 150; spawnBoss(BOSS_ORDER[S.bossN % BOSS_ORDER.length]); }
+  if (t >= S.nextBoss) { S.nextBoss += 120; spawnBoss(BOSS_ORDER[S.bossN % BOSS_ORDER.length]); }
 }
 
 // ---------- crates & items ----------
@@ -1461,9 +1388,11 @@ function tickUlts(dt) {
 // =====================================================================
 // Levelling
 // =====================================================================
+const MAX_LEVEL = 50;
 function gainXp(v) {
   S.xp += v;
-  while (S.xp >= S.need) { S.xp -= S.need; S.level++; S.need = Math.floor(6 + S.level * 3.4 + S.level * S.level * .18); S.pendingLv++; }
+  while (S.xp >= S.need && S.level < MAX_LEVEL) { S.xp -= S.need; S.level++; S.need = Math.floor(6 + S.level * 3.4 + S.level * S.level * .18); S.pendingLv++; }
+  if (S.level >= MAX_LEVEL) S.xp = S.need; // capped: keep the bar full
 }
 function evolveCheck() {
   const st = S.level >= 15 ? 2 : S.level >= 7 ? 1 : 0;
@@ -1642,16 +1571,6 @@ function initSettings() {
   $('#sfxvol').oninput = e => { SET.sfxVol = +e.target.value; applyVolumes(); save(); };
   $('#sfxvol').onchange = () => sfx('super');
   $('#musvol').oninput = e => { SET.musicVol = +e.target.value; applyVolumes(); save(); };
-  const pickSounds = e => { const files = [...e.target.files]; e.target.value = ''; if (files.length) loadSoundFiles(files).catch(() => soundStatus()); };
-  $('#sfxdir').onchange = pickSounds;
-  $('#sfxfiles').onchange = pickSounds;
-  $('#sfxclear').onclick = async () => { AUDIO.raw = {}; AUDIO.custom = {}; try { await idbWrite('sounds', s => s.clear()); } catch {} soundStatus(false); };
-  $('#skinfiles').onchange = async e => {
-    const files = [...e.target.files]; e.target.value = '';
-    for (const f of files) if (await addTrainerSheet(f.name, f).catch(() => false)) { try { await idbWrite('skins', s => s.put(f, f.name)); } catch {} }
-    skinStatus();
-  };
-  $('#skinclear').onclick = async () => { for (const k in TRAINERS) delete TRAINERS[k]; trainerId = null; try { await idbWrite('skins', s => s.clear()); } catch {} skinStatus(); };
   $('#movelist').innerHTML = Object.values(MOVES).map(m => `<li><span class="type" style="background:${TYPE_COLOR[m.el]}">${m.el}</span> <b>${m.name}.</b> ${m.blurb}</li>`).join('');
 }
 
@@ -1688,9 +1607,23 @@ addEventListener('keydown', e => {
 addEventListener('keyup', e => keys.delete(e.code));
 // Browsers only start audio after a user gesture.
 for (const ev of ['pointerdown', 'pointerup', 'click', 'touchend', 'keydown']) addEventListener(ev, audioInit, true);
-document.querySelectorAll('.soundbtn').forEach(b => b.onclick = toggleMute);
 document.addEventListener('click', e => { if (e.target.closest('button, label.btn')) sfx('click'); });
 addEventListener('blur', () => { keys.clear(); setPause(true); });
+// Without this the 3D view silently freezes (menus still work) until a reload. three.js restores itself if the context comes back.
+let gfxTimer;
+cvs.addEventListener('webglcontextlost', e => {
+  e.preventDefault();
+  setPause(true);
+  banner('Graphics paused', 'Your graphics card needs a moment');
+  gfxTimer = setTimeout(() => {
+    const d = document.createElement('div');
+    d.id = 'loading';
+    d.innerHTML = '<div style="text-align:center">The graphics stopped responding.<br><small>Your unlocks and best times are saved.</small><br><br><button class="btn">Reload</button></div>';
+    d.querySelector('button').onclick = () => location.reload();
+    document.body.appendChild(d);
+  }, 4000);
+});
+cvs.addEventListener('webglcontextrestored', () => { clearTimeout(gfxTimer); $('#loading')?.remove(); banner('Graphics are back', 'Resume when you are ready'); });
 document.addEventListener('visibilitychange', () => document.hidden && setPause(true));
 const stickEl = $('#stick'), knob = stickEl.firstChild;
 cvs.addEventListener('pointerdown', e => {
@@ -2004,7 +1937,7 @@ function updateHud() {
   $('#hpfill').style.background = p > .5 ? 'var(--hp-hi)' : p > .2 ? 'var(--hp-mid)' : 'var(--hp-lo)';
   $('#hptext').textContent = `${Math.ceil(Math.max(0, S.hp))} / ${S.maxHp}`;
   $('#xpfill').style.width = (S.xp / S.need * 100) + '%';
-  $('#plv').textContent = `Lv ${S.level}`;
+  $('#plv').textContent = S.level >= MAX_LEVEL ? `Lv ${S.level} MAX` : `Lv ${S.level}`;
   $('#pname').textContent = S.a.names[S.stage];
   $('#clock').textContent = fmt(S.t);
   $('#kills').textContent = `${S.kills} defeated · ${fmt(Math.max(0, RUN_LENGTH - S.t))} to go`;
@@ -2049,6 +1982,8 @@ function tickHerd(dt, show) {
 const camPos = new THREE.Vector3(), target = new THREE.Vector3();
 let last = performance.now();
 function frame(now) {
+  // Queue the next frame first: if anything below throws, the game keeps running and Restart still works.
+  requestAnimationFrame(frame);
   const dt = Math.min(.05, (now - last) / 1000);
   last = now;
   if (state === 'play') { update(dt); if (state !== 'title') updateHud(); }
@@ -2072,7 +2007,6 @@ function frame(now) {
     camera.lookAt(target);
   }
   renderer.render(scene, camera);
-  requestAnimationFrame(frame);
 }
 
 async function boot() {
@@ -2101,11 +2035,6 @@ async function boot() {
   makeHerd();
   initSettings();
   try { const saved = localStorage.getItem('pocketwilds-partner'); if (saved && PARTNERS[saved] && isUnlocked(saved)) chosen = saved; } catch {}
-  // The player's own sounds and trainer sheets, saved from earlier visits.
-  try { AUDIO.raw = await idbAll('sounds'); } catch {}
-  soundStatus(false);
-  try { for (const [name, blob] of Object.entries(await idbAll('skins'))) await addTrainerSheet(name, blob).catch(() => {}); } catch {}
-  skinStatus();
   if (matchMedia('(pointer: coarse)').matches) $('#hint').textContent = 'Left thumb moves · right thumb looks around · tap the circle for your ultimate';
   $('#loading').remove();
   toTitle();
