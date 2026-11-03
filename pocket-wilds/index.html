@@ -62,7 +62,17 @@ img.px { image-rendering: pixelated; }
 #kills { font-weight: 600; font-size: .9rem; white-space: nowrap; }
 .hud-tr { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); right: calc(14px + env(safe-area-inset-right, 0px)); pointer-events: auto; }
 #radar { position: absolute; top: calc(66px + env(safe-area-inset-top, 0px)); right: calc(14px + env(safe-area-inset-right, 0px)); width: 150px; height: 150px; }
-@media (max-width: 600px) { #radar { width: 110px; height: 110px; } }
+@media (max-width: 600px) {
+  #radar { width: 110px; height: 110px; }
+  /* Portrait phones: the clock moves under the radar and the boss bar fills the space left of the ultimate button. */
+  #top { top: calc(190px + env(safe-area-inset-top, 0px)); left: auto; right: calc(14px + env(safe-area-inset-right, 0px)); transform: none; text-align: right; }
+  #clock { font-size: 1.5rem; }
+  #kills { font-size: .78rem; }
+  #hud #bossbar { left: calc(14px + env(safe-area-inset-left, 0px)); transform: none; width: calc(100vw - 150px); }
+}
+/* Touch-only HUD buttons (boss, full screen); phones have no E key. */
+.touch { display: none; }
+@media (pointer: coarse) { .touch { display: inline-block; } .hud-tr { display: flex; gap: 8px; } #radar { top: calc(70px + env(safe-area-inset-top, 0px)); } #hud, #stage { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; } button { touch-action: manipulation; } }
 .icon-btn { width: 44px; height: 44px; border-radius: 8px; border: 3px solid var(--panel-edge); background: var(--panel); color: var(--ink); font-family: var(--display); font-size: 1rem; }
 #bossbar { position: absolute; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); width: min(420px, calc(100vw - 280px)); padding: 6px 12px 8px; display: grid; gap: 3px; }
 #bossbar b { font-family: var(--display); }
@@ -155,6 +165,98 @@ kbd { font-family: var(--display); font-size: .9rem; background: var(--ink); col
 .rc.locked img { filter: brightness(0) opacity(.45); }
 .note { font-size: .9rem; color: var(--soft); }
 label.btn.file { cursor: pointer; display: inline-block; }
+/* In-run ability readout under the XP bar. */
+#abil { display: flex; gap: 8px; align-items: center; font-size: .72rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--soft); }
+#abil .bar { flex: 1; height: 7px; border-width: 1px; }
+#abil .bar > i { background: var(--gold); transition: none; }
+#abil.hot #abtext { color: #c23a1e; }
+#abil.hot .bar > i { background: var(--hp-lo); }
+.st { display: inline-block; font-size: .68rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink); padding: 1px 6px; border-radius: 3px; vertical-align: middle; }
+.st.locked { background: #d9d2bd; }
+
+/* Wild Dex: entry card on the left, the roster on the right; the roster moves on top on narrow screens. */
+.dexbox { width: min(1180px, 100%); }
+.dexhead { display: flex; align-items: center; gap: 8px 14px; flex-wrap: wrap; }
+.dexhead h2 { font-size: clamp(2rem, 6vw, 3rem); color: var(--gold); }
+.dexhead .btn { margin-left: auto; }
+.dexgrid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(270px, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 860px) { .dexgrid { grid-template-columns: minmax(0, 1fr); } .dexlist { order: -1; } }
+.dexcard { padding: 16px 18px; display: grid; gap: 14px; text-align: left; min-width: 0; scroll-margin-top: 12px; }
+.dextop { display: grid; grid-template-columns: 156px minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 520px) { .dextop { grid-template-columns: minmax(0, 1fr); } }
+.portrait { width: 156px; height: 156px; display: grid; place-items: end center; padding-bottom: 6px; box-sizing: border-box; border: 3px solid var(--panel-edge); border-radius: 10px 2px 10px 2px;
+  background: radial-gradient(ellipse 60% 18% at 50% 88%, rgba(0,0,0,.18), transparent 70%), linear-gradient(to bottom, #fffbef, color-mix(in srgb, var(--c, #d9d2bd) 45%, #fffbef)); }
+.dexid { display: grid; gap: 6px; min-width: 0; }
+.dexno { font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--soft); }
+.rar { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 3px; background: var(--ink); color: var(--panel); letter-spacing: .04em; }
+.dexname { font-size: clamp(1.7rem, 4vw, 2.3rem); line-height: 1; overflow-wrap: anywhere; }
+.tight { gap: 6px; }
+.dexblurb { margin: 0; font-size: .95rem; line-height: 1.35; }
+.evoline { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.evoline button { display: grid; place-items: end center; min-width: 52px; min-height: 58px; padding: 2px 4px; border: 2px solid var(--panel-edge); border-radius: 6px; background: #fffbef; }
+.evoline button:hover, .evoline button.on { outline: 3px solid var(--gold); }
+.evoline span { font-size: .72rem; font-weight: 700; color: var(--soft); white-space: nowrap; }
+.evoline span::after { content: " \2192"; }
+.dexcols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+@media (max-width: 640px) { .dexcols { grid-template-columns: minmax(0, 1fr); } }
+.dexsec { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.dexsec h4 { margin: 6px 0 0; font-family: var(--display); font-size: 1.1rem; padding-bottom: 3px; border-bottom: 2px solid #d9d2bd; display: flex; gap: 8px; align-items: baseline; }
+.dexsec h4:first-child { margin-top: 0; }
+.dexsec h4 small { font-family: var(--ui); font-size: .78rem; color: var(--soft); }
+.dexsec p { margin: 0; line-height: 1.35; font-size: .92rem; }
+.abil { background: #fffbef; border: 2px solid #d9d2bd; border-radius: 8px; padding: 8px 10px; display: grid; gap: 3px; }
+.abil b { font-family: var(--display); font-size: 1.12rem; }
+.sbars { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px 10px; align-items: center; font-size: .88rem; font-weight: 600; }
+.sbars b { font-variant-numeric: tabular-nums; text-align: right; }
+.sbars .bar { height: 8px; border-width: 1px; }
+.mv { border: 2px solid #d9d2bd; border-left: 6px solid var(--c); border-radius: 6px; padding: 7px 10px; display: grid; gap: 4px; background: #fffbef; }
+.mv h5 { margin: 0; font-family: var(--display); font-size: 1.02rem; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.mv p { font-size: .86rem; }
+.tagl { font-family: var(--ui); font-size: .66rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 1px 6px; border-radius: 3px; background: #ece6d2; color: var(--soft); }
+.tagl.on { background: var(--gold); color: var(--ink); }
+.nums { display: flex; flex-wrap: wrap; gap: 4px; }
+.nums span { font-size: .72rem; font-weight: 600; background: #ece6d2; border-radius: 4px; padding: 1px 6px; font-variant-numeric: tabular-nums; color: var(--soft); }
+.nums b { color: var(--ink); }
+.rec { display: flex; gap: 18px; flex-wrap: wrap; }
+.rec div { display: grid; }
+.rec b { font-family: var(--display); font-size: 1.3rem; font-variant-numeric: tabular-nums; }
+.rec span { font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--soft); }
+.dexlist { padding: 12px; display: grid; gap: 10px; text-align: left; min-width: 0; }
+.dexfilter { display: flex; flex-wrap: wrap; gap: 6px; }
+.dexfilter button { display: inline-flex; align-items: center; gap: 5px; border: 2px solid var(--panel-edge); border-radius: 999px; padding: 3px 11px; font-weight: 700; font-size: .84rem; background: #fffbef; color: var(--ink); }
+.dexfilter button.on { background: var(--ink); color: var(--panel); }
+.dexfilter i, .tdot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+#dexsearch { width: 100%; box-sizing: border-box; font: 600 .95rem var(--ui); padding: 8px 10px; border: 2px solid var(--panel-edge); border-radius: 8px; background: #fffbef; color: var(--ink); }
+.dexmons { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 8px; max-height: min(460px, 52vh); overflow-y: auto; padding: 4px; }
+.dm { position: relative; display: grid; justify-items: center; align-content: end; gap: 3px; min-height: 108px; padding: 16px 4px 6px; border: 2px solid var(--panel-edge); border-radius: 8px; background: #fffbef; color: var(--ink); }
+.dm:hover, .dm.on { outline: 4px solid var(--gold); outline-offset: -1px; }
+.dm b { font-size: .76rem; line-height: 1.1; text-align: center; overflow-wrap: anywhere; }
+.dm .no { position: absolute; top: 3px; left: 6px; font-size: .66rem; font-weight: 700; color: var(--soft); }
+.dm .lock { position: absolute; top: 4px; right: 5px; width: 10px; height: 12px; }
+.dm .prog { width: 76%; height: 4px; border-radius: 2px; background: #d9d2bd; overflow: hidden; }
+.dm .prog i { display: block; height: 100%; background: var(--gold); }
+.dm.seen, .dm.unseen { background: #ece6d2; }
+.dm.unseen img:not(.lock), img.shadow { filter: brightness(0) opacity(.4); }
+.dexprog { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: .78rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--soft); }
+.dexprog .bar > i { background: var(--gold); }
+.dexprog b { font-family: var(--display); font-size: 1rem; color: var(--ink); letter-spacing: 0; }
+.fxlegend { display: grid; gap: 6px; border-top: 2px solid #d9d2bd; padding-top: 8px; }
+.fxlegend h4 { margin: 0; font-family: var(--display); font-size: 1rem; }
+.fxlegend p { margin: 0; font-size: .82rem; line-height: 1.3; }
+/* Phones play in landscape: portrait gets a rotate prompt over everything, short landscape screens get a tighter HUD. */
+#rotate { display: none; position: fixed; inset: 0; z-index: 50; place-items: center; text-align: center; background: var(--night); color: var(--gold); font-family: var(--display); font-size: 1.5rem; padding: 24px; }
+#rotate b { display: block; font-size: 4rem; line-height: 1; margin-bottom: 12px; }
+#rotate small { display: block; margin-top: 8px; font-family: var(--ui); font-size: 1rem; color: var(--panel); }
+@media (pointer: coarse) and (orientation: portrait) { #rotate { display: grid; } }
+@media (pointer: coarse) and (max-height: 500px) {
+  #me { width: min(240px, 34vw); padding: 5px 9px 7px; gap: 2px; }
+  .namerow b { font-size: 1rem; }
+  #kit { display: none; }
+  #radar { width: 96px; height: 96px; top: calc(64px + env(safe-area-inset-top, 0px)); }
+  #ultbtn { width: 84px; height: 84px; }
+  #clock { font-size: 1.5rem; }
+  .screen { padding-block: 10px; }
+}
 #loading { position: fixed; inset: 0; display: grid; place-items: center; background: var(--night); font-family: var(--display); font-size: 1.4rem; color: var(--gold); }
 @media (prefers-reduced-motion: reduce) { #ultbtn.ready, .press { animation: none; } .pop { animation-duration: .01s; } }
 </style>
@@ -167,10 +269,11 @@ label.btn.file { cursor: pointer; display: inline-block; }
     <div class="hprow"><em>HP</em><div class="bar"><i id="hpfill"></i></div></div>
     <span id="hptext">95 / 95</span>
     <div id="xpbar"><i id="xpfill"></i></div>
+    <div id="abil"><span id="abtext">Ability</span><div class="bar" id="abbar"><i id="abfill"></i></div></div>
     <div id="kit"></div>
   </div>
   <div id="top"><div id="clock">0:00</div><div id="kills">0 defeated</div></div>
-  <div class="hud-tr"><button class="icon-btn" id="pausebtn" aria-label="Pause">II</button></div>
+  <div class="hud-tr"><button class="icon-btn touch" id="bossbtn" aria-label="Call a boss">E</button><button class="icon-btn touch" id="fsbtn" aria-label="Full screen">&#x26F6;</button><button class="icon-btn" id="pausebtn" aria-label="Pause">II</button></div>
   <canvas id="radar" width="150" height="150" aria-label="Radar"></canvas>
   <div id="bossbar" class="plate" hidden><b id="bossname">Boss</b><div class="bar"><i id="bossfill"></i></div></div>
   <div id="crosshair" hidden></div>
@@ -189,6 +292,7 @@ label.btn.file { cursor: pointer; display: inline-block; }
     <p class="tag">A pixel monster meadow. Pick a fire, water or grass partner, learn moves, evolve twice and survive ten minutes of wild monsters.</p>
     <div class="menu">
       <button class="btn" id="playbtn">Play</button>
+      <button class="btn ghost" data-open="dex">Wild Dex</button>
       <button class="btn ghost" data-open="help">How to play</button>
       <button class="btn ghost" data-open="settings">Settings</button>
       <button class="btn ghost" data-open="credits">Credits</button>
@@ -208,7 +312,7 @@ label.btn.file { cursor: pointer; display: inline-block; }
       <h3 class="sect">Trainer</h3>
       <div class="recruits" id="trainers"></div>
     </div>
-    <div class="row"><button class="btn" id="startbtn">I choose you</button><button class="btn ghost" id="selectback">Back</button><span class="small" id="best"></span></div>
+    <div class="row"><button class="btn" id="startbtn">I choose you</button><button class="btn ghost" data-open="dex">Wild Dex</button><button class="btn ghost" id="selectback">Back</button><span class="small" id="best"></span></div>
   </div>
 </div>
 
@@ -223,12 +327,14 @@ label.btn.file { cursor: pointer; display: inline-block; }
         <kbd>E</kbd><span>Call a boss into the meadow whenever you feel ready. Bosses slam, charge and fire volleys, so watch for the red circle.</span>
         <kbd>M</kbd><span>Turn sound on or off.</span>
         <kbd>Esc</kbd><span>Pause and open the menu. Press again to resume.</span>
+        <kbd>Phone</kbd><span>The game goes full screen when a run starts (turn the phone sideways). Left thumb moves and the camera follows, right thumb looks around, the circle fires your ultimate, E calls a boss and &#x26F6; toggles full screen.</span>
         <kbd>1 2 3</kbd><span>Pick a reward when you level up.</span>
       </div>
       <p>Your moves fire on their own. Walk over the glowing orbs to gain experience and pick a new move or trait each level. Your partner only learns moves of its own type. You heal slowly when you avoid damage for a few seconds.</p>
       <p><b>Radar.</b> The circle at the top right shows monsters (coloured by type), bosses (big red dots), crates (brown) and items (gold). The gold ring is the fence at the edge of the meadow.</p>
       <p><b>Crates and drops.</b> Break crates by attacking or walking into them. Crates and some monsters drop a Heal Berry, Magnet (pulls in every orb), Bomb (blasts everything nearby), Shield (6 seconds of safety) or Star Candy (an instant level).</p>
-      <p> Your partner evolves at level 7 and level 15. A boss shows up every 2:00. Beat a boss once and it joins you as a playable partner, including Boulderback, the ground-type boss.</p>
+      <p>Your partner evolves at level 12 and level 27, recruits included. A boss shows up every 2:00. Beat a boss once and it joins you as a playable partner, including Boulderback, the ground-type boss.</p>
+      <p><b>Abilities and status effects.</b> Every partner has its own ability, like Overheat for the fire starter. Moves can also leave a status on monsters: fire <b>burns</b>, water <b>chills</b> (chill a monster three times and it <b>freezes</b> solid), grass <b>poisons</b> and ground <b>dazes</b>. Open the <b>Wild Dex</b> to read every partner's ability, stats and moves.</p>
       <p><b>Recruits.</b> Every wild monster you defeat counts toward recruiting its species, across all your runs. Reach the target and it joins you as a playable partner, even in the middle of a run. Bosses join after you beat them once.</p>
       <h3>Type matchups</h3>
       <div class="chart"><table>
@@ -268,9 +374,29 @@ label.btn.file { cursor: pointer; display: inline-block; }
     <div class="plate sheet">
       <h2>Credits</h2>
       <p>Wild monster sprites come from the <b>Mons 24</b> pixel pack you downloaded ("Free ver 2"), recoloured into fire, water, grass and rock types. The zip did not include a license file, so check the pack's itch.io page before sharing this game.</p>
-      <p>Starters, the meadow, trees, effects, the built-in sound effects and the music are made in code for this game.</p>
+      <p>Starters, the meadow, trees, effects, the built-in sound effects and the music are made in code for this game. Recruit evolutions are drawn in code on top of the Mons 24 sprites.</p>
       <p>A personal fan project made for fun. It is not affiliated with any game company.</p>
       <div class="row"><button class="btn" data-close>Back</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="dex" hidden>
+  <div class="box dexbox">
+    <div class="dexhead">
+      <h2>Wild Dex</h2>
+      <span class="small" id="dexcount"></span>
+      <button class="btn ghost" data-close>Back</button>
+    </div>
+    <div class="dexgrid">
+      <article class="plate dexcard" id="dexcard" aria-live="polite"></article>
+      <aside class="plate dexlist" aria-label="All partners">
+        <div class="dexfilter" id="dexfilter" role="group" aria-label="Filter by type"></div>
+        <input type="search" id="dexsearch" placeholder="Search by name" aria-label="Search by name" autocomplete="off">
+        <div class="dexmons" id="dexmons"></div>
+        <div class="dexprog"><span>Recruited</span><div class="bar"><i id="dexprogfill"></i></div><b id="dexprogtext"></b></div>
+        <div class="fxlegend" id="fxlegend"></div>
+      </aside>
     </div>
   </div>
 </div>
@@ -289,6 +415,7 @@ label.btn.file { cursor: pointer; display: inline-block; }
     <div class="menu">
       <button class="btn" id="resumebtn">Resume</button>
       <button class="btn ghost" id="restartbtn">Restart run</button>
+      <button class="btn ghost" data-open="dex">Wild Dex</button>
       <button class="btn ghost" data-open="help">How to play</button>
       <button class="btn ghost" data-open="settings">Settings</button>
       <button class="btn ghost" id="quitbtn">Quit to title</button>
@@ -306,6 +433,7 @@ label.btn.file { cursor: pointer; display: inline-block; }
   </div>
 </div>
 
+<div id="rotate" aria-live="polite"><div><b>&#x21BB;</b>Turn your phone sideways<small>Pocket Wilds plays in landscape</small></div></div>
 <div id="loading">Loading the meadow…</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -411,10 +539,11 @@ const SYNTH = {
   crate: t => { hiss(t, { kind: 'lowpass', f: 1500, f2: 300, dur: .15, vol: .3 }); tone(t, { type: 'triangle', f: 220, f2: 90, dur: .1, vol: .2 }); },
   click: t => tone(t, { f: 900, dur: .03, vol: .06 }),
   unlock: t => arp(t, [659, 784, 988, 1319, 1568], .08, { dur: .2, vol: .16 }),
+  freeze: t => { arp(t, [1568, 2093, 2637], .035, { type: 'sine', dur: .09, vol: .07 }); hiss(t, { kind: 'highpass', f: 5000, dur: .12, vol: .1 }); },
   win: t => arp(t, [523, 523, 784, 1047, 988, 1047], .12, { dur: .25, vol: .16 }),
   gameover: t => arp(t, [440, 349, 294, 220], .18, { type: 'triangle', dur: .35, vol: .18 }),
 };
-const SFX_GAP = { hit: .05, weak: .06, super: .08, pop: .04, pickup: .03, watergun: .09, bubble: .08, splash: .1, leaf: .1, flame: .12, ember: .06, rock: .08, crate: .06 };
+const SFX_GAP = { hit: .05, weak: .06, super: .08, pop: .04, pickup: .03, watergun: .09, bubble: .08, splash: .1, leaf: .1, flame: .12, ember: .06, rock: .08, crate: .06, freeze: .12 };
 function sfx(name) {
   const c = AUDIO.ctx;
   if (!c || SET.sfxVol <= 0 || c.state !== 'running') return;
@@ -583,13 +712,106 @@ function recolor(c, tint) {
   x.putImageData(d, 0, 0);
 }
 let SHEET;
+const cellOf = id => [id < 16 ? id % 8 : id - 12, id < 8 ? 0 : id < 16 ? 1 : 2];
 function monFrames(id, tint) {
-  const row = id < 8 ? 0 : id < 16 ? 1 : 2, col = id < 16 ? id % 8 : id - 12;
+  const [col, row] = cellOf(id);
   return [0, 1, 2, 3].map(f => {
     const c = canvas(28), x = c.getContext('2d');
     x.drawImage(SHEET, col * 24, f * 72 + row * 24, 24, 24, 2, 2, 24, 24);
     if (tint) recolor(c, tint);
     return finish(c, { edge: [30, 22, 30] });
+  });
+}
+
+// ---------- per-partner art styles ----------
+// A style swings the art's base hue (base) to a new hue (h), keeps part of the original hue spread (k) and scales
+// saturation (s, plus sa) and lightness (l, plus la). Outlines and white glints stay as drawn.
+function restylePx(R, G, B, T) {
+  const [h, s, l] = rgb2hsl(R, G, B);
+  if (l < .2 || (s < .12 && l > .9)) return null;
+  const dh = ((h - T.base + .5) % 1 + 1) % 1 - .5;
+  return hsl2rgb(T.h + dh * (T.k ?? .5), clamp(s * (T.s ?? 1) + (T.sa || 0), 0, 1), clamp(l * (T.l ?? 1) + (T.la || 0), 0, 1));
+}
+function restyle(src, T) {
+  const c = canvas(src.width, src.height), x = c.getContext('2d');
+  x.drawImage(src, 0, 0);
+  const d = x.getImageData(0, 0, c.width, c.height), a = d.data;
+  for (let i = 0; i < a.length; i += 4) {
+    if (!a[i + 3]) continue;
+    const p = restylePx(a[i], a[i + 1], a[i + 2], T);
+    if (p) { a[i] = p[0]; a[i + 1] = p[1]; a[i + 2] = p[2]; }
+  }
+  x.putImageData(d, 0, 0);
+  return c;
+}
+const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const rgbHex = c => '#' + c.map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+const styleHex = (hex, T) => T ? rgbHex(restylePx(...hexRgb(hex), T) || hexRgb(hex)) : hex;
+function flipV(src) { const c = canvas(src.width, src.height), x = c.getContext('2d'); x.translate(0, src.height); x.scale(1, -1); x.drawImage(src, 0, 0); return c; }
+
+// ---------- recruit evolutions ----------
+// The sheet sprite gains type features (crest, fins, leaves, spikes) placed on its own silhouette, deeper colours,
+// and at the last stage a glowing rim. Sheet creatures face right, so the head is the high point on the right.
+function deepen(c, st) {
+  const x = c.getContext('2d'), d = x.getImageData(0, 0, c.width, c.height), a = d.data;
+  for (let i = 0; i < a.length; i += 4) {
+    if (!a[i + 3]) continue;
+    const [h, s, l] = rgb2hsl(a[i], a[i + 1], a[i + 2]);
+    const [R, G, B] = hsl2rgb(h, Math.min(1, s * (1 + .14 * st)), l * (1 - .05 * st));
+    a[i] = R; a[i + 1] = G; a[i + 2] = B;
+  }
+  x.putImageData(d, 0, 0);
+}
+function silhouette(c) {
+  const w = c.width, h = c.height, a = c.getContext('2d').getImageData(0, 0, w, h).data, top = [], bot = [];
+  let x0 = w, x1 = -1;
+  for (let X = 0; X < w; X++) {
+    top[X] = bot[X] = -1;
+    for (let Y = 0; Y < h; Y++) if (a[(Y * w + X) * 4 + 3] > 110) { if (top[X] < 0) top[X] = Y; bot[X] = Y; }
+    if (top[X] >= 0) { x0 = Math.min(x0, X); x1 = Math.max(x1, X); }
+  }
+  const W = x1 - x0;
+  const peak = (f0, f1) => { let b = -1; for (let X = Math.round(x0 + W * f0); X <= Math.round(x0 + W * f1); X++) if (top[X] >= 0 && (b < 0 || top[X] < top[b])) b = X; return [b, b < 0 ? -1 : top[b]]; };
+  return { back: peak(.12, .4), mid: peak(.4, .62), head: peak(.62, 1), tail: [x0 + 1, Math.round((top[x0] + bot[x0]) / 2)] };
+}
+// Feature shapes, drawn with their base at (X, Y) on the silhouette. C = [dark, main, light].
+const SHAPES = {
+  flame(x, X, Y, s, C) {
+    poly(x, C[0], X - s * .7, Y + 1, X - s, Y - s * .8, X - s * .3, Y - s * .5, X - s * .2, Y - s * 1.5, X + s * .3, Y - s * .6, X + s * .7, Y + 1);
+    poly(x, C[1], X - s * .45, Y + 1, X - s * .55, Y - s * .55, X - s * .1, Y - s * .3, X, Y - s * 1.05, X + s * .35, Y + 1);
+    poly(x, C[2], X - s * .2, Y + 1, X - s * .05, Y - s * .55, X + s * .15, Y + 1);
+  },
+  fin(x, X, Y, s, C) { poly(x, C[0], X - s * .9, Y + 1.5, X - s * 1.1, Y - s * 1.2, X - s * .1, Y - s * .5, X + s * .6, Y + 1.5); poly(x, C[1], X - s * .6, Y + 1, X - s * .75, Y - s * .75, X + s * .3, Y + 1); },
+  leaf(x, X, Y, s, C) { e(x, X - s * .45, Y - s * .5, s * .75, s * .3, C[1], -.9); e(x, X + s * .35, Y - s * .55, s * .65, s * .28, C[2], .85); r(x, X, Y - 1, 1, 2, C[0]); },
+  bloom(x, X, Y, s, C) { for (let k = 0; k < 5; k++) { const a = k / 5 * TAU - Math.PI / 2; e(x, X + Math.cos(a) * s * .42, Y - s * .55 + Math.sin(a) * s * .42, s * .3, s * .3, '#ef6f94'); } e(x, X, Y - s * .55, s * .24, s * .24, '#ffe36e'); },
+  spike(x, X, Y, s, C) { poly(x, C[1], X - s * .55, Y + 1.5, X - s * .25, Y - s, X + s * .55, Y + 1.5); poly(x, C[2], X - s * .3, Y + 1, X - s * .2, Y - s * .55, X + s * .05, Y + 1); },
+  horn(x, X, Y, s, C) { poly(x, C[1], X - s * .4, Y + 1.5, X + s * .7, Y - s * .9, X + s * .4, Y + 1.5); poly(x, C[2], X - s * .1, Y + 1, X + s * .55, Y - s * .6, X + s * .25, Y + 1); },
+  crystal(x, X, Y, s, C) { poly(x, C[1], X - s * .35, Y + 1, X - s * .1, Y - s * 1.3, X + s * .35, Y + 1); poly(x, C[2], X - s * .12, Y, X - s * .08, Y - s, X + s * .1, Y); },
+  thorn(x, X, Y, s, C) { poly(x, C[0], X - s * .5, Y + 1.5, X - s * .9, Y - s * 1.1, X + .2, Y - s * .3, X + s * .5, Y + 1.5); poly(x, C[1], X - s * .3, Y + 1, X - s * .6, Y - s * .7, X + .1, Y + 1); },
+};
+// What grows where at each evolution: [anchor, shape, size]. Index 0 = first evolution, 1 = second.
+const EVO_PLAN = {
+  flame: [[['head', 'flame', 4], ['tail', 'flame', 3]], [['head', 'flame', 6], ['back', 'flame', 4], ['tail', 'flame', 4.5]]],
+  fin: [[['back', 'fin', 5]], [['back', 'fin', 7], ['mid', 'fin', 4.5], ['head', 'crystal', 3.5]]],
+  leaf: [[['back', 'leaf', 5]], [['back', 'bloom', 6], ['mid', 'leaf', 5], ['head', 'leaf', 4]]],
+  spike: [[['back', 'spike', 3.5], ['mid', 'spike', 4]], [['back', 'spike', 4.5], ['mid', 'spike', 5.5], ['head', 'horn', 4.5]]],
+  crystal: [[['back', 'crystal', 4.5], ['mid', 'crystal', 5]], [['back', 'crystal', 6], ['mid', 'crystal', 7], ['head', 'crystal', 4.5]]],
+  thorn: [[['back', 'thorn', 4.5], ['mid', 'thorn', 4.5]], [['back', 'thorn', 6], ['mid', 'thorn', 6], ['head', 'horn', 4.5], ['tail', 'thorn', 4]]],
+};
+const FEAT = { fire: ['#c2321e', '#ff8a2a', '#ffe36e'], water: ['#2c5aa8', '#4a8fe0', '#bfe6ff'], grass: ['#357a2e', '#6cbf4a', '#c6f07a'], ground: ['#5a5560', '#c9bfae', '#f2ece0'] };
+// 36 px frames with the 24 px creature low in the frame, leaving headroom for crests.
+function evoFrames(k, st) {
+  const w = WILD[k], p = PARTNERS[k], T = STYLES[p.style], C = FEAT[p.type].map(h => styleHex(h, T)), [col, row] = cellOf(w.id);
+  return [0, 1, 2, 3].map(f => {
+    const c = canvas(36), x = c.getContext('2d');
+    x.drawImage(SHEET, col * 24, f * 72 + row * 24, 24, 24, 6, 10, 24, 24);
+    if (w.tint) recolor(c, w.tint);
+    deepen(c, st);
+    const A = silhouette(c);
+    for (const [at, shape, s] of EVO_PLAN[p.feat][st - 1]) { const [X, Y] = A[at]; if (X >= 0) SHAPES[shape](x, X, Y, s, C); }
+    finish(c, { edge: [30, 22, 30] });
+    if (st > 1) { const d = x.getImageData(0, 0, 36, 36); outline(d.data, 36, 36, hexRgb(C[2])); x.putImageData(d, 0, 0); }
+    return c;
   });
 }
 
@@ -637,6 +859,12 @@ const VFXDRAW = {
   }],
   petalburst: [4, 16, 16, (x, i) => { for (let k = 0; k < 4; k++) { const a = k / 4 * TAU + i * .6, R = 2 + i * 1.5; e(x, 8 + Math.cos(a) * R, 8 + Math.sin(a) * R, 2.2, 1.3, k % 2 ? '#ef6f94' : '#ffb3c8', a); } }],
   sparkle: [4, 16, 16, (x, i) => { const L = [3, 6, 4, 2][i]; r(x, 8 - L, 7, L * 2, 2, '#ffffff'); r(x, 7, 8 - L, 2, L * 2, '#ffffff'); r(x, 7, 7, 2, 2, '#ffe36e'); }, { dark: false }],
+  // Status and ability effects.
+  spore: [5, 28, 28, (x, i) => { const R = 3 + i * 2.4; for (let k = 0; k < 9; k++) { const a = k / 9 * TAU + i * .2; e(x, 14 + Math.cos(a) * R, 15 + Math.sin(a) * R * .75, 3 - i * .4, 3 - i * .4, k % 3 ? '#b070e0' : '#a6e05a'); } }, { dark: false }],
+  iceshatter: [5, 28, 28, (x, i) => { const R = 2 + i * 2.8; for (let k = 0; k < 7; k++) { const a = k / 7 * TAU + .3, cx = 14 + Math.cos(a) * R, cy = 14 + Math.sin(a) * R; poly(x, k % 2 ? '#e0f6ff' : '#8fd0f0', cx - 2.2, cy + 1.5, cx, cy - 3.5 + i * .4, cx + 2.2, cy + 1.5); } }],
+  poisonbub: [4, 12, 16, (x, i) => { e(x, 4, 13 - i * 3, 2.6 - i * .3, 2.6 - i * .3, '#9a4ad0'); e(x, 8.5, 10 - i * 2.5, 1.9, 1.9, '#c88aff'); if (i < 3) r(x, 3, 12 - i * 3, 1, 1, '#f0d8ff'); }],
+  dazed: [4, 20, 10, (x, i) => { for (let k = 0; k < 3; k++) { const a = k / 3 * TAU + i * TAU / 12, cx = 10 + Math.cos(a) * 7, cy = 5 + Math.sin(a) * 2.5; r(x, cx - 1.5, cy - .5, 3, 1, '#ffe36e'); r(x, cx - .5, cy - 1.5, 1, 3, '#ffe36e'); r(x, cx - .5, cy - .5, 1, 1, '#ffffff'); } }, { dark: false }],
+  steam: [5, 20, 24, (x, i) => { for (let k = 0; k < 3; k++) e(x, 6 + k * 4 + (i % 2), 20 - i * 3.5 - k * 2, 3 + i * .5, 2.6 + i * .4, k % 2 ? '#e8ecf0' : '#c8d0d8'); }, { dark: false }],
 };
 const SMALL = {
   ember0: [16, 16, x => { e(x, 8, 8, 5, 5, '#e2321e'); e(x, 8, 8, 3.5, 3.5, '#ff9a2a'); e(x, 7, 7, 2, 2, '#ffe36e'); }],
@@ -644,8 +872,25 @@ const SMALL = {
   droplet: [12, 12, x => { e(x, 6, 7, 3.5, 3.5, '#3f7fd8'); poly(x, '#3f7fd8', 3, 6, 6, 1, 9, 6); e(x, 5, 6, 1.5, 1.5, '#d6f0ff'); }],
   bubble: [16, 16, x => { e(x, 8, 8, 5.5, 5.5, '#4a8fe0'); e(x, 8, 8, 4.3, 4.3, '#bfe6ff'); r(x, 5, 5, 2, 2, '#ffffff'); }],
   leaf: [16, 16, x => { e(x, 8, 8, 6, 2.6, '#7cc05a', .7); x.strokeStyle = '#357a2e'; x.beginPath(); x.moveTo(4, 12); x.lineTo(12, 4); x.stroke(); }],
-  vine: [12, 12, x => { e(x, 6, 6, 3.6, 3.6, '#3f8a34'); e(x, 5, 5, 2, 2, '#6cbf4a'); r(x, 8, 2, 2, 2, '#a6e05a'); }],
-  vinetip: [16, 16, x => { e(x, 8, 8, 6, 3, '#6cbf4a', -.6); r(x, 4, 10, 1, 1, '#357a2e'); x.strokeStyle = '#2f6e28'; x.beginPath(); x.moveTo(4, 11); x.lineTo(12, 5); x.stroke(); }],
+  // Vine Whip: two leaf shapes and a thorn (flipped copies hang under the vine), plus a curled tendril for the tip.
+  vineA: [14, 14, x => { e(x, 7.5, 6.5, 5.5, 2.6, '#5cae4a', -.8); e(x, 8, 6, 3.4, 1.3, '#a6e05a', -.8); r(x, 2, 11, 2, 2, '#357a2e'); }],
+  vineB: [14, 14, x => { e(x, 7, 6.5, 4.6, 3.8, '#3f8a34', .5); e(x, 6.5, 6, 2.8, 2.1, '#6cbf4a', .5); r(x, 3, 11, 2, 2, '#357a2e'); r(x, 7, 5, 1, 3, '#2f6e28'); }],
+  thornA: [14, 14, x => { poly(x, '#4a2a5a', 2, 13, 6, 12, 11, 2, 7, 8); poly(x, '#9a6ab8', 4, 12, 6, 11, 10, 4); }],
+  vinetip: [16, 16, x => { x.strokeStyle = '#3f8a34'; x.lineWidth = 2.4; x.beginPath(); x.moveTo(1, 11); x.quadraticCurveTo(9, 11, 11, 6); x.arc(9, 6, 2.2, 0, Math.PI * 1.6, true); x.stroke(); e(x, 5, 8, 3.2, 1.7, '#6cbf4a', -.5); r(x, 12, 2, 2, 2, '#a6e05a'); }],
+  fireball0: [20, 20, x => fireball(x, 0)],
+  fireball1: [20, 20, x => fireball(x, TAU / 16)],
+  wisp: [14, 16, x => { poly(x, '#e2321e', 2, 12, 3, 6, 7, 1, 8, 5, 12, 7, 12, 12, 7, 15); poly(x, '#ff8a2a', 4, 12, 5, 8, 7, 4, 9, 8, 10, 12, 7, 14); e(x, 7, 11.5, 2, 2.2, '#ffe36e'); }],
+  snowflake: [12, 12, x => { for (let k = 0; k < 3; k++) { x.save(); x.translate(6, 6); x.rotate(k * Math.PI / 3); r(x, -5, -.8, 10, 1.6, '#e8f6ff'); r(x, -3.6, -2.2, 1.4, 1.4, '#bfe6ff'); r(x, 2.4, -2.2, 1.4, 1.4, '#bfe6ff'); x.restore(); } e(x, 6, 6, 1.7, 1.7, '#ffffff'); }],
+  snowball: [16, 16, x => { e(x, 8, 8, 5.5, 5.5, '#bfdcef'); e(x, 7, 7, 4.2, 4.2, '#f4fbff'); r(x, 5, 5, 2, 2, '#ffffff'); r(x, 10, 10, 1, 1, '#9fc4dc'); }],
+  petal: [16, 16, x => { e(x, 8, 8, 5.5, 3, '#ef6f94', .7); e(x, 7.5, 7.5, 3.4, 1.7, '#ffb3c8', .7); r(x, 5, 11, 1, 1, '#c2405a'); }],
+  thornshard: [16, 16, x => { poly(x, '#4a2a5a', 3, 13, 13, 2, 9, 9, 13, 14); poly(x, '#9a6ab8', 5, 12, 12, 4, 9, 8); }],
+  iceblock: [28, 28, x => {
+    for (const [bx, h, w, ln] of [[4, 17, 3.6, -1], [24, 17, 3.6, 1], [8, 11, 3, 1], [20, 11, 3, -1], [14, 7, 3.4, 0], [2, 9, 2.4, -1], [26, 9, 2.4, 1]]) {
+      poly(x, '#7cc4ea', bx - w, 27, bx + ln, 27 - h, bx + w, 27);
+      poly(x, '#d8f2ff', bx - w * .35, 26, bx + ln * .8, 29 - h, bx + w * .1, 26);
+    }
+    r(x, 1, 24, 26, 3, '#a8dcf6'); r(x, 3, 24, 9, 1, '#ffffff');
+  }],
   xp0: [12, 12, x => { e(x, 6, 6, 3.5, 3.5, '#5ab4f0'); r(x, 4, 4, 2, 2, '#e6f6ff'); }],
   xp1: [12, 12, x => { e(x, 6, 6, 4, 4, '#6ad85a'); r(x, 4, 4, 2, 2, '#efffe0'); }],
   xp2: [12, 12, x => { e(x, 6, 6, 4.5, 4.5, '#f2557a'); r(x, 4, 3, 2, 2, '#ffe6ee'); }],
@@ -660,6 +905,23 @@ const SMALL = {
   it_shield: [16, 16, x => { poly(x, '#3f6fd8', 2, 3, 8, 1, 14, 3, 13, 9, 8, 15, 3, 9); poly(x, '#9fc4ff', 4, 4, 8, 3, 12, 4, 11, 8, 8, 12, 5, 8); }],
   it_candy: [16, 16, x => { poly(x, '#f2c230', 1, 5, 4, 8, 1, 11); poly(x, '#f2c230', 15, 5, 12, 8, 15, 11); e(x, 8, 8, 4.5, 4, '#ef6f94'); r(x, 6, 6, 2, 2, '#ffffff'); r(x, 9, 9, 1, 1, '#ffe6ee'); }],
   crate: [24, 24, x => { r(x, 2, 4, 20, 18, '#8a5a36'); r(x, 2, 4, 20, 3, '#b58a5a'); r(x, 2, 19, 20, 3, '#6b4429'); r(x, 2, 4, 3, 18, '#a8784a'); r(x, 19, 4, 3, 18, '#6b4429'); poly(x, '#6b4429', 5, 18, 7, 18, 19, 8, 19, 6, 17, 6, 5, 16); r(x, 11, 10, 2, 2, '#e8c070'); }],
+};
+
+// A round fireball with flame tongues all around, so it reads the same from any side.
+function fireball(x, o) {
+  for (let k = 0; k < 8; k++) {
+    const a = k / 8 * TAU + o, R = k % 2 ? 8 : 9.5;
+    poly(x, '#e2321e', 10 + Math.cos(a - .4) * 5.5, 10 + Math.sin(a - .4) * 5.5, 10 + Math.cos(a) * R, 10 + Math.sin(a) * R, 10 + Math.cos(a + .4) * 5.5, 10 + Math.sin(a + .4) * 5.5);
+  }
+  e(x, 10, 10, 6.5, 6.5, '#e2321e'); e(x, 10, 10, 5, 5, '#ff8a2a'); e(x, 9, 9, 3.2, 3.2, '#ffe36e'); r(x, 7, 7, 2, 2, '#ffffff');
+}
+// Tiling textures for mesh effects. The vine is a stem strip with leaf nodes, repeated along the Vine Whip ribbon.
+const TEXDRAW = {
+  vine: [32, 8, x => {
+    r(x, 0, 2, 32, 4, '#357a2e'); r(x, 0, 2, 32, 1, '#6cbf4a'); r(x, 0, 5, 32, 1, '#245a22');
+    for (const X of [5, 21]) { r(x, X, 1, 3, 6, '#2f6e28'); r(x, X + 1, 2, 1, 1, '#a6e05a'); }
+    r(x, 13, 1, 2, 1, '#5aa64a'); r(x, 29, 6, 2, 1, '#2f6e28');
+  }],
 };
 
 // ---------- environment pixel art ----------
@@ -725,8 +987,15 @@ function tex(c, repeat) {
   return t;
 }
 function smat(t, color = '#ffffff') { return new THREE.SpriteMaterial({ map: t, alphaTest: .5, color, fog: true }); }
-// n / m = normal / mirrored, fn / fm = hit-flash tints of each.
-function matSet(c) { const a = tex(c), b = tex(mirror(c)); return { n: smat(a), m: smat(b), fn: smat(a, '#ff8a8a'), fm: smat(b, '#ff8a8a') }; }
+// n / m = normal / mirrored, fn / fm = hit-flash tints of each. Wild monsters also get a [normal, mirrored] pair per status tint.
+const TINTS = { burn: '#ffa070', chill: '#80c4ff', freeze: '#a8dcff', poison: '#cc8cff', daze: '#ffe070' };
+function matSet(c, tinted) {
+  const a = tex(c), b = tex(mirror(c)), o = { n: smat(a), m: smat(b), fn: smat(a, '#ff8a8a'), fm: smat(b, '#ff8a8a') };
+  if (tinted) o.tint = Object.fromEntries(Object.entries(TINTS).map(([k, col]) => [k, [smat(a, col), smat(b, col)]]));
+  return o;
+}
+function vineTex(c) { const t = tex(c, [1, 1]); t.wrapT = THREE.ClampToEdgeWrapping; return t; }
+const vineMat = t => new THREE.MeshBasicMaterial({ map: t, alphaTest: .5, side: THREE.DoubleSide });
 const shadowGeo = new THREE.CircleGeometry(1, 18).rotateX(-Math.PI / 2);
 const shadowMat = new THREE.MeshBasicMaterial({ color: '#1b3a14', transparent: true, opacity: .28, depthWrite: false });
 function shadow(rad) { const m = new THREE.Mesh(shadowGeo, shadowMat); m.scale.set(rad, 1, rad * .8); m.position.y = .03; scene.add(m); return m; }
@@ -774,27 +1043,52 @@ const STARTERS = {
     ult: 'Overgrowth', ultDesc: 'Thorns burst under every nearby monster and you heal half your HP.', blurb: 'A sunny gecko that slowly heals itself as it moves.' },
 };
 // Each partner learns only moves of its own type (5 per type).
+// stat(l) holds a move's numbers at level l, before the partner's Power, Focus and Big Aura: dmg per hit, n targets or projectiles,
+// cd seconds between uses, every = seconds between hits, dur seconds, reach and r (radius) in metres, st = chance per hit to cause its type's status.
+const lv = l => Math.pow(.9, l - 1);
 const MOVES = {
-  ember: { name: 'Ember', el: 'fire', blurb: 'Spits a fireball at the nearest monster. It bursts into flame on impact.', up: 'Hotter, faster fireballs. One more fireball every second level.' },
-  flameburst: { name: 'Lava Plume', el: 'fire', blurb: 'Magma erupts in a ring of flame pillars around the nearest group of monsters.', up: 'Wider, hotter eruptions, more often.' },
-  firespin: { name: 'Fire Spin', el: 'fire', blurb: 'A spiral of flames circles you and scorches anything it touches.', up: 'One more flame, harder hits, wider spiral.' },
-  flamethrower: { name: 'Flamethrower', el: 'fire', blurb: 'Breathes a cone of fire at the nearest monster and burns everything inside it.', up: 'A longer, hotter cone.' },
-  fireblast: { name: 'Fire Blast', el: 'fire', blurb: 'Launches a big fireball that explodes into a star of fire.', up: 'A bigger, harder explosion, more often.' },
-  shuriken: { name: 'Water Shuriken', el: 'water', blurb: 'Throws spinning water stars at several monsters at once.', up: 'One more star and more damage.' },
-  whirlpool: { name: 'Whirlpool', el: 'water', blurb: 'A spinning vortex pulls monsters in and keeps hurting them.', up: 'A bigger vortex that lasts longer.' },
-  aquaring: { name: 'Aqua Ring', el: 'water', blurb: 'A veil of water rings heals you every second.', up: 'Heals more each level.' },
-  leechseed: { name: 'Leech Seed', el: 'grass', blurb: 'Plants seeds on nearby monsters that drain their HP into yours.', up: 'More seeds that drain harder.' },
-  magicleaf: { name: 'Magical Leaf', el: 'grass', blurb: 'Glowing leaves home in on monsters and never miss.', up: 'More leaves, more damage.' },
-  petals: { name: 'Petal Blizzard', el: 'grass', blurb: 'A storm of petals whirls around you and hits everything nearby.', up: 'A wider, harder storm, more often.' },
-  rockthrow: { name: 'Rock Throw', el: 'ground', blurb: 'Tosses rocks in an arc at the nearest monsters.', up: 'More rocks that hit harder.' },
-  rockslide: { name: 'Rock Slide', el: 'ground', blurb: 'Boulders crash down on the monsters around you.', up: 'More boulders, more often.' },
-  ancientpower: { name: 'Ancient Power', el: 'ground', blurb: 'Glowing ancient stones orbit you and smash into monsters.', up: 'One more stone and harder hits.' },
-  stoneedge: { name: 'Stone Edge', el: 'ground', blurb: 'Sharp stone spikes burst from the ground under the nearest monster.', up: 'More spikes, more damage.' },
-  watergun: { name: 'Water Gun', el: 'water', blurb: 'Shoots a high-pressure jet of water that pierces through a line of monsters.', up: 'Longer jets that hit harder. A second jet at level 4.' },
-  bubbles: { name: 'Bubble Guard', el: 'water', blurb: 'Bubbles circle you and splash anything they touch.', up: 'One more bubble, harder hits, wider circle.' },
-  vinewhip: { name: 'Vine Whip', el: 'grass', blurb: 'Lashes a long vine at the nearest monster and hits everything along it.', up: 'Longer reach and a harder lash. A second vine at level 4.' },
-  leaves: { name: 'Razor Leaf', el: 'grass', blurb: 'Sharp leaves fly out from you in every direction.', up: 'Two more leaves, more damage, quicker volleys.' },
-  stomp: { name: 'Mud Stomp', el: 'ground', blurb: 'Shakes the ground around you and throws monsters back.', up: 'Bigger, harder and more frequent stomps.' },
+  ember: { name: 'Ember', el: 'fire', blurb: 'Spits a fireball at the nearest monster. It bursts into flame on impact.', up: 'Hotter, faster fireballs. One more fireball every second level.',
+    stat: l => ({ dmg: 12 + 6 * (l - 1), n: 1 + Math.floor((l - 1) / 2), cd: .85 * lv(l), reach: 24, pierce: l >= 4 ? 1 : 0, st: .2 }) },
+  flameburst: { name: 'Lava Plume', el: 'fire', blurb: 'Magma erupts in a ring of flame pillars around the nearest group of monsters.', up: 'Wider, hotter eruptions, more often.',
+    stat: l => ({ dmg: 20 + 10 * (l - 1), cd: 3 * lv(l), r: 2.6 + .35 * (l - 1), reach: 18, st: .35 }) },
+  firespin: { name: 'Fire Spin', el: 'fire', blurb: 'A spiral of flames circles you and scorches anything it touches.', up: 'One more flame, harder hits, wider spiral.',
+    stat: l => ({ dmg: 5 + 3 * (l - 1), n: 1 + l, every: .45, r: 2.4 + .15 * l, st: .15 }) },
+  flamethrower: { name: 'Flamethrower', el: 'fire', blurb: 'Breathes a cone of fire at the nearest monster and burns everything inside it.', up: 'A longer, hotter cone.',
+    stat: l => ({ dmg: 6 + 3 * (l - 1), every: .15, dur: .8 + .1 * l, cd: 2.4 * lv(l), reach: 6 + .5 * l, st: .08 }) },
+  fireblast: { name: 'Fire Blast', el: 'fire', blurb: 'Launches a big fireball that explodes into a star of fire.', up: 'A bigger, harder explosion, more often.',
+    stat: l => ({ dmg: 30 + 14 * (l - 1), cd: 3.4 * lv(l), r: 3 + .35 * l, reach: 22, st: .5 }) },
+  shuriken: { name: 'Water Shuriken', el: 'water', blurb: 'Throws spinning water stars at several monsters at once.', up: 'One more star and more damage.',
+    stat: l => ({ dmg: 10 + 4 * (l - 1), n: 1 + l, cd: 1.6 * lv(l), reach: 20, st: .25 }) },
+  whirlpool: { name: 'Whirlpool', el: 'water', blurb: 'A spinning vortex pulls monsters in and keeps hurting them.', up: 'A bigger vortex that lasts longer.',
+    stat: l => ({ dmg: 6 + 3 * (l - 1), every: .3, dur: 2.4 + .3 * l, cd: 4.2 * lv(l), r: 2.6 + .3 * l, reach: 18, st: .1 }) },
+  aquaring: { name: 'Aqua Ring', el: 'water', blurb: 'A veil of water rings heals you every second.', up: 'Heals more each level.',
+    stat: l => ({ heal: .8 + .5 * l }) },
+  leechseed: { name: 'Leech Seed', el: 'grass', blurb: 'Plants seeds on nearby monsters that drain their HP into yours.', up: 'More seeds that drain harder.',
+    stat: l => ({ dmg: 4 + 2 * l, n: 2 + Math.floor(l / 2), every: .5, dur: 4, cd: 2.4 * lv(l), reach: 16 }) },
+  magicleaf: { name: 'Magical Leaf', el: 'grass', blurb: 'Glowing leaves home in on monsters and never miss.', up: 'More leaves, more damage.',
+    stat: l => ({ dmg: 8 + 4 * (l - 1), n: 2 + l, cd: 1.4 * lv(l), reach: 22, st: .2 }) },
+  petals: { name: 'Petal Blizzard', el: 'grass', blurb: 'A storm of petals whirls around you and hits everything nearby.', up: 'A wider, harder storm, more often.',
+    stat: l => ({ dmg: 12 + 7 * (l - 1), cd: 2.4 * lv(l), r: 4.5 + .5 * (l - 1), st: .25 }) },
+  rockthrow: { name: 'Rock Throw', el: 'ground', blurb: 'Tosses rocks in an arc at the nearest monsters.', up: 'More rocks that hit harder.',
+    stat: l => ({ dmg: 14 + 6 * (l - 1), n: 1 + Math.floor(l / 2), cd: 1.3 * lv(l), reach: 20, st: .25 }) },
+  rockslide: { name: 'Rock Slide', el: 'ground', blurb: 'Boulders crash down on the monsters around you.', up: 'More boulders, more often.',
+    stat: l => ({ dmg: 22 + 9 * (l - 1), n: 2 + l, cd: 3 * lv(l), r: 1.8, reach: 16, st: .35 }) },
+  ancientpower: { name: 'Ancient Power', el: 'ground', blurb: 'Glowing ancient stones orbit you and smash into monsters.', up: 'One more stone and harder hits.',
+    stat: l => ({ dmg: 5 + 3 * (l - 1), n: 1 + l, every: .45, r: 2.4 + .15 * l, st: .2 }) },
+  stoneedge: { name: 'Stone Edge', el: 'ground', blurb: 'Sharp stone spikes burst from the ground under the nearest monster.', up: 'More spikes, more damage.',
+    stat: l => ({ dmg: 26 + 10 * (l - 1), n: 2 + l, cd: 2 * lv(l), r: 2.2, reach: 18, st: .4 }) },
+  // Water Gun was far ahead of Ember (eleven droplets per jet, each piercing three monsters). Six softer droplets that pierce one
+  // now add up to about Ember's damage per second on a single target.
+  watergun: { name: 'Water Gun', el: 'water', blurb: 'Shoots a quick burst of water droplets that pierce through to the monster behind.', up: 'Harder droplets, more often. A second jet at level 4.',
+    stat: l => ({ dmg: 3.5 + 1.5 * (l - 1), hits: 6, n: l >= 4 ? 2 : 1, cd: 1.5 * lv(l), reach: 22, pierce: 1, st: .1 }) },
+  bubbles: { name: 'Bubble Guard', el: 'water', blurb: 'Bubbles circle you and splash anything they touch.', up: 'One more bubble, harder hits, wider circle.',
+    stat: l => ({ dmg: 5 + 3 * (l - 1), n: 1 + l, every: .45, r: 2.4 + .15 * l, st: .2 }) },
+  vinewhip: { name: 'Vine Whip', el: 'grass', blurb: 'Lashes a leafy vine at the nearest monster and hits everything along it.', up: 'Longer reach and a harder lash. A second vine at level 4.',
+    stat: l => ({ dmg: 16 + 7 * (l - 1), n: l >= 4 ? 2 : 1, cd: 1.3 * lv(l), reach: 6.5 + .7 * (l - 1), st: .3 }) },
+  leaves: { name: 'Razor Leaf', el: 'grass', blurb: 'Sharp leaves fly out from you in every direction.', up: 'Two more leaves, more damage, quicker volleys.',
+    stat: l => ({ dmg: 9 + 4 * (l - 1), n: 6 + 2 * (l - 1), cd: 1.5 * lv(l), reach: 7.8, pierce: 1, st: .12 }) },
+  stomp: { name: 'Mud Stomp', el: 'ground', blurb: 'Shakes the ground around you and throws monsters back.', up: 'Bigger, harder and more frequent stomps.',
+    stat: l => ({ dmg: 14 + 8 * (l - 1), cd: 2.6 * lv(l), r: 4 + .6 * (l - 1), st: .3 }) },
 };
 const TRAITS = {
   hide: { name: 'Sturdy', desc: '+25 max HP and heal 25.', apply: () => { S.maxHp += 25; S.hp = Math.min(S.maxHp, S.hp + 25); } },
@@ -823,26 +1117,183 @@ const WILD = {
 };
 const BOSS_ORDER = ['bramblegore', 'boulderback', 'tidehorn', 'magmaw'];
 const ULTS = {
-  fire: { name: 'Inferno', desc: 'Three rings of fire pillars erupt around you.' },
-  water: { name: 'Tidal Wave', desc: 'A wall of water rolls outward and sweeps monsters away.' },
-  grass: { name: 'Overgrowth', desc: 'Thorns burst under every nearby monster and you heal half your HP.' },
-  ground: { name: 'Earthquake', desc: 'The ground splits in two huge rings and throws every monster back.' },
+  fire: { name: 'Inferno', desc: 'Three rings of fire pillars erupt around you and burn everything they hit.' },
+  water: { name: 'Tidal Wave', desc: 'A wall of water rolls outward, sweeps monsters away and chills them.' },
+  grass: { name: 'Overgrowth', desc: 'Poison thorns burst under every nearby monster and you heal half your HP.' },
+  ground: { name: 'Earthquake', desc: 'The ground splits in two huge rings and throws every monster back, dazed.' },
 };
 const TYPE_MOVE = { fire: 'ember', water: 'watergun', grass: 'vinewhip', ground: 'stomp' };
 
 // Playable partners: the three starters plus recruits from the wild roster.
 const RECRUIT_NEED = { kindlit: 150, sprigcub: 150, puplash: 150, cinderpaw: 100, mossaur: 100, rippig: 100, pebblion: 60, gloomhog: 60, blazemane: 60, bramblegore: 1, boulderback: 1, tidehorn: 1, magmaw: 1 };
+// Wild Dex entries: number, role, rarity, ability, move-art style (STYLES), evolved names and blurb.
+// feat picks the evolution features for recruits (default by type: fire flame, water fin, grass leaf, ground spike).
+const DEX = {
+  fire: { no: 1, role: 'Striker', rarity: 'Starter', ability: 'overheat' },
+  water: { no: 2, role: 'Tank', rarity: 'Starter', ability: 'torrent' },
+  grass: { no: 3, role: 'Healer', rarity: 'Starter', ability: 'greenheart' },
+  kindlit: { no: 4, role: 'Striker', rarity: 'Common', ability: 'flashfire', style: 'spark', evo: ['Kindlash', 'Kindrake'], blurb: 'Small and quick to catch fire. Whatever it burns tends to set its neighbours alight.' },
+  puplash: { no: 5, role: 'Controller', rarity: 'Common', ability: 'snowcloak', style: 'snow', feat: 'crystal', evo: ['Frostpup', 'Glaciound'], blurb: 'Its splashes freeze in mid-air, so it fights with flurries of snow.' },
+  sprigcub: { no: 6, role: 'Controller', rarity: 'Common', ability: 'sporeburst', style: 'blossom', evo: ['Spriggrowl', 'Grovemaul'], blurb: 'Shakes clouds of spores loose whenever a poisoned monster goes down.' },
+  cinderpaw: { no: 7, role: 'Skirmisher', rarity: 'Uncommon', ability: 'embertrail', style: 'ash', evo: ['Cinderclaw', 'Ashenfang'], blurb: 'Leaves smouldering pawprints wherever it runs.' },
+  rippig: { no: 8, role: 'Bruiser', rarity: 'Uncommon', ability: 'soak', style: 'marsh', evo: ['Ripboar', 'Torrentusk'], blurb: 'Soaks monsters to the bone, so every hit on them lands harder.' },
+  mossaur: { no: 9, role: 'Tank', rarity: 'Uncommon', ability: 'mosscoat', style: 'moss', evo: ['Mossodon', 'Mossaurex'], blurb: 'Roots itself in place and lets moss grow over its hide.' },
+  pebblion: { no: 10, role: 'Tank', rarity: 'Rare', ability: 'sturdy', evo: ['Cobblion', 'Monolion'], blurb: 'Hard as the stones it naps on. It refuses to go down in one blow.' },
+  blazemane: { no: 11, role: 'Striker', rarity: 'Rare', ability: 'blueblaze', style: 'blue', evo: ['Sapphimane', 'Azuremane'], blurb: 'Its mane burns so hot that the flames turn blue.' },
+  gloomhog: { no: 12, role: 'Controller', rarity: 'Rare', ability: 'shadowtremor', style: 'shadow', evo: ['Duskhog', 'Umbraboar'], blurb: 'Its tremors leave monsters reeling and wide open.' },
+  bramblegore: { no: 13, role: 'Bruiser', rarity: 'Boss', ability: 'thornhide', style: 'bramble', feat: 'thorn', evo: ['Briargore', 'Thornwarden'], blurb: 'Barbed with poison thorns. Touching it is a bad idea.' },
+  boulderback: { no: 14, role: 'Tank', rarity: 'Boss', ability: 'rockshell', style: 'sand', evo: ['Cragback', 'Titanback'], blurb: 'Grows a fresh stone shell every few seconds.' },
+  tidehorn: { no: 15, role: 'Controller', rarity: 'Boss', ability: 'riptide', style: 'abyss', evo: ['Surgehorn', 'Maelhorn'], blurb: 'Commands the riptide. Its waves freeze where they break.' },
+  magmaw: { no: 16, role: 'Bruiser', rarity: 'Boss', ability: 'magmaarmor', style: 'magma', evo: ['Lavamaw', 'Calderamaw'], blurb: 'Molten skin that sets anything touching it on fire.' },
+};
+// Move-art palettes (see restyle). Starters and Pebblion keep the drawn colours. swap replaces a sprite with another shape.
+const STYLES = {
+  spark: { el: 'fire', base: .06, h: .12, k: .5, l: 1.1 },
+  ash: { el: 'fire', base: .06, h: 0, k: .4, s: .75, l: .78 },
+  blue: { el: 'fire', base: .06, h: .57, k: .5, l: 1.05 },
+  magma: { el: 'fire', base: .06, h: .98, k: .35, l: .72 },
+  snow: { el: 'water', base: .6, h: .55, k: .2, s: .35, la: .28, swap: { droplet: 'snowflake', bubble: 'snowball' } },
+  marsh: { el: 'water', base: .6, h: .46, k: .5, s: .85, l: .9 },
+  abyss: { el: 'water', base: .6, h: .66, k: .4, l: .7 },
+  blossom: { el: 'grass', base: .28, h: .94, k: .3, s: .85, l: 1.12, swap: { leaf: 'petal' } },
+  moss: { el: 'grass', base: .28, h: .18, k: .4, s: .75, l: .85 },
+  bramble: { el: 'grass', base: .28, h: .8, k: .35, s: .6, l: .78, swap: { leaf: 'thornshard', vineA: 'thornA', vineB: 'thornA', vineAd: 'thornAd', vineBd: 'thornAd' } },
+  shadow: { el: 'ground', base: .08, h: .76, k: .2, sa: .22, l: .66 },
+  sand: { el: 'ground', base: .08, h: .1, k: .2, sa: .35, l: 1.08 },
+};
+const FEAT_SHAPE = { fire: 'flame', water: 'fin', grass: 'leaf', ground: 'spike' };
 const PARTNERS = {};
-for (const t in STARTERS) PARTNERS[t] = { ...STARTERS[t], type: t, art: 'starter' };
+for (const t in STARTERS) PARTNERS[t] = { ...STARTERS[t], ...DEX[t], type: t, art: 'starter' };
 for (const k in RECRUIT_NEED) {
-  const w = WILD[k], type = w.el === 'rock' ? 'ground' : w.el, big = !!w.boss, small = w.xp === 1;
+  const w = WILD[k], type = w.el === 'rock' ? 'ground' : w.el, big = !!w.boss, small = w.xp === 1, d = DEX[k];
   PARTNERS[k] = {
-    names: [w.name, `${w.name} (Grown)`, `${w.name} (Alpha)`], type, art: 'mon', kind: k, move: TYPE_MOVE[type], need: RECRUIT_NEED[k],
+    ...d, names: [w.name, ...d.evo], type, art: 'mon', kind: k, feat: d.feat || FEAT_SHAPE[type], move: TYPE_MOVE[type], need: RECRUIT_NEED[k],
     hp: { fire: 95, water: 120, grass: 110, ground: 140 }[type] + (big ? 40 : small ? -10 : 0), spd: big ? 6.4 : small ? 7.9 : 7.1,
     armor: type === 'ground' ? 2 : big ? 1 : 0, dmg: big ? 1.2 : 1.05, regen: type === 'grass' ? .4 : 0,
-    blurb: big ? `The ${w.name} you defeated now fights beside you.` : `A wild ${w.name} that joined your team.`,
   };
 }
+
+// ---------- status effects ----------
+// Every move can leave its type's status on a monster (chance st per hit). Ultimates always do.
+const EL_STATUS = { fire: 'burn', water: 'chill', grass: 'poison', ground: 'daze' };
+const STATUS = {
+  burn: { name: 'Burn', color: '#ff9a5a', desc: 'Takes fire damage every half second for 3 s.' },
+  chill: { name: 'Chill', color: '#9fd8ff', desc: 'Moves 45% slower for 2.5 s. Chill a monster three times in a row and it freezes.' },
+  freeze: { name: 'Freeze', color: '#e0f6ff', desc: 'Frozen solid for 1.6 s: it cannot move or hurt you, and takes 25% more damage.' },
+  poison: { name: 'Poison', color: '#c58af0', desc: 'Takes damage every half second for 4 s. Stacks up to three times.' },
+  daze: { name: 'Daze', color: '#f6d45a', desc: 'Stunned in place for 1 s.' },
+};
+
+// ---------- abilities ----------
+// One per partner. Hooks the run calls: init(), tick(dt), rate() move recharge speed, power() outgoing damage,
+// dmgTo(en) damage taken by a monster, stMul(el) status chance, hit(en, el), kill(en), hurt(d) incoming damage,
+// endure() last stand, touch(en) monster contact, poisonTick(), meter() HUD readout { v 0..1, text, hot }.
+// Plain fields: armor, knock (water knockback), chillStep, burnMul, burnExtra, dazeMul, waveFreeze.
+const ABILITIES = {
+  overheat: {
+    name: 'Overheat', desc: 'Fire hits build heat. At full heat it overheats for 5 s: moves recharge 40% faster and every fire hit burns. Then it cools down for 3 s, letting off steam, with slower moves.',
+    init: () => Object.assign(S, { heat: 0, hot: 0, cool: 0, heatT: 0 }),
+    hit: (en, el) => {
+      if (el !== 'fire' || S.hot > 0 || S.cool > 0 || S.t - S.heatT < .25) return;
+      S.heatT = S.t; S.heat = Math.min(100, S.heat + 4);
+      if (S.heat >= 100) { S.hot = 5; banner(`${S.a.names[S.stage]} is overheating!`, 'Moves recharge faster and every hit burns'); ring(5, '#ff8a2a', .6); sfx('ult_fire'); }
+    },
+    tick: dt => {
+      if (S.hot > 0) {
+        S.hot -= dt; S.heat = Math.max(0, S.hot / 5 * 100);
+        if (Math.random() < dt * 8) anim(PV('flame'), S.x + rand(-.7, .7), .1, S.z + rand(-.7, .7), 1.2, 16);
+        if (S.hot <= 0) { S.cool = 3; S.heat = 0; }
+      } else if (S.cool > 0) { S.cool -= dt; if (Math.random() < dt * 5) anim('steam', S.x + rand(-.5, .5), 1.4, S.z + rand(-.5, .5), 1.1, 9, { cy: .3 }); }
+    },
+    rate: () => S.hot > 0 ? 1 / .6 : S.cool > 0 ? .8 : 1,
+    stMul: el => S.hot > 0 && el === 'fire' ? 99 : 1,
+    meter: () => ({ v: S.cool > 0 ? 0 : S.heat / 100, text: S.hot > 0 ? 'Overheating!' : S.cool > 0 ? 'Cooling down' : 'Heat', hot: S.hot > 0 }),
+  },
+  torrent: {
+    name: 'Torrent', desc: 'Below 40% HP its water moves hit 40% harder and chill twice as often.',
+    power: () => S.hp < S.maxHp * .4 ? 1.4 : 1, stMul: () => S.hp < S.maxHp * .4 ? 2 : 1,
+    meter: () => S.hp < S.maxHp * .4 ? { v: 1, text: 'Torrent', hot: true } : null,
+  },
+  greenheart: {
+    name: 'Green Heart', desc: 'Every poison tick on a monster heals it a little, up to 3 HP a second.',
+    poisonTick: () => { if (S.t - (S.phT || 0) > .1) { S.phT = S.t; S.hp = Math.min(S.maxHp, S.hp + .3); } },
+  },
+  flashfire: {
+    name: 'Flash Fire', desc: 'Burning monsters burst into flames when they faint and set the monsters around them on fire.',
+    kill: en => { if (en.burn && S.bursts.length < 30) S.bursts.push({ x: en.x, z: en.z, t: .12, el: 'fire', r: 2.6, dmg: 8 * S.dmg }); },
+  },
+  snowcloak: {
+    name: 'Snow Cloak', desc: 'Its water turns to snow. Two chills freeze a monster instead of three, and frozen monsters shatter into ice when they faint, hurting monsters nearby.',
+    chillStep: 1.5,
+    kill: en => { if (en.freeze > 0 && S.bursts.length < 30) S.bursts.push({ x: en.x, z: en.z, t: .1, el: 'water', r: 2.4, dmg: 12 * S.dmg, fx: 'iceshatter' }); },
+  },
+  sporeburst: {
+    name: 'Spore Burst', desc: 'Poisoned monsters release a cloud of spores when they faint, poisoning every monster close by.',
+    kill: en => { if (en.poison && S.bursts.length < 30) S.bursts.push({ x: en.x, z: en.z, t: .15, el: 'grass', r: 2.8, dmg: 4 * S.dmg, fx: 'spore' }); },
+  },
+  embertrail: {
+    name: 'Ember Trail', desc: 'Leaves burning embers behind it as it runs. Monsters that walk through them catch fire.',
+    init: () => { S.trailT = 0; },
+    tick: dt => { if (S.moving && (S.trailT -= dt) <= 0) { S.trailT = .3; S.patches.push({ x: S.x, z: S.z, t: 2.4, tick: 0 }); if (S.patches.length > 10) S.patches.shift(); } },
+  },
+  soak: { name: 'Soak', desc: 'Chilled and frozen monsters take 30% more damage from everything.', dmgTo: en => en.chill || en.freeze > 0 ? 1.3 : 1 },
+  mosscoat: {
+    name: 'Moss Coat', desc: 'While it stands still it takes 40% less damage and heals 2.5 HP a second.',
+    tick: dt => { if (!S.moving) S.hp = Math.min(S.maxHp, S.hp + 2.5 * dt); },
+    hurt: d => S.moving ? d : d * .6,
+    meter: () => ({ v: S.moving ? 0 : 1, text: S.moving ? 'Moss Coat' : 'Rooted' }),
+  },
+  sturdy: {
+    name: 'Sturdy', desc: 'Once per run, a blow that would knock it out leaves it at 1 HP with 3 s of shield instead.',
+    init: () => { S.endure = true; },
+    endure: () => { if (!S.endure) return false; S.endure = false; S.hp = 1; S.shield = 3; banner(`${S.a.names[S.stage]} endured the hit!`, 'Sturdy is used up for this run'); sfx('rock'); return true; },
+    meter: () => ({ v: S.endure ? 1 : 0, text: S.endure ? 'Sturdy ready' : 'Sturdy used' }),
+  },
+  blueblaze: { name: 'Blue Blaze', desc: 'Its flames burn blue-hot: burns deal double damage and last 2 s longer.', burnMul: 2, burnExtra: 2 },
+  shadowtremor: { name: 'Shadow Tremor', desc: 'Daze lasts 50% longer, and dazed monsters take 40% more damage.', dazeMul: 1.5, dmgTo: en => en.daze > 0 ? 1.4 : 1 },
+  magmaarmor: {
+    name: 'Magma Armor', desc: '+2 armor. Monsters that touch its molten skin catch fire.', armor: 2,
+    touch: en => { if (S.t - (en.touchT || 0) < .5) return; en.touchT = S.t; inflict(en, 'fire', 12 * S.dmg, 1); },
+  },
+  riptide: { name: 'Riptide', desc: 'Its water pushes monsters 60% farther, and its Tidal Wave freezes everything it hits.', knock: 1.6, waveFreeze: true },
+  thornhide: {
+    name: 'Thorn Hide', desc: 'Monsters that touch it get stabbed by poison barbs: they take damage and are poisoned.',
+    touch: en => { if (S.t - (en.touchT || 0) < .5) return; en.touchT = S.t; hitEnemy(en, 10 * S.dmg, 'grass', 0, 0, true, 1); },
+  },
+  rockshell: {
+    name: 'Rock Shell', desc: 'Every 8 s a stone shell forms around it and blocks the next hit completely.',
+    init: () => { S.shellT = 8; S.shell = false; },
+    tick: dt => { if (!S.shell && (S.shellT -= dt) <= 0) { S.shell = true; sfx('rock'); } },
+    hurt: d => { if (!S.shell) return d; S.shell = false; S.shellT = 8; anim(PV('dust'), S.x, .1, S.z, 2.6, 14); sfx('rock'); popText(S.x, 2.6, S.z, 'Blocked!', '#e8d48a'); return 0; },
+    meter: () => ({ v: S.shell ? 1 : 1 - S.shellT / 8, text: S.shell ? 'Shell up' : 'Shell forming' }),
+  },
+};
+
+// Move art for one partner: its element's sprites recoloured by its style, with some shapes swapped.
+const EL_ART = {
+  fire: { sm: ['ember0', 'ember1', 'fireball0', 'fireball1', 'wisp'], vfx: ['flame'] },
+  water: { sm: ['droplet', 'bubble', 'star'], vfx: ['splash', 'wave'], tex: ['vortex'] },
+  grass: { sm: ['leaf', 'mleaf', 'vineA', 'vineB', 'vineAd', 'vineBd', 'vinetip'], vfx: ['leafburst', 'thorn', 'petalburst'], tex: ['vine'] },
+  ground: { sm: ['rock', 'boulder', 'stone'], vfx: ['dust', 'stonespike'] },
+};
+function artFor(id) {
+  if (ART_CACHE[id]) return ART_CACHE[id];
+  const T = STYLES[id], out = { sm: {}, vfx: {}, tex: {} };
+  if (T) {
+    const K = EL_ART[T.el], swap = T.swap || {};
+    for (const k of K.sm) out.sm[k] = swap[k] ? SM[swap[k]] : smat(tex(restyle(SRC.sm[k], T)));
+    for (const k of K.vfx) out.vfx[k] = { w: VFX[k].w, h: VFX[k].h, mats: SRC.vfx[k].map(c => smat(tex(restyle(c, T)))) };
+    for (const k of K.tex || []) out.tex[k] = k === 'vine' ? vineTex(restyle(SRC.tex[k], T)) : tex(restyle(SRC.tex[k], T));
+    if (out.tex.vine) out.vineMat = vineMat(out.tex.vine);
+    if (out.sm.ember0) out.sm.ember = [out.sm.ember0, out.sm.ember1];
+    if (out.sm.fireball0) out.sm.fireball = [out.sm.fireball0, out.sm.fireball1];
+  }
+  return ART_CACHE[id] = out;
+}
+// The current partner's version of a sprite material (PS), frame-animated effect (PV) or texture (PT).
+const PS = k => S.art.sm[k] || SM[k];
+const PV = k => S.art.vfx[k] || VFX[k];
+const PT = k => S.art.tex[k] || TEX[k];
 const PROG = Object.assign({ kills: {}, unlocked: [], survived5: false, bossBeaten: false, won: false }, readJSON('pocketwilds-progress'));
 const saveProg = () => writeJSON('pocketwilds-progress', PROG);
 const isUnlocked = id => !!STARTERS[id] || PROG.unlocked.includes(id);
@@ -861,7 +1312,9 @@ const MAX_MOVE = 6, MAX_TRAIT = 5;
 
 // Built at boot.
 const ART = { starter: {} }, STARTER_MATS = {}, WILD_MATS = {}, VFX = {}, SM = {}, ICONS = {};
-let player, playerShadow, buddy, buddyShadow, shieldMesh;
+// SRC keeps the source canvases so partner styles can recolour them; EVO_MATS[kind][stage] = recruit frames per evolution.
+const SRC = { sm: {}, vfx: {}, tex: {} }, TEX = {}, ART_CACHE = {}, WILD_ART = {}, EVO_MATS = {}, DEX_IMG = {};
+let player, playerShadow, buddy, buddyShadow, shieldMesh, shellMesh, VINE_MAT, LOCK_ICON;
 
 // =====================================================================
 // Run state
@@ -877,7 +1330,8 @@ const herd = [];
 function clearRun() {
   if (!S) return;
   for (const list of [S.enemies, S.shots, S.gems, S.fx, S.anims]) for (const o of list) { scene.remove(o.mesh); if (o.shadow) scene.remove(o.shadow); if (o.parts) o.parts.forEach(p => scene.remove(p)); }
-  for (const w of S.whips) w.parts.forEach(p => scene.remove(p));
+  for (const w of S.whips) { w.parts.forEach(p => scene.remove(p)); w.mesh.geometry.dispose(); }
+  for (const en of S.enemies) if (en.ice) scene.remove(en.ice);
   for (const k in S.orbs) S.orbs[k].forEach(m => scene.remove(m));
   for (const o of [...S.zones, ...S.falls, ...S.eshots]) scene.remove(o.mesh);
   for (const en of S.enemies) if (en.atk?.tele) scene.remove(en.atk.tele);
@@ -893,10 +1347,15 @@ function newRun(pid) {
     newUnlocks: [], lastSave: 0, ultWasReady: false,
     moves: { [a.move]: { l: 1, t: .5, a: 0 } }, traits: {},
     enemies: [], shots: [], gems: [], fx: [], anims: [], orbs: {}, whips: [], jets: [], cones: [], zones: [], falls: [], eshots: [], wave: null,
+    patches: [], bursts: [], art: artFor(a.style), ab: ABILITIES[a.ability],
     lastHit: -9, shield: 0, lastSummon: -9, crateT: 0,
     spawnT: 0, nextBoss: 120, bossN: 0, pendingLv: 0, boss: null, lastPop: 0,
   };
-  yaw = Math.PI; pitch = .36;
+  S.armor += S.ab.armor || 0;
+  S.ab.init?.();
+  if (shieldMesh) shieldMesh.visible = shellMesh.visible = false;
+  yaw = Math.PI; pitch = .36; shake = 0;
+  clearTimeout(bannerTimer); $('#banner').classList.remove('show');
   for (let i = 0; i < 24; i++) spawnCrate();
   $('#ultname').textContent = ULTS[type].name;
   $('#ptype').textContent = cap(type);
@@ -906,9 +1365,10 @@ function newRun(pid) {
 }
 
 // ---------- effects ----------
+// name is a VFX key or a styled effect from PV().
 function anim(name, x, y, z, size, fps = 14, opts = {}) {
   if (S.anims.length > 160) return;
-  const v = VFX[name], s = sprite(v.mats[0], size * v.w / v.h, size, opts.cy ?? .1);
+  const v = typeof name === 'string' ? VFX[name] : name, s = sprite(v.mats[0], size * v.w / v.h, size, opts.cy ?? .1);
   s.position.set(x, y, z);
   S.anims.push({ mesh: s, v, t: 0, fps, loop: opts.loop || 0, follow: opts.follow, vx: opts.vx || 0, vz: opts.vz || 0 });
 }
@@ -920,8 +1380,7 @@ function ring(r, color, dur = .5) {
 }
 const ringGeo = new THREE.RingGeometry(.9, 1, 56).rotateX(-Math.PI / 2);
 const discGeo = new THREE.CircleGeometry(1, 40).rotateX(-Math.PI / 2);
-let VORTEX_TEX;
-function vortexTexture() {
+function vortexCanvas() {
   const c = canvas(48), x = c.getContext('2d');
   for (let k = 0; k < 3; k++) {
     x.strokeStyle = ['#2c5aa8', '#4a8fe0', '#bfe6ff'][k]; x.lineWidth = 3 - k * .5; x.beginPath();
@@ -929,7 +1388,7 @@ function vortexTexture() {
     x.stroke();
   }
   e(x, 24, 24, 4, 4, '#1b3a6a');
-  return tex(finish(c, { dark: false }));
+  return finish(c, { dark: false });
 }
 function popText(x, y, z, text, color) {
   if (!SET.popups) return;
@@ -1017,24 +1476,29 @@ function dropItem(x, z, kind) {
 }
 
 // ---------- combat ----------
-function hitEnemy(en, dmg, el, kx = 0, kz = 0, fx = true) {
+// st = chance to leave this element's status (see inflict).
+function hitEnemy(en, dmg, el, kx = 0, kz = 0, fx = true, st = 0) {
   if (en.dying > 0) return;
   const m = eff(el, en.el);
-  en.hp -= dmg * m;
+  en.hp -= dmg * m * (en.freeze > 0 ? 1.25 : 1) * (S.ab.dmgTo?.(en, el) ?? 1);
   en.flash = .12;
   sfx(m > 1 ? 'super' : m < 1 ? 'weak' : 'hit');
-  const k = en.boss ? .1 : 1;
+  const k = (en.boss ? .1 : 1) * (el === 'water' ? S.ab.knock || 1 : 1);
   en.kx += kx * k; en.kz += kz * k;
-  if (fx && Math.random() < .6) anim(HIT_FX[el], en.x + rand(-.3, .3), .2, en.z + rand(-.3, .3), en.boss ? 2.4 : 1.4, 16);
+  if (fx && Math.random() < .6) anim(el === S.type ? PV(HIT_FX[el]) : HIT_FX[el], en.x + rand(-.3, .3), .2, en.z + rand(-.3, .3), en.boss ? 2.4 : 1.4, 16);
   if (m > 1) {
     if (Math.random() < .5) anim('spark', en.x, en.size * .45, en.z, 1.4, 16, { cy: .5 });
     if (S.t - S.lastPop > .3) { S.lastPop = S.t; popText(en.x, en.size * .9, en.z, 'Super effective!', '#ffe36e'); }
   }
+  if (st) inflict(en, el, dmg, st);
+  S.ab.hit?.(en, el);
   if (en.hp <= 0) killEnemy(en);
 }
 function killEnemy(en) {
   en.dying = .3;
   if (en.obj) { anim('dust', en.x, .1, en.z, 1.8, 14); sfx('crate'); dropItem(en.x, en.z); return; }
+  S.ab.kill?.(en);
+  if (en.ice) { scene.remove(en.ice); en.ice = null; }
   if (en.atk?.tele) { scene.remove(en.atk.tele); en.atk.tele = null; }
   if (en.boss) { dropItem(en.x + 1, en.z, 'candy'); dropItem(en.x - 1, en.z, 'berry'); }
   else if (Math.random() < .015) dropItem(en.x, en.z);
@@ -1082,22 +1546,82 @@ function dropGem(x, z, v) {
   addPickup(x, z, v, 'xp', SM[v >= 20 ? 'xp2' : v >= 5 ? 'xp1' : 'xp0'], v >= 20 ? 1 : .7);
 }
 function dropBerry(x, z) { dropItem(x, z, 'berry'); }
-function shock(cx, cz, r, dmg, el, knock, fxRing) {
+function shock(cx, cz, r, dmg, el, knock, fxRing, st = 0) {
   if (fxRing) ring(r, fxRing, .55);
   for (const en of S.enemies) {
     const dx = en.x - cx, dz = en.z - cz, d = Math.hypot(dx, dz) || 1;
-    if (d < r + en.r) hitEnemy(en, dmg, el, dx / d * knock, dz / d * knock);
+    if (d < r + en.r) hitEnemy(en, dmg, el, dx / d * knock, dz / d * knock, true, st);
   }
 }
 function hurt(d) {
   if (S.inv > 0 || S.shield > 0) return;
-  S.hp -= Math.max(1, d - S.armor);
+  d = S.ab.hurt?.(d) ?? d;
   S.inv = .5;
+  if (d <= 0) return; // blocked (Rock Shell)
+  S.hp -= Math.max(1, d - S.armor);
   S.lastHit = S.t;
   sfx('hurt');
   $('#hurt').style.opacity = 1;
   setTimeout(() => $('#hurt').style.opacity = 0, 120);
-  if (S.hp <= 0) endRun(false);
+  if (S.hp <= 0 && !S.ab.endure?.()) endRun(false);
+}
+
+// ---------- status effects ----------
+function inflict(en, el, dmg, chance) {
+  if (en.obj || en.dying > 0 || Math.random() >= chance * (S.ab.stMul?.(el) ?? 1)) return;
+  const cc = en.boss ? .4 : 1; // bosses shake off freeze and daze faster
+  switch (EL_STATUS[el]) {
+    case 'burn': { const b = en.burn ||= { t: 0, tick: .5, dps: 0 }; b.t = 3 + (S.ab.burnExtra || 0); b.dps = Math.max(b.dps, dmg * .4 * (S.ab.burnMul || 1)); break; }
+    case 'poison': { const p = en.poison ||= { t: 0, tick: .5, n: 0, dps: 0 }; p.t = 4; p.n = Math.min(3, p.n + 1); p.dps = Math.max(p.dps, dmg * .2); break; }
+    case 'chill': { if (en.freeze > 0) break; const c = en.chill ||= { t: 0, n: 0 }; c.t = 2.5; c.n += S.ab.chillStep || 1; if (c.n >= 3) freeze(en, 1.6 * cc); break; }
+    case 'daze': en.daze = Math.max(en.daze || 0, cc * (S.ab.dazeMul || 1)); break;
+  }
+}
+function freeze(en, t) {
+  if (!(en.freeze > 0)) sfx('freeze');
+  en.freeze = Math.max(en.freeze || 0, t); en.chill = null;
+  if (!en.ice && !en.boss) en.ice = sprite(SM.iceblock, en.size, en.size, .07);
+}
+function thaw(en) { en.freeze = 0; if (en.ice) { scene.remove(en.ice); en.ice = null; } }
+// Damage over time: no knockback, sound or new statuses.
+function dotHit(en, dmg, el) {
+  if (en.dying > 0) return;
+  en.hp -= dmg * eff(el, en.el) * (en.freeze > 0 ? 1.25 : 1) * (S.ab.dmgTo?.(en, el) ?? 1);
+  if (en.hp <= 0) killEnemy(en);
+}
+// Ticks a monster's statuses and returns its speed factor (0 while frozen or dazed).
+function tickStatus(en, dt) {
+  const b = en.burn, p = en.poison;
+  if (b) { b.t -= dt; if ((b.tick -= dt) <= 0) { b.tick = .5; dotHit(en, b.dps * .5, 'fire'); } if (b.t <= 0) en.burn = null; }
+  if (p) { p.t -= dt; if ((p.tick -= dt) <= 0) { p.tick = .5; dotHit(en, p.dps * p.n * .5, 'grass'); S.ab.poisonTick?.(); } if (p.t <= 0) en.poison = null; }
+  if (en.chill && (en.chill.t -= dt) <= 0) en.chill = null;
+  if (en.freeze > 0 && (en.freeze -= dt) <= 0) thaw(en);
+  if (en.daze > 0) en.daze -= dt;
+  if (en.dying <= 0 && S.anims.length < 110) {
+    if (en.burn && Math.random() < dt * 1.6) anim(PV('flame'), en.x + rand(-.3, .3), .1, en.z + rand(-.3, .3), en.size * .42, 14);
+    else if (en.poison && Math.random() < dt * 1.6) anim('poisonbub', en.x + rand(-.4, .4), en.size * .5, en.z + rand(-.4, .4), .7, 8, { cy: .5 });
+    if (en.daze > 0 && Math.random() < dt * 2.5) anim('dazed', en.x, en.size * .9, en.z, en.size * .35, 10, { cy: .5 });
+  }
+  return en.freeze > 0 || en.daze > 0 ? 0 : en.chill ? .55 : 1;
+}
+// Ability leftovers: Ember Trail patches, and faint bursts queued so chain reactions spread over a few frames.
+function tickExtras(dt) {
+  for (const p of S.patches) {
+    p.t -= dt;
+    if ((p.tick -= dt) > 0) continue;
+    p.tick = .4;
+    for (const en of S.enemies) if (en.dying <= 0 && !en.obj && Math.hypot(en.x - p.x, en.z - p.z) < 1.2 + en.r) hitEnemy(en, 3 * S.dmg, 'fire', 0, 0, false, 1);
+    if (S.anims.length < 120) anim(PV('flame'), p.x + rand(-.3, .3), 0, p.z + rand(-.3, .3), .9, 12);
+  }
+  S.patches = S.patches.filter(p => p.t > 0);
+  const due = S.bursts.filter(b => (b.t -= dt) <= 0);
+  if (!due.length) return;
+  S.bursts = S.bursts.filter(b => b.t > 0);
+  for (const b of due) {
+    if (b.el === 'fire') flameRing(b.x, b.z, b.r * .6, 6, 1.6);
+    else anim(b.fx, b.x, .3, b.z, b.r * 1.3, 14, { cy: .3 });
+    shock(b.x, b.z, b.r, b.dmg, b.el, 3, null, 1);
+  }
 }
 const dist = en => Math.hypot(en.x - S.x, en.z - S.z);
 function nearest(n, range) { return S.enemies.filter(en => en.dying <= 0 && !en.obj && dist(en) < range).sort((a, b) => dist(a) - dist(b)).slice(0, n); }
@@ -1109,8 +1633,8 @@ function shoot(mats, ang, speed, dmg, el, life, pierce, size = .8, y = 1, opts =
 }
 function blast(s) {
   if (s.el === 'fire') { flameRing(s.x, s.z, s.explode * .8, 10, 2.2); anim('spark', s.x, 1, s.z, s.explode * 1.2, 14, { cy: .5 }); sfx('flame'); }
-  else anim('dust', s.x, .1, s.z, s.explode * 1.6, 14);
-  shock(s.x, s.z, s.explode, s.dmg * .8, s.el, 5);
+  else anim(PV('dust'), s.x, .1, s.z, s.explode * 1.6, 14);
+  shock(s.x, s.z, s.explode, s.dmg * .8, s.el, 5, null, s.st || 0);
 }
 // Boss projectiles that hurt the player.
 const ESHOT_ART = { fire: 'ember0', water: 'bubble', grass: 'leaf', rock: 'rock' };
@@ -1119,168 +1643,197 @@ function eshoot(en, ang, speed = 9) {
   m.position.set(en.x, 1.2, en.z);
   S.eshots.push({ mesh: m, x: en.x, z: en.z, vx: Math.sin(ang) * speed, vz: Math.cos(ang) * speed, life: 3.5, dmg: en.dmg * .45 });
 }
-function flameRing(cx, cz, r, n, size) { for (let i = 0; i < n; i++) { const a = i / n * TAU; anim('flame', cx + Math.cos(a) * r, 0, cz + Math.sin(a) * r, size, 14); } }
+function flameRing(cx, cz, r, n, size) { for (let i = 0; i < n; i++) { const a = i / n * TAU; anim(PV('flame'), cx + Math.cos(a) * r, 0, cz + Math.sin(a) * r, size, 14); } }
 
 // Orbiting moves: [sprite, element, size, sound, spin direction].
-const ORBITS = { bubbles: ['bubble', 'water', .8, 'bubble', 1], firespin: ['ember0', 'fire', .9, 'ember', 1], ancientpower: ['stone', 'ground', .9, 'rock', -1] };
+const ORBITS = { bubbles: ['bubble', 'water', .8, 'bubble', 1], firespin: ['wisp', 'fire', 1, 'ember', 1], ancientpower: ['stone', 'ground', .9, 'rock', -1] };
 const angTo = en => Math.atan2(en.x - S.x, en.z - S.z);
-function tickOrbit(k, w, l, dt) {
-  const [sm, el, size, snd, dir] = ORBITS[k], n = 1 + l, R = (2.4 + .15 * l) * S.area, dmg = (5 + 3 * (l - 1)) * S.dmg;
+function tickOrbit(k, w, P, dt, D) {
+  const [sm, el, size, snd, dir] = ORBITS[k], n = P.n, R = P.r * S.area, dmg = P.dmg * D;
   const list = S.orbs[k] ||= [];
-  while (list.length < n) list.push(sprite(SM[sm], size, size, .5));
-  w.a += (2.8 + .3 * l) * dt * dir;
+  while (list.length < n) list.push(sprite(PS(sm), size, size, .5));
+  w.a += (2.8 + .3 * w.l) * dt * dir;
   list.forEach((m, i) => {
     const a = w.a + i / n * TAU, x = S.x + Math.cos(a) * R, z = S.z + Math.sin(a) * R;
     m.position.set(x, .9 + Math.sin(S.t * 5 + i) * .15, z);
     for (const en of S.enemies) {
-      if (en.dying <= 0 && S.t - (en.orbT[k] || 0) > .45 && Math.hypot(en.x - x, en.z - z) < en.r + .5) { en.orbT[k] = S.t; sfx(snd); hitEnemy(en, dmg, el, Math.cos(a) * 3, Math.sin(a) * 3); }
+      if (en.dying <= 0 && S.t - (en.orbT[k] || 0) > P.every && Math.hypot(en.x - x, en.z - z) < en.r + .5) { en.orbT[k] = S.t; sfx(snd); hitEnemy(en, dmg, el, Math.cos(a) * 3, Math.sin(a) * 3, true, P.st); }
     }
   });
 }
+// Vine Whip: a camera-facing ribbon along a curved spine, with leaves of alternating shape and side and a curled tendril tip.
+const VINE_SEG = 20, vP = new THREE.Vector3(), vA = new THREE.Vector3(), vB = new THREE.Vector3(), vW = new THREE.Vector3();
+function makeVine(ang, len, side, dmg, st) {
+  const g = new THREE.BufferGeometry(), idx = [];
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array((VINE_SEG + 1) * 6), 3));
+  g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array((VINE_SEG + 1) * 4), 2));
+  for (let j = 0; j < VINE_SEG; j++) { const a = j * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  g.setIndex(idx);
+  const mesh = new THREE.Mesh(g, S.art.vineMat || VINE_MAT);
+  mesh.frustumCulled = false;
+  scene.add(mesh);
+  const leaves = [['vineA', 1], ['vineBd', -1], ['vineB', 1], ['vineAd', -1], ['vineA', 1]].map(([k, s]) => Object.assign(sprite(PS(k), .5, .5, .5), { side: s }));
+  const tip = sprite(PS('vinetip'), .9, .9, .5);
+  return { ang, len, side, t: 0, dur: .38, dmg, st, hit: new Set(), mesh, leaves, tip, parts: [mesh, ...leaves, tip] };
+}
+function vinePoint(w, L, ext, p, f, out) {
+  const dx = Math.sin(w.ang), dz = Math.cos(w.ang), px = -dz * w.side, pz = dx * w.side;
+  const curve = Math.sin(f * Math.PI) * (1 - p) * 1.4 + Math.sin(f * 7 - w.t * 18) * .12 * f * ext;
+  return out.set(S.x + dx * L * f + px * curve, .9 + Math.sin(f * Math.PI) * .5 * ext, S.z + dz * L * f + pz * curve);
+}
+// Spine point at f into vP; vW = the sideways direction facing the camera, pointing up on screen.
+function vineFrame(w, L, ext, p, f) {
+  vinePoint(w, L, ext, p, Math.min(1, f + .03), vA);
+  vinePoint(w, L, ext, p, Math.max(0, f - .03), vB);
+  vA.sub(vB);
+  if (vA.lengthSq() < 1e-6) vA.set(Math.sin(w.ang), 0, Math.cos(w.ang));
+  vinePoint(w, L, ext, p, f, vP);
+  vW.subVectors(camera.position, vP).cross(vA).normalize();
+  if (vW.y < 0) vW.negate();
+}
+function layVine(w, L, ext, p) {
+  const pos = w.mesh.geometry.attributes.position, uv = w.mesh.geometry.attributes.uv;
+  for (let j = 0; j <= VINE_SEG; j++) {
+    const f = j / VINE_SEG, hw = (.3 - .17 * f) * (.4 + .6 * ext);
+    vineFrame(w, L, ext, p, f);
+    pos.setXYZ(j * 2, vP.x + vW.x * hw, vP.y + vW.y * hw, vP.z + vW.z * hw);
+    pos.setXYZ(j * 2 + 1, vP.x - vW.x * hw, vP.y - vW.y * hw, vP.z - vW.z * hw);
+    uv.setXY(j * 2, L * f / .9, 1); uv.setXY(j * 2 + 1, L * f / .9, 0);
+  }
+  pos.needsUpdate = uv.needsUpdate = true;
+  w.leaves.forEach((s, i) => {
+    vineFrame(w, L, ext, p, (i + 1) / (w.leaves.length + 1));
+    const off = .24 * s.side;
+    s.position.set(vP.x + vW.x * off, vP.y + vW.y * off, vP.z + vW.z * off);
+    s.scale.setScalar(.12 + .5 * ext);
+  });
+  vineFrame(w, L, ext, p, 1);
+  w.tip.position.copy(vP);
+  w.tip.scale.setScalar(.3 + .65 * ext);
+}
 function tickMoves(dt) {
+  // D = outgoing damage multiplier; rate speeds up recharging (Overheat).
+  const D = S.dmg * (S.ab.power?.() ?? 1), A = S.area, rate = S.ab.rate?.() ?? 1;
   for (const k in S.moves) {
-    const w = S.moves[k], l = w.l, D = S.dmg, A = S.area, cdm = Math.pow(.9, l - 1) * S.cd;
-    if (ORBITS[k]) { tickOrbit(k, w, l, dt); continue; }
+    const w = S.moves[k], P = MOVES[k].stat(w.l), cd = (P.cd || 0) * S.cd;
+    if (ORBITS[k]) { tickOrbit(k, w, P, dt, D); continue; }
     if (k === 'aquaring') {
-      S.hp = Math.min(S.maxHp, S.hp + (.8 + .5 * l) * dt);
+      S.hp = Math.min(S.maxHp, S.hp + P.heal * dt);
       if ((w.t -= dt) <= 0) { w.t = 1.4; ring(2, '#8fe6f4', .9); anim('sparkle', S.x + rand(-1, 1), rand(.5, 2), S.z + rand(-1, 1), .7, 10); }
       continue;
     }
-    w.t -= dt;
-    if (w.t > 0) continue;
+    if ((w.t -= dt * rate) > 0) continue;
     if (k === 'flamethrower') {
       const [t] = nearest(1, 9 * A);
       if (!t) { w.t = .2; continue; }
-      w.t = 2.4 * cdm;
-      S.cones.push({ ang: angTo(t), t: .8 + .1 * l, tick: 0, len: (6 + .5 * l) * A, dmg: (6 + 3 * (l - 1)) * D });
+      w.t = cd;
+      S.cones.push({ ang: angTo(t), t: P.dur, tick: 0, len: P.reach * A, dmg: P.dmg * D, st: P.st });
       sfx('flame');
-      continue;
-    }
-    if (k === 'fireblast') {
-      const [t] = nearest(1, 22);
+    } else if (k === 'fireblast') {
+      const [t] = nearest(1, P.reach);
       if (!t) { w.t = .2; continue; }
-      w.t = 3.4 * cdm;
-      shoot(SM.ember, angTo(t), 13, (30 + 14 * (l - 1)) * D, 'fire', 1.8, 0, 1.9, 1.1, { explode: (3 + .35 * l) * A });
+      w.t = cd;
+      shoot(PS('fireball'), angTo(t), 13, P.dmg * D, 'fire', 1.8, 0, 1.9, 1.1, { explode: P.r * A, st: P.st });
       sfx('ember');
-      continue;
-    }
-    if (k === 'shuriken') {
-      const ts = nearest(1 + l, 20);
+    } else if (k === 'shuriken') {
+      const ts = nearest(P.n, P.reach);
       if (!ts.length) { w.t = .2; continue; }
-      w.t = 1.6 * cdm;
-      ts.forEach(t => shoot([SM.star], angTo(t), 20, (10 + 4 * (l - 1)) * D, 'water', 1.2, 0, .8));
+      w.t = cd;
+      ts.forEach(t => shoot([PS('star')], angTo(t), 20, P.dmg * D, 'water', 1.2, 0, .8, 1, { st: P.st }));
       sfx('watergun');
-      continue;
-    }
-    if (k === 'whirlpool') {
-      const [t] = nearest(1, 18);
+    } else if (k === 'whirlpool') {
+      const [t] = nearest(1, P.reach);
       if (!t) { w.t = .2; continue; }
-      w.t = 4.2 * cdm;
-      const r0 = (2.6 + .3 * l) * A, m = new THREE.Mesh(discGeo, new THREE.MeshBasicMaterial({ map: VORTEX_TEX, transparent: true, alphaTest: .4, depthWrite: false }));
+      w.t = cd;
+      const r0 = P.r * A, m = new THREE.Mesh(discGeo, new THREE.MeshBasicMaterial({ map: PT('vortex'), transparent: true, alphaTest: .4, depthWrite: false }));
       m.scale.set(r0, 1, r0); m.position.set(t.x, .06, t.z); scene.add(m);
-      S.zones.push({ x: t.x, z: t.z, r: r0, t: 2.4 + .3 * l, tick: 0, dmg: (6 + 3 * (l - 1)) * D, mesh: m });
+      S.zones.push({ x: t.x, z: t.z, r: r0, t: P.dur, tick: 0, every: P.every, dmg: P.dmg * D, st: P.st, mesh: m });
       sfx('splash');
-      continue;
-    }
-    if (k === 'leechseed') {
-      const ts = nearest(2 + Math.floor(l / 2), 16).filter(t => !t.seed);
+    } else if (k === 'leechseed') {
+      const ts = nearest(P.n, P.reach).filter(t => !t.seed);
       if (!ts.length) { w.t = .3; continue; }
-      w.t = 2.4 * cdm;
-      ts.forEach(t => { t.seed = { t: 4, tick: 0, dmg: (4 + 2 * l) * D }; anim('thorn', t.x, 0, t.z, 1.3, 12); });
+      w.t = cd;
+      ts.forEach(t => { t.seed = { t: P.dur, tick: 0, dmg: P.dmg * D }; anim(PV('thorn'), t.x, 0, t.z, 1.3, 12); });
       sfx('leaf');
-      continue;
-    }
-    if (k === 'magicleaf') {
-      const ts = nearest(2 + l, 22);
+    } else if (k === 'magicleaf') {
+      const ts = nearest(P.n, P.reach);
       if (!ts.length) { w.t = .2; continue; }
-      w.t = 1.4 * cdm;
-      ts.forEach((t, i) => shoot([SM.mleaf], angTo(t) + (i - ts.length / 2) * .35, 12, (8 + 4 * (l - 1)) * D, 'grass', 2.4, 0, .8, 1, { home: t }));
+      w.t = cd;
+      ts.forEach((t, i) => shoot([PS('mleaf')], angTo(t) + (i - ts.length / 2) * .35, 12, P.dmg * D, 'grass', 2.4, 0, .8, 1, { home: t, st: P.st }));
       sfx('leaf');
-      continue;
-    }
-    if (k === 'petals') {
-      w.t = 2.4 * cdm;
-      const R = (4.5 + .5 * (l - 1)) * A;
-      for (let i = 0; i < 16; i++) { const a = rand(0, TAU), rr = rand(.5, R); anim('petalburst', S.x + Math.cos(a) * rr, rand(.3, 2), S.z + Math.sin(a) * rr, 1.3, 12, { cy: .5 }); }
-      shock(S.x, S.z, R, (12 + 7 * (l - 1)) * D, 'grass', 4);
+    } else if (k === 'petals') {
+      w.t = cd;
+      const R = P.r * A;
+      for (let i = 0; i < 16; i++) { const a = rand(0, TAU), rr = rand(.5, R); anim(PV('petalburst'), S.x + Math.cos(a) * rr, rand(.3, 2), S.z + Math.sin(a) * rr, 1.3, 12, { cy: .5 }); }
+      shock(S.x, S.z, R, P.dmg * D, 'grass', 4, null, P.st);
       sfx('leaf');
-      continue;
-    }
-    if (k === 'rockthrow') {
-      const ts = nearest(1 + Math.floor(l / 2), 20);
+    } else if (k === 'rockthrow') {
+      const ts = nearest(P.n, P.reach);
       if (!ts.length) { w.t = .2; continue; }
-      w.t = 1.3 * cdm;
-      ts.forEach(t => shoot([SM.rock], angTo(t), 14, (14 + 6 * (l - 1)) * D, 'ground', Math.max(.35, dist(t) / 14), 0, .9, 1, { arc: 2.5, explode: 1.2 }));
+      w.t = cd;
+      ts.forEach(t => shoot([PS('rock')], angTo(t), 14, P.dmg * D, 'ground', Math.max(.35, dist(t) / 14), 0, .9, 1, { arc: 2.5, explode: 1.2, st: P.st }));
       sfx('rock');
-      continue;
-    }
-    if (k === 'rockslide') {
-      const ts = nearest(2 + l, 16);
+    } else if (k === 'rockslide') {
+      const ts = nearest(P.n, P.reach);
       if (!ts.length) { w.t = .3; continue; }
-      w.t = 3 * cdm;
-      ts.forEach((t, i) => S.falls.push({ x: t.x + rand(-.5, .5), z: t.z + rand(-.5, .5), t: .55 + i * .08, t0: .55 + i * .08, dmg: (22 + 9 * (l - 1)) * D, mesh: sprite(SM.boulder, 1.8, 1.8, .5) }));
-      continue;
-    }
-    if (k === 'stoneedge') {
-      const [t] = nearest(1, 18);
+      w.t = cd;
+      ts.forEach((t, i) => S.falls.push({ x: t.x + rand(-.5, .5), z: t.z + rand(-.5, .5), t: .55 + i * .08, t0: .55 + i * .08, dmg: P.dmg * D, r: P.r, st: P.st, mesh: sprite(PS('boulder'), 1.8, 1.8, .5) }));
+    } else if (k === 'stoneedge') {
+      const [t] = nearest(1, P.reach);
       if (!t) { w.t = .2; continue; }
-      w.t = 2 * cdm;
-      const n = 2 + l;
-      for (let i = 0; i < n; i++) { const a = i / n * TAU, rr = i ? 1.4 * A : 0; anim('stonespike', t.x + Math.cos(a) * rr, 0, t.z + Math.sin(a) * rr, 2.2, 12); }
-      shock(t.x, t.z, 2.2 * A, (26 + 10 * (l - 1)) * D, 'ground', 2);
+      w.t = cd;
+      for (let i = 0; i < P.n; i++) { const a = i / P.n * TAU, rr = i ? 1.4 * A : 0; anim(PV('stonespike'), t.x + Math.cos(a) * rr, 0, t.z + Math.sin(a) * rr, 2.2, 12); }
+      shock(t.x, t.z, P.r * A, P.dmg * D, 'ground', 2, null, P.st);
       sfx('rock');
-      continue;
-    }
-    if (k === 'ember') {
-      const targets = nearest(1 + Math.floor((l - 1) / 2), 24);
-      if (!targets.length) { w.t = .1; continue; }
-      w.t = .85 * Math.pow(.9, l - 1) * S.cd;
+    } else if (k === 'ember') {
+      const ts = nearest(P.n, P.reach);
+      if (!ts.length) { w.t = .1; continue; }
+      w.t = cd;
       sfx('ember');
-      for (const en of targets) shoot(SM.ember, Math.atan2(en.x - S.x, en.z - S.z), 18, (12 + 6 * (l - 1)) * S.dmg, 'fire', 1.5, l >= 4 ? 1 : 0, 1);
+      for (const en of ts) shoot(PS('ember'), angTo(en), 18, P.dmg * D, 'fire', 1.5, P.pierce, 1, 1, { st: P.st });
     } else if (k === 'flameburst') {
-      const [t] = nearest(1, 18);
+      const [t] = nearest(1, P.reach);
       if (!t) { w.t = .2; continue; }
-      w.t = 3 * Math.pow(.9, l - 1) * S.cd;
-      const R = (2.6 + .35 * (l - 1)) * S.area;
-      flameRing(t.x, t.z, R * .8, 9, 2.4); anim('flame', t.x, 0, t.z, 3.2, 12); sfx('flame');
-      shock(t.x, t.z, R, (20 + 10 * (l - 1)) * S.dmg, 'fire', 5);
+      w.t = cd;
+      const R = P.r * A;
+      flameRing(t.x, t.z, R * .8, 9, 2.4); anim(PV('flame'), t.x, 0, t.z, 3.2, 12); sfx('flame');
+      shock(t.x, t.z, R, P.dmg * D, 'fire', 5, null, P.st);
     } else if (k === 'watergun') {
-      const targets = nearest(l >= 4 ? 2 : 1, 22);
-      if (!targets.length) { w.t = .15; continue; }
-      w.t = 1.7 * Math.pow(.9, l - 1) * S.cd;
-      for (const en of targets) S.jets.push({ target: en, t: .45 + .05 * l, every: 0, dmg: (6 + 3 * (l - 1)) * S.dmg, life: .7 + .06 * l });
+      const ts = nearest(P.n, P.reach);
+      if (!ts.length) { w.t = .15; continue; }
+      w.t = cd;
+      for (const en of ts) S.jets.push({ target: en, left: P.hits, every: 0, dmg: P.dmg * D, pierce: P.pierce, st: P.st });
     } else if (k === 'vinewhip') {
-      const reach = (6.5 + .7 * (l - 1)) * S.area, targets = nearest(l >= 4 ? 2 : 1, reach);
-      if (!targets.length) { w.t = .15; continue; }
-      w.t = 1.3 * Math.pow(.9, l - 1) * S.cd;
+      const reach = P.reach * A, ts = nearest(P.n, reach);
+      if (!ts.length) { w.t = .15; continue; }
+      w.t = cd;
       sfx('vine');
-      targets.forEach((en, i) => S.whips.push({ ang: Math.atan2(en.x - S.x, en.z - S.z), len: Math.max(dist(en) + 1, reach * .7), t: 0, dur: .38, side: i % 2 ? -1 : 1,
-        dmg: (16 + 7 * (l - 1)) * S.dmg, hit: new Set(), parts: Array.from({ length: 14 }, (_, j) => sprite(j === 13 ? SM.vinetip : SM.vine, j === 13 ? .9 : .6, j === 13 ? .9 : .6, .5)) }));
+      ts.forEach((en, i) => S.whips.push(makeVine(angTo(en), Math.max(dist(en) + 1, reach * .7), i % 2 ? -1 : 1, P.dmg * D, P.st)));
     } else if (k === 'stomp') {
-      w.t = 2.6 * Math.pow(.9, l - 1) * S.cd;
-      const R = (4 + .6 * (l - 1)) * S.area;
-      for (let i = 0; i < 10; i++) { const a = i / 10 * TAU; anim('dust', S.x + Math.cos(a) * R * .7, .1, S.z + Math.sin(a) * R * .7, 1.8, 14); }
-      shock(S.x, S.z, R, (14 + 8 * (l - 1)) * S.dmg, 'ground', 9, '#c9a46a');
+      w.t = cd;
+      const R = P.r * A;
+      for (let i = 0; i < 10; i++) { const a = i / 10 * TAU; anim(PV('dust'), S.x + Math.cos(a) * R * .7, .1, S.z + Math.sin(a) * R * .7, 1.8, 14); }
+      shock(S.x, S.z, R, P.dmg * D, 'ground', 9, '#c9a46a', P.st);
       addShake(.12);
       sfx('stomp');
     } else if (k === 'leaves') {
-      w.t = 1.5 * Math.pow(.9, l - 1) * S.cd;
-      const n = 6 + 2 * (l - 1), off = rand(0, TAU);
+      w.t = cd;
+      const off = rand(0, TAU);
       sfx('leaf');
-      for (let i = 0; i < n; i++) shoot([SM.leaf], off + i / n * TAU, 13, (9 + 4 * (l - 1)) * S.dmg, 'grass', .6 * Math.sqrt(S.area), 1, .85);
+      for (let i = 0; i < P.n; i++) shoot([PS('leaf')], off + i / P.n * TAU, 13, P.dmg * D, 'grass', .6 * Math.sqrt(A), P.pierce, .85, 1, { st: P.st });
     }
   }
   // Flamethrower: a cone of moving flames; damage ticks every 0.15 s.
   for (const c of S.cones) {
     c.t -= dt; c.tick -= dt;
     const a = c.ang + rand(-.3, .3), sp = c.len / .45;
-    anim('flame', S.x + Math.sin(a) * .8, .3, S.z + Math.cos(a) * .8, rand(.9, 1.4), 16, { vx: Math.sin(a) * sp, vz: Math.cos(a) * sp });
+    anim(PV('flame'), S.x + Math.sin(a) * .8, .3, S.z + Math.cos(a) * .8, rand(.9, 1.4), 16, { vx: Math.sin(a) * sp, vz: Math.cos(a) * sp });
     if (c.tick <= 0) {
       c.tick = .15;
       for (const en of S.enemies) {
         if (en.dying > 0) continue;
         const d = dist(en), da = Math.abs(Math.atan2(Math.sin(angTo(en) - c.ang), Math.cos(angTo(en) - c.ang)));
-        if (d < c.len + en.r && da < .45) hitEnemy(en, c.dmg, 'fire', Math.sin(c.ang) * 2, Math.cos(c.ang) * 2, Math.random() < .3);
+        if (d < c.len + en.r && da < .45) hitEnemy(en, c.dmg, 'fire', Math.sin(c.ang) * 2, Math.cos(c.ang) * 2, Math.random() < .3, c.st);
       }
     }
   }
@@ -1295,9 +1848,9 @@ function tickMoves(dt) {
       const dx = zn.x - en.x, dz = zn.z - en.z, d = Math.hypot(dx, dz);
       if (d > zn.r + en.r) continue;
       if (!en.boss) { en.kx += dx / (d || 1) * 10 * dt; en.kz += dz / (d || 1) * 10 * dt; }
-      if (zn.tick <= 0) hitEnemy(en, zn.dmg, 'water', 0, 0, Math.random() < .3);
+      if (zn.tick <= 0) hitEnemy(en, zn.dmg, 'water', 0, 0, Math.random() < .3, zn.st);
     }
-    if (zn.tick <= 0) zn.tick = .3;
+    if (zn.tick <= 0) zn.tick = zn.every;
     if (zn.t <= 0) { scene.remove(zn.mesh); zn.mesh.material.dispose(); }
   }
   S.zones = S.zones.filter(zn => zn.t > 0);
@@ -1307,58 +1860,55 @@ function tickMoves(dt) {
     f.mesh.position.set(f.x, Math.max(0, f.t / f.t0) * 9 + .6, f.z);
     if (f.t <= 0) {
       scene.remove(f.mesh);
-      anim('dust', f.x, .1, f.z, 2.4, 14);
-      shock(f.x, f.z, 1.8 * S.area, f.dmg, 'ground', 4);
+      anim(PV('dust'), f.x, .1, f.z, 2.4, 14);
+      shock(f.x, f.z, f.r * S.area, f.dmg, 'ground', 4, null, f.st);
       sfx('rock');
     }
   }
   S.falls = S.falls.filter(f => f.t > 0);
-  // Water Gun: a stream of droplets re-aimed at the moving target every 50 ms.
+  // Water Gun: a short burst of droplets re-aimed at the moving target every 50 ms.
   for (const j of S.jets) {
-    j.t -= dt; j.every -= dt;
-    if (j.every <= 0 && j.t > 0) {
-      j.every = .045;
-      const tx = j.target.dying > 0 ? S.x + Math.sin(yaw) : j.target.x, tz = j.target.dying > 0 ? S.z + Math.cos(yaw) : j.target.z;
-      const a = Math.atan2(tx - S.x, tz - S.z) + rand(-.04, .04);
-      shoot([SM.droplet], a, 26, j.dmg, 'water', j.life, 2, .55, .9);
-      sfx('watergun');
-      if (Math.random() < .25) anim('splash', S.x + Math.sin(a) * .8, .5, S.z + Math.cos(a) * .8, .9, 18);
-    }
+    if ((j.every -= dt) > 0) continue;
+    j.every = .05; j.left--;
+    const tx = j.target.dying > 0 ? S.x + Math.sin(yaw) : j.target.x, tz = j.target.dying > 0 ? S.z + Math.cos(yaw) : j.target.z;
+    const a = Math.atan2(tx - S.x, tz - S.z) + rand(-.04, .04);
+    shoot([PS('droplet')], a, 26, j.dmg, 'water', .8, j.pierce, .6, .9, { st: j.st });
+    sfx('watergun');
+    if (Math.random() < .3) anim(PV('splash'), S.x + Math.sin(a) * .8, .5, S.z + Math.cos(a) * .8, .9, 18);
   }
-  S.jets = S.jets.filter(j => j.t > 0);
+  S.jets = S.jets.filter(j => j.left > 0);
   // Vine Whip: extend then retract along a curve; hits everything near the vine at full reach.
   for (const w of S.whips) {
     w.t += dt;
     const p = Math.min(1, w.t / w.dur), ext = Math.sin(p * Math.PI), L = w.len * ext;
-    const dx = Math.sin(w.ang), dz = Math.cos(w.ang), px = -dz * w.side, pz = dx * w.side;
-    w.parts.forEach((s, j) => {
-      const f = (j + 1) / w.parts.length, curve = Math.sin(f * Math.PI) * (1 - p) * 1.4;
-      s.position.set(S.x + dx * L * f + px * curve, .9 + Math.sin(f * Math.PI) * .5 * ext, S.z + dz * L * f + pz * curve);
-    });
+    const dx = Math.sin(w.ang), dz = Math.cos(w.ang);
+    layVine(w, L, ext, p);
     if (ext > .75) for (const en of S.enemies) {
       if (en.dying > 0 || w.hit.has(en)) continue;
       const ex = en.x - S.x, ez = en.z - S.z, along = ex * dx + ez * dz, off = Math.abs(ex * -dz + ez * dx);
-      if (along > 0 && along < L + en.r && off < .7 + en.r) { w.hit.add(en); hitEnemy(en, w.dmg, 'grass', dx * 6, dz * 6); }
+      if (along > 0 && along < L + en.r && off < .7 + en.r) { w.hit.add(en); hitEnemy(en, w.dmg, 'grass', dx * 6, dz * 6, true, w.st); }
     }
-    if (p >= 1) { w.parts.forEach(s => scene.remove(s)); w.done = true; }
+    if (p >= 1) { w.parts.forEach(s => scene.remove(s)); w.mesh.geometry.dispose(); w.done = true; }
   }
   S.whips = S.whips.filter(w => !w.done);
 }
 function useUlt() {
   if (state !== 'play' || S.ult < S.ultNeed) return;
   S.ult = 0;
-  const A = S.area, D = S.dmg;
+  const A = S.area, D = S.dmg * (S.ab.power?.() ?? 1);
   if (S.type === 'fire') S.pillars = [[0, 6], [.4, 11], [.4, 16]].map(([d, r]) => ({ d, r: r * A, dmg: 130 * D }));
-  if (S.type === 'water') S.wave = { r: 1, max: 26 * A, dmg: 200 * D, hit: new Set(), parts: Array.from({ length: 28 }, () => sprite(VFX.wave.mats[0], 3, 3, .05)) };
+  // a new Tidal Wave replaces one still rolling: remove the old wave's sprites or they stay on screen for good
+  if (S.type === 'water' && S.wave) S.wave.parts.forEach(p => scene.remove(p));
+  if (S.type === 'water') S.wave = { r: 1, max: 26 * A, dmg: 200 * D, hit: new Set(), parts: Array.from({ length: 28 }, () => sprite(PV('wave').mats[0], 3, 3, .05)) };
   if (S.type === 'grass') {
     S.hp = Math.min(S.maxHp, S.hp + S.maxHp * .5);
-    for (const en of S.enemies) if (en.dying <= 0 && dist(en) < 15 * A) { anim('thorn', en.x, 0, en.z, en.boss ? 5 : 2.4, 12); hitEnemy(en, 180 * D, 'grass', 0, 0, false); }
+    for (const en of S.enemies) if (en.dying <= 0 && dist(en) < 15 * A) { anim(PV('thorn'), en.x, 0, en.z, en.boss ? 5 : 2.4, 12); hitEnemy(en, 180 * D, 'grass', 0, 0, false, 1); }
     for (let i = 0; i < 12; i++) anim('sparkle', S.x + rand(-1.5, 1.5), rand(.5, 2.5), S.z + rand(-1.5, 1.5), .8, 10);
     ring(15 * A, '#a6e05a', .7);
   }
   if (S.type === 'ground') {
-    for (let i = 0; i < 18; i++) { const a = i / 18 * TAU; anim('dust', S.x + Math.cos(a) * 9 * A, .1, S.z + Math.sin(a) * 9 * A, 3, 12); anim('dust', S.x + Math.cos(a) * 17 * A, .1, S.z + Math.sin(a) * 17 * A, 3.6, 9); }
-    shock(S.x, S.z, 22 * A, 240 * D, 'ground', 24, '#c9a46a');
+    for (let i = 0; i < 18; i++) { const a = i / 18 * TAU; anim(PV('dust'), S.x + Math.cos(a) * 9 * A, .1, S.z + Math.sin(a) * 9 * A, 3, 12); anim(PV('dust'), S.x + Math.cos(a) * 17 * A, .1, S.z + Math.sin(a) * 17 * A, 3.6, 9); }
+    shock(S.x, S.z, 22 * A, 240 * D, 'ground', 24, '#c9a46a', 1);
   }
   banner(`${S.a.names[S.stage]} used ${ULTS[S.type].name}!`);
   addShake(.6);
@@ -1368,18 +1918,22 @@ function tickUlts(dt) {
   if (S.pillars.length && (S.pillars[0].d -= dt) <= 0) {
     const p = S.pillars.shift();
     flameRing(S.x, S.z, p.r * .9, Math.round(p.r * 2.2), 3.6);
-    shock(S.x, S.z, p.r, p.dmg, 'fire', 10, '#ff8a2a');
+    shock(S.x, S.z, p.r, p.dmg, 'fire', 10, '#ff8a2a', 1);
     addShake(.3);
   }
   const w = S.wave;
   if (w) {
     w.r += 24 * dt;
-    const frame = VFX.wave.mats[Math.floor(S.t * 10) % VFX.wave.mats.length];
+    const wv = PV('wave').mats, frame = wv[Math.floor(S.t * 10) % wv.length];
     w.parts.forEach((s, i) => { const a = i / w.parts.length * TAU; s.material = frame; s.position.set(S.x + Math.cos(a) * w.r, 0, S.z + Math.sin(a) * w.r); });
     for (const en of S.enemies) {
       if (en.dying > 0 || w.hit.has(en)) continue;
       const dx = en.x - S.x, dz = en.z - S.z, d = Math.hypot(dx, dz) || 1;
-      if (d < w.r + en.r) { w.hit.add(en); hitEnemy(en, w.dmg, 'water', dx / d * 28, dz / d * 28); }
+      if (d < w.r + en.r) {
+        w.hit.add(en);
+        hitEnemy(en, w.dmg, 'water', dx / d * 28, dz / d * 28, true, S.ab.waveFreeze ? 0 : 1);
+        if (S.ab.waveFreeze && en.dying <= 0 && !en.obj) freeze(en, en.boss ? .6 : 1.8);
+      }
     }
     if (w.r >= w.max) { w.parts.forEach(s => scene.remove(s)); S.wave = null; }
   }
@@ -1389,13 +1943,14 @@ function tickUlts(dt) {
 // Levelling
 // =====================================================================
 const MAX_LEVEL = 50;
+const EVOLVE_AT = [12, 27]; // levels for the first and second evolution
 function gainXp(v) {
   S.xp += v;
   while (S.xp >= S.need && S.level < MAX_LEVEL) { S.xp -= S.need; S.level++; S.need = Math.floor(6 + S.level * 3.4 + S.level * S.level * .18); S.pendingLv++; }
   if (S.level >= MAX_LEVEL) S.xp = S.need; // capped: keep the bar full
 }
 function evolveCheck() {
-  const st = S.level >= 15 ? 2 : S.level >= 7 ? 1 : 0;
+  const st = S.level >= EVOLVE_AT[1] ? 2 : S.level >= EVOLVE_AT[0] ? 1 : 0;
   if (st <= S.stage) return;
   const from = S.a.names[S.stage];
   S.stage = st;
@@ -1452,6 +2007,7 @@ function choose(o) {
   evolveCheck();
   renderKit();
   if (S.pendingLv > 0) openLevelUp();
+  else if (S.level >= MAX_LEVEL) endRun(false, true);
   else { showScreen(null); state = 'play'; last = performance.now(); lockMouse(); }
 }
 function renderKit() {
@@ -1462,14 +2018,14 @@ function renderKit() {
 // =====================================================================
 // Screens & menus
 // =====================================================================
-const SCREENS = ['title', 'select', 'help', 'settings', 'credits', 'pause', 'levelup', 'over'];
+const SCREENS = ['title', 'select', 'help', 'settings', 'credits', 'dex', 'pause', 'levelup', 'over'];
 function showScreen(id) {
   screen = id;
   for (const s of SCREENS) $('#' + s).hidden = s !== id;
   const inMenu = state === 'title';
   $('#hud').hidden = inMenu;
 }
-function openSub(id) { returnTo = screen; showScreen(id); $('#' + id).querySelector('button, input')?.focus(); }
+function openSub(id) { returnTo = screen; if (id === 'dex') { dexSel = chosen; dexStage = 0; renderDex(); } showScreen(id); $('#' + id).querySelector('button, input')?.focus(); }
 function closeSub() { showScreen(returnTo); $('#' + returnTo)?.querySelector('button')?.focus(); }
 let bannerTimer;
 function banner(text, sub = '') {
@@ -1488,6 +2044,7 @@ function toTitle() {
 }
 function toSelect() { state = 'title'; showScreen('select'); renderPicks(); $('.pick.on')?.focus(); }
 function startGame() {
+  if (matchMedia('(pointer: coarse)').matches && !document.fullscreenElement) goFullscreen();
   newRun(chosen);
   state = 'play';
   showScreen(null);
@@ -1499,17 +2056,18 @@ function setPause(on) {
   if (on && state === 'play') { state = 'pause'; showScreen('pause'); unlockMouse(); $('#resumebtn').focus(); }
   else if (!on && state === 'pause') { state = 'play'; showScreen(null); last = performance.now(); lockMouse(); }
 }
-function endRun(win) {
+function endRun(win, maxed = false) {
   state = 'over';
   unlockMouse();
   if (win) setFlag('won');
   saveProg();
-  sfx(win ? 'win' : 'gameover');
+  sfx(win || maxed ? 'win' : 'gameover');
   const best = readJSON('pocketwilds-best'), prev = best[S.pid] || 0, record = S.t > prev;
   if (record) { best[S.pid] = S.t; writeJSON('pocketwilds-best', best); }
   const nm = S.a.names[S.stage];
-  $('#overtitle').textContent = win ? 'Meadow champion!' : `${nm} fainted`;
-  $('#oversub').textContent = (win ? `${nm} held out for all ten minutes.` : 'The wild monsters were too many this time.') + (record && !win ? ' New best time with this partner.' : '')
+  $('#overtitle').textContent = maxed ? 'Max level reached!' : win ? 'Meadow champion!' : `${nm} fainted`;
+  $('#againbtn').textContent = win || maxed ? 'Play again' : 'Try again';
+  $('#oversub').textContent = (maxed ? `${nm} reached level ${MAX_LEVEL}, as strong as it gets. Start a new run to go again.` : win ? `${nm} held out for all ten minutes.` : 'The wild monsters were too many this time.') + (record && !win ? ' New best time with this partner.' : '')
     + (S.newUnlocks.length ? ` Unlocked this run: ${S.newUnlocks.join(', ')}.` : '');
   $('#overstats').innerHTML = [[fmt(S.t), 'Survived'], [S.kills, 'Defeated'], [S.level, 'Level'], [fmt(Math.max(prev, S.t)), 'Best']]
     .map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('');
@@ -1525,13 +2083,14 @@ function renderPicks() {
       <h3>${a.names[0]} ${badge(t)}</h3>
       <p>${a.blurb}</p>
       <p><b>${MOVES[a.move].name}:</b> ${MOVES[a.move].blurb} <b>${ULTS[t].name}:</b> ${ULTS[t].desc}</p>
-      <span class="evo">${a.names.map((n, i) => `<img class="px" alt="${n}" src="${ART.starter[t][i].front.toDataURL()}">`).join('<span>&rarr;</span>')}<span>Lv 7, Lv 15</span></span>
+      <p><b>Ability, ${ABILITIES[PARTNERS[t].ability].name}:</b> ${ABILITIES[PARTNERS[t].ability].desc}</p>
+      <span class="evo">${a.names.map((n, i) => `<img class="px" alt="${n}" src="${ART.starter[t][i].front.toDataURL()}">`).join('<span>&rarr;</span>')}<span>Lv ${EVOLVE_AT[0]}, Lv ${EVOLVE_AT[1]}</span></span>
     </button>`).join('');
   const ids = Object.keys(RECRUIT_NEED);
   $('#recruitcount').textContent = `${ids.filter(isUnlocked).length} of ${ids.length} unlocked`;
   $('#recruits').innerHTML = ids.map(k => {
     const p = PARTNERS[k], open = isUnlocked(k), have = Math.min(p.need, PROG.kills[k] || 0);
-    const how = open ? `${MOVES[p.move].name} · ${ULTS[p.type].name}` : p.need === 1 ? `Defeat the boss ${WILD[k].name}` : `Defeat ${p.need} ${WILD[k].name} · ${have}/${p.need}`;
+    const how = open ? `${ABILITIES[p.ability].name} · ${MOVES[p.move].name}` : p.need === 1 ? `Defeat the boss ${WILD[k].name}` : `Defeat ${p.need} ${WILD[k].name} · ${have}/${p.need}`;
     return `<button class="rc plate ${k === chosen ? 'on' : ''} ${open ? '' : 'locked'}" data-t="${k}" ${open ? '' : 'aria-disabled="true"'}>
       <img class="px" alt="" src="${ICONS[k]}"><b>${open ? WILD[k].name : '???'} ${badge(p.type)}</b><span>${how}</span></button>`;
   }).join('');
@@ -1560,6 +2119,134 @@ function renderPicks() {
     document.querySelector(`[data-tr="${k}"]`).focus();
   });
 }
+// =====================================================================
+// Wild Dex: every partner's evolutions, stats, ability, status effect, moves and record
+// =====================================================================
+let dexSel = 'fire', dexStage = 0, dexType = 'all', dexQuery = '';
+const dexOrder = () => Object.keys(PARTNERS).sort((a, b) => PARTNERS[a].no - PARTNERS[b].no);
+// open = playable, seen = defeated at least once but not recruited, unseen = never met (silhouette only).
+const dexSeen = k => isUnlocked(k) ? 'open' : (PROG.kills[k] || 0) > 0 ? 'seen' : 'unseen';
+const badgeT = t => `<span class="type" style="background:${TYPE_COLOR[t]}">${t}</span>`;
+const badgeS = id => `<span class="st" style="background:${STATUS[id].color}">${STATUS[id].name}</span>`;
+const num = v => String(v >= 10 ? Math.round(v) : Math.round(v * 100) / 100);
+// Whole-pixel scales so a 28 px recruit, a 36 px evolution and a 48 px starter all keep crisp pixels.
+const DEX_SCALE = { big: [4, 3], tile: [2, 1.25], evo: [1.5, 1] };
+function dexImg(k, st, where, cls = '') {
+  const im = DEX_IMG[k][st], sc = DEX_SCALE[where][PARTNERS[k].art === 'starter' ? 1 : 0];
+  return `<img class="px ${cls}" alt="" src="${im.src}" style="width:${im.px * sc}px">`;
+}
+// Lv 1 → max-level numbers for a move.
+function moveNums(k) {
+  const a = MOVES[k].stat(1), b = MOVES[k].stat(MAX_MOVE), out = [];
+  const pair = (x, y, u = '') => x === y ? `${num(x)}${u}` : `${num(x)}${u} → ${num(y)}${u}`;
+  if (a.dmg) out.push(['Damage', pair(a.dmg, b.dmg) + (a.hits ? ` ×${a.hits}` : '')]);
+  if (a.heal) out.push(['Heals', pair(a.heal, b.heal, '/s')]);
+  if (a.n && (a.n > 1 || b.n > 1)) out.push([k === 'leechseed' ? 'Seeds' : 'Count', pair(a.n, b.n)]);
+  if (a.cd) out.push(['Cooldown', pair(a.cd, b.cd, ' s')]);
+  if (a.every) out.push(['Hits every', `${num(a.every)} s`]);
+  if (a.reach) out.push(['Reach', pair(a.reach, b.reach, ' m')]);
+  if (a.r) out.push(['Radius', pair(a.r, b.r, ' m')]);
+  if (a.st) out.push([STATUS[EL_STATUS[MOVES[k].el]].name, `${Math.round(a.st * 100)}%`]);
+  return out;
+}
+function renderDex() {
+  const ids = dexOrder(), open = ids.filter(isUnlocked).length;
+  $('#dexcount').textContent = `${open} of ${ids.length} recruited`;
+  $('#dexprogfill').style.width = open / ids.length * 100 + '%';
+  $('#dexprogtext').textContent = `${open}/${ids.length}`;
+  $('#dexfilter').innerHTML = ['all', 'fire', 'water', 'grass', 'ground'].map(t =>
+    `<button data-ft="${t}" class="${t === dexType ? 'on' : ''}" aria-pressed="${t === dexType}">${t === 'all' ? 'All' : `<i style="background:${TYPE_COLOR[t]}"></i>${cap(t)}`}</button>`).join('');
+  $('#dexfilter').querySelectorAll('button').forEach(b => b.onclick = () => { dexType = b.dataset.ft; renderDex(); $(`[data-ft="${dexType}"]`).focus(); });
+  $('#dexsearch').value = dexQuery;
+  $('#fxlegend').innerHTML = '<h4>Status effects</h4>' + Object.keys(STATUS).map(id => `<p>${badgeS(id)} ${STATUS[id].desc}</p>`).join('')
+    + '<p class="note">Bosses shake off freeze and daze faster.</p>';
+  renderDexList();
+  renderDexCard();
+}
+function renderDexList() {
+  const q = dexQuery.trim().toLowerCase();
+  const ids = dexOrder().filter(k => (dexType === 'all' || PARTNERS[k].type === dexType)
+    && (!q || (dexSeen(k) !== 'unseen' && PARTNERS[k].names.some(n => n.toLowerCase().includes(q)))));
+  $('#dexmons').innerHTML = ids.map(k => {
+    const p = PARTNERS[k], s = dexSeen(k), have = Math.min(p.need || 0, PROG.kills[k] || 0);
+    return `<button class="dm ${s} ${k === dexSel ? 'on' : ''}" data-dex="${k}" aria-pressed="${k === dexSel}" aria-label="${s === 'unseen' ? `Number ${p.no}, not seen yet` : p.names[0]}">
+      <span class="no">${String(p.no).padStart(3, '0')}</span>${s === 'open' ? '' : `<img class="lock px" alt="" src="${LOCK_ICON}">`}
+      ${dexImg(k, 0, 'tile')}<b>${s === 'unseen' ? '???' : p.names[0]}</b>
+      ${s === 'open' ? `<i class="tdot" style="background:${TYPE_COLOR[p.type]}"></i>` : `<span class="prog"><i style="width:${have / p.need * 100}%"></i></span>`}
+    </button>`;
+  }).join('') || '<p class="note">Nothing matches that search.</p>';
+  $('#dexmons').querySelectorAll('[data-dex]').forEach(b => b.onclick = () => {
+    dexSel = b.dataset.dex; dexStage = 0;
+    renderDexList(); renderDexCard();
+    $(`[data-dex="${dexSel}"]`).focus();
+    if (innerWidth <= 860) $('#dexcard').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+  });
+}
+function renderDexCard() {
+  const k = dexSel, p = PARTNERS[k], s = dexSeen(k), el = $('#dexcard'), no = String(p.no).padStart(3, '0');
+  const have = Math.min(p.need || 0, PROG.kills[k] || 0);
+  const how = p.need === 1 ? `Defeat the boss ${WILD[k].name} once.` : `Defeat ${p.need} wild ${p.names[0]} across your runs (${have}/${p.need}).`;
+  if (s === 'unseen') {
+    el.innerHTML = `<div class="dextop"><div class="portrait">${dexImg(k, 0, 'big', 'shadow')}</div>
+      <div class="dexid"><span class="dexno">No. ${no}</span><h3 class="dexname">???</h3>
+      <p class="dexblurb">Not seen yet. Defeat one in the meadow to add it to the Wild Dex.</p>
+      <p class="note">${p.need === 1 ? 'A boss: beat it once and it joins you.' : `Recruit it by defeating ${p.need} of its kind.`}</p></div></div>`;
+    return;
+  }
+  const st = dexStage, ab = ABILITIES[p.ability], sid = EL_STATUS[p.type], name = p.names[st];
+  // Each evolution adds 30 HP, 20% damage and 5% speed.
+  const hp = p.hp + 30 * st, pw = p.dmg * 1.2 ** st, sp = p.spd * 1.05 ** st, ar = p.armor + (ab.armor || 0);
+  const all = Object.values(PARTNERS), top = f => Math.max(...all.map(f));
+  const rows = [['HP', hp, top(q => q.hp) + 60, num(hp), '#4ccf5c'], ['Speed', sp, top(q => q.spd) * 1.1025, num(sp), '#4a9be8'],
+    ['Power', pw, top(q => q.dmg) * 1.44, `×${num(pw)}`, '#e8483a'], ['Armor', ar, 4, num(ar), '#9a96a0'], ['Regen', p.regen, 1, `${num(p.regen)}/s`, '#78c850']];
+  const moves = [p.move, ...Object.keys(MOVES).filter(m => MOVES[m].el === p.type && m !== p.move)];
+  const ch = CHART[p.type], strong = Object.keys(ch).filter(t => ch[t] > 1), weak = Object.keys(ch).filter(t => ch[t] < 1);
+  const best = readJSON('pocketwilds-best')[k];
+  let act;
+  if (s !== 'open') act = `<p class="note"><b>How to recruit:</b> ${how}</p>`;
+  else if (state === 'title') act = `<button class="btn" id="dexplay">Play as ${p.names[0]}</button>`;
+  else act = chosen === k ? `<p class="note">${p.names[0]} is your partner for the next run.</p>` : `<button class="btn ghost" id="dexplay">Use ${p.names[0]} next run</button>`;
+  el.innerHTML = `
+    <div class="dextop">
+      <div class="portrait" style="--c:${TYPE_COLOR[p.type]}">${dexImg(k, st, 'big')}</div>
+      <div class="dexid">
+        <span class="dexno">No. ${no} · ${p.role}<span class="rar">${p.rarity}</span></span>
+        <h3 class="dexname">${name}</h3>
+        <div class="row tight">${badgeT(p.type)}${badgeS(sid)}${s === 'seen' ? '<span class="st locked">Not recruited</span>' : ''}</div>
+        <div class="evoline" aria-label="Evolutions">${p.names.map((n, i) => `${i ? `<span>Lv ${EVOLVE_AT[i - 1]}</span>` : ''}<button data-stage="${i}" class="${i === st ? 'on' : ''}" aria-pressed="${i === st}" aria-label="${n}" title="${n}">${dexImg(k, i, 'evo')}</button>`).join('')}</div>
+        <p class="dexblurb">${p.blurb}</p>
+      </div>
+    </div>
+    <div class="dexcols">
+      <div class="dexsec">
+        <h4>Ability</h4>
+        <div class="abil"><b>${ab.name}</b><p>${ab.desc}</p></div>
+        <h4>Status effect</h4>
+        <div class="abil"><b>${STATUS[sid].name}${sid === 'chill' ? ' and Freeze' : ''}</b><p>Its ${p.type} moves can cause it. ${STATUS[sid].desc}${sid === 'chill' ? ' ' + STATUS.freeze.desc : ''}</p></div>
+        <h4>Stats ${st ? `<small>as ${name}</small>` : ''}</h4>
+        <div class="sbars">${rows.map(([l, v, mx, t, c]) => `<span>${l}</span><div class="bar"><i style="width:${Math.max(4, Math.min(100, v / mx * 100))}%;background:${c}"></i></div><b>${t}</b>`).join('')}</div>
+        <h4>Matchups</h4>
+        <p><b>Super effective on</b> ${strong.map(badgeT).join(' ')}</p>
+        <p><b>Not very effective on</b> ${weak.map(badgeT).join(' ')}</p>
+        <h4>Record</h4>
+        <div class="rec"><div><b>${best ? fmt(best) : '–'}</b><span>Best time</span></div>${p.need ? `<div><b>${PROG.kills[k] || 0}</b><span>Defeated</span></div>` : ''}<div><b>${!p.need ? 'Starter' : s === 'open' ? 'Yes' : `${have}/${p.need}`}</b><span>Recruited</span></div></div>
+      </div>
+      <div class="dexsec">
+        <h4>Moves <small>Lv 1 → Lv ${MAX_MOVE}</small></h4>
+        ${moves.map((m, i) => `<div class="mv" style="--c:${TYPE_COLOR[MOVES[m].el]}"><h5>${MOVES[m].name}<span class="tagl ${i ? '' : 'on'}">${i ? 'Learnable' : 'Starts with'}</span></h5><p>${MOVES[m].blurb}</p><div class="nums">${moveNums(m).map(([a, b]) => `<span>${a} <b>${b}</b></span>`).join('')}</div></div>`).join('')}
+        <h4>Ultimate</h4>
+        <div class="mv" style="--c:var(--gold)"><h5>${ULTS[p.type].name}<span class="tagl">Space</span></h5><p>${ULTS[p.type].desc}</p></div>
+      </div>
+    </div>
+    <div class="row">${act}</div>`;
+  el.querySelectorAll('[data-stage]').forEach(b => b.onclick = () => { dexStage = +b.dataset.stage; renderDexCard(); el.querySelector(`[data-stage="${dexStage}"]`).focus(); });
+  $('#dexplay')?.addEventListener('click', () => {
+    chosen = k;
+    try { localStorage.setItem('pocketwilds-partner', k); } catch {}
+    if (state === 'title') startGame(); else renderDexCard();
+  });
+}
+
 function initSettings() {
   const save = () => writeJSON('pocketwilds-settings', SET);
   $('#sens').value = SET.sens; $('#invert').checked = SET.invertY; $('#shakeset').checked = SET.shake; $('#popset').checked = SET.popups;
@@ -1590,6 +2277,8 @@ document.addEventListener('pointerlockchange', () => {
   expectUnlock = false;
 });
 addEventListener('keydown', e => {
+  // Typing in the Wild Dex search box: only Esc works as a hotkey.
+  if (e.target.type === 'search' && e.code !== 'Escape') return;
   keys.add(e.code);
   if (state === 'levelup' && /^Digit[123]$/.test(e.code)) $('#choices').children[+e.code.slice(5) - 1]?.click();
   if (e.code === 'Space' && state === 'play') { e.preventDefault(); useUlt(); }
@@ -1598,7 +2287,7 @@ addEventListener('keydown', e => {
   if (e.code === 'Enter' && screen === 'title' && document.activeElement === document.body) toSelect();
   if (e.code === 'Escape' || e.code === 'KeyP') {
     if (performance.now() - lastUnlockPause < 300) return;
-    if (['help', 'settings', 'credits'].includes(screen)) closeSub();
+    if (['help', 'settings', 'credits', 'dex'].includes(screen)) closeSub();
     else if (state === 'play') setPause(true);
     else if (state === 'pause') setPause(false);
     else if (screen === 'select') toTitle();
@@ -1625,6 +2314,8 @@ cvs.addEventListener('webglcontextlost', e => {
 });
 cvs.addEventListener('webglcontextrestored', () => { clearTimeout(gfxTimer); $('#loading')?.remove(); banner('Graphics are back', 'Resume when you are ready'); });
 document.addEventListener('visibilitychange', () => document.hidden && setPause(true));
+// The rotate prompt covers the game in portrait, so pause while it shows.
+matchMedia('(pointer: coarse) and (orientation: portrait)').addEventListener('change', e => e.matches && setPause(true));
 const stickEl = $('#stick'), knob = stickEl.firstChild;
 cvs.addEventListener('pointerdown', e => {
   if (state !== 'play') return;
@@ -1653,6 +2344,13 @@ addEventListener('pointerup', pointerEnd);
 addEventListener('pointercancel', pointerEnd);
 $('#ultbtn').onclick = useUlt;
 $('#pausebtn').onclick = () => setPause(true);
+$('#bossbtn').onclick = () => state === 'play' && summonBoss();
+$('#fsbtn').onclick = () => document.fullscreenElement ? document.exitFullscreen() : goFullscreen();
+// Phones: fill the screen and prefer landscape. iPhone Safari has no page fullscreen, so failures are ignored.
+function goFullscreen() {
+  const el = document.documentElement, req = el.requestFullscreen || el.webkitRequestFullscreen;
+  req?.call(el, { navigationUI: 'hide' })?.then?.(() => screen.orientation?.lock?.('landscape').catch(() => {}), () => {});
+}
 $('#resumebtn').onclick = () => setPause(false);
 $('#restartbtn').onclick = startGame;
 $('#quitbtn').onclick = toTitle;
@@ -1678,7 +2376,11 @@ function update(dt) {
   if (keys.has('KeyS') || keys.has('ArrowDown')) f--;
   if (keys.has('KeyD') || keys.has('ArrowRight')) s++;
   if (keys.has('KeyA') || keys.has('ArrowLeft')) s--;
-  if (stick.on) { s += stick.x; f -= stick.y; }
+  if (stick.on) {
+    s += stick.x; f -= stick.y;
+    // Easy steering: with no thumb on the look side, the camera swings toward where the stick points.
+    if (lookTouch.id === null) yaw -= stick.x * 1.6 * dt;
+  }
   const len = Math.hypot(f, s);
   if (len > 1) { f /= len; s /= len; }
   S.moving = len > .1;
@@ -1698,6 +2400,9 @@ function update(dt) {
   S.shield -= dt;
   shieldMesh.visible = S.shield > 0;
   if (S.shield > 0) { shieldMesh.position.set(S.x, 1.2, S.z); shieldMesh.rotation.y += dt * 2; shieldMesh.material.opacity = S.shield < 1.5 && Math.floor(S.t * 8) % 2 ? .15 : .4; }
+  shellMesh.visible = !!S.shell && S.shield <= 0;
+  if (S.shell) { shellMesh.position.set(S.x, 1.1, S.z); shellMesh.rotation.y -= dt * 1.2; }
+  S.ab.tick?.(dt);
   if (S.t > 20) $('#hint').hidden = true;
   if (S.t >= 300) setFlag('survived5');
   if (S.t - S.lastSave > 10) { S.lastSave = S.t; saveProg(); }
@@ -1705,6 +2410,7 @@ function update(dt) {
   spawnTick(dt);
   tickMoves(dt);
   tickUlts(dt);
+  tickExtras(dt);
 
   for (const en of S.enemies) {
     if (en.dying > 0) {
@@ -1727,8 +2433,11 @@ function update(dt) {
       if (en.seed.t <= 0) en.seed = null;
       if (en.dying > 0) continue;
     }
-    const hold = en.boss && bossBrain(en, dt, dx, dz, d);
-    if (!hold) { en.x += dx / d * en.spd * dt; en.z += dz / d * en.spd * dt; }
+    const sp = tickStatus(en, dt);
+    if (en.dying > 0) continue;
+    // Frozen or dazed monsters stand still; bosses stop their attack patterns too.
+    const hold = !sp || (en.boss && bossBrain(en, dt, dx, dz, d));
+    if (!hold) { en.x += dx / d * en.spd * sp * dt; en.z += dz / d * en.spd * sp * dt; }
     en.x += en.kx * dt; en.z += en.kz * dt;
     const damp = Math.pow(.004, dt);
     en.kx *= damp; en.kz *= damp;
@@ -1737,10 +2446,15 @@ function update(dt) {
     en.mesh.position.set(en.x, 0, en.z);
     en.shadow.position.set(en.x, .03, en.z);
     // Sheet art faces right: use the normal frame when heading screen-right.
-    const goingRight = (dx * right.x + dz * right.z) > 0, M = WILD_MATS[en.kind][Math.floor(S.t * 7 + en.ph) % 4];
+    // Frames stop while held in place; a status tints the sprite (hit flash wins).
+    if (sp) en.fr = Math.floor(S.t * 7 + en.ph) % 4;
+    const goingRight = (dx * right.x + dz * right.z) > 0, M = WILD_MATS[en.kind][en.fr || 0];
+    const tint = en.freeze > 0 ? 'freeze' : en.burn ? 'burn' : en.poison ? 'poison' : en.chill ? 'chill' : en.daze > 0 ? 'daze' : null;
     if (en.flash > 0) { en.flash -= dt; en.mesh.material = goingRight ? M.fn : M.fm; en.mesh.scale.set(en.size * 1.12, en.size * .88, 1); }
-    else { en.mesh.material = goingRight ? M.n : M.m; en.mesh.scale.set(en.size, en.size, 1); }
-    if (d < en.r + .6) hurt(en.dmg);
+    else { en.mesh.material = tint ? M.tint[tint][goingRight ? 0 : 1] : goingRight ? M.n : M.m; en.mesh.scale.set(en.size, en.size, 1); }
+    // The ice sits a little toward the camera so it draws in front of the monster.
+    if (en.ice) { vA.subVectors(camera.position, en.mesh.position).setY(0).normalize(); en.ice.position.set(en.x + vA.x * .35, 0, en.z + vA.z * .35); }
+    if (d < en.r + .6 && !(en.freeze > 0)) { hurt(en.dmg); S.ab.touch?.(en); }
   }
   // ponytail: O(n²) separation over ≤320 monsters; switch to a spatial grid if the cap rises.
   const live = S.enemies.filter(en => en.dying <= 0);
@@ -1772,7 +2486,7 @@ function update(dt) {
     for (const en of S.enemies) {
       if (en.dying > 0 || s.hit.has(en) || Math.hypot(en.x - s.x, en.z - s.z) > en.r + .4) continue;
       s.hit.add(en);
-      hitEnemy(en, s.dmg, s.el, s.vx / s.sp * 4, s.vz / s.sp * 4, s.el !== 'water' || Math.random() < .35);
+      hitEnemy(en, s.dmg, s.el, s.vx / s.sp * 4, s.vz / s.sp * 4, s.el !== 'water' || Math.random() < .35, s.st || 0);
       if (--s.pierce < 0) { s.life = 0; break; }
     }
     if (s.life <= 0) { if (s.explode) blast(s); scene.remove(s.mesh); s.gone = true; }
@@ -1785,7 +2499,7 @@ function update(dt) {
     if (s.life <= 0) { scene.remove(s.mesh); s.gone = true; }
   }
   S.eshots = S.eshots.filter(s => !s.gone);
-  SM.leaf.rotation += dt * 12;
+  PS('leaf').rotation += dt * 12;
 
   for (const g of S.gems) {
     const dx = S.x - g.x, dz = S.z - g.z, d = Math.hypot(dx, dz);
@@ -1866,10 +2580,11 @@ function tickAnims(dt) {
 function partnerMat(faceBack, faceRight, t, moving) {
   const a = S.a;
   if (a.art === 'starter') { const set = STARTER_MATS[a.type][S.stage][faceBack ? 'back' : 'front']; return faceRight ? set.m : set.n; }
-  const M = WILD_MATS[a.kind][moving ? Math.floor(t * 8) % 4 : 0];
+  const M = EVO_MATS[a.kind][S.stage][moving ? Math.floor(t * 8) % 4 : 0];
   return faceRight ? M.n : M.m;
 }
-const partnerSize = () => (S.a.art === 'starter' ? 3 : WILD[S.a.kind].size * (WILD[S.a.kind].boss ? .45 : 1.25)) * (1 + S.stage * .1);
+// Evolved recruit frames are 36 px instead of 28 px around the same 24 px creature, so they scale up to match.
+const partnerSize = () => (S.a.art === 'starter' ? 3 : WILD[S.a.kind].size * (WILD[S.a.kind].boss ? .45 : 1.25) * (S.stage ? 36 / 28 : 1)) * (1 + S.stage * .1);
 function drawPlayer(t) {
   const tr = state === 'title' ? null : trainer(), bob = S.moving ? Math.abs(Math.sin(t * 12)) : 0;
   if (tr) {
@@ -1939,6 +2654,11 @@ function updateHud() {
   $('#xpfill').style.width = (S.xp / S.need * 100) + '%';
   $('#plv').textContent = S.level >= MAX_LEVEL ? `Lv ${S.level} MAX` : `Lv ${S.level}`;
   $('#pname').textContent = S.a.names[S.stage];
+  const am = S.ab.meter?.();
+  $('#abtext').textContent = am ? am.text : S.ab.name;
+  $('#abbar').hidden = !am;
+  if (am) $('#abfill').style.width = am.v * 100 + '%';
+  $('#abil').classList.toggle('hot', !!am?.hot);
   $('#clock').textContent = fmt(S.t);
   $('#kills').textContent = `${S.kills} defeated · ${fmt(Math.max(0, RUN_LENGTH - S.t))} to go`;
   const u = S.ult / S.ultNeed, ub = $('#ultbtn');
@@ -1984,7 +2704,8 @@ let last = performance.now();
 function frame(now) {
   // Queue the next frame first: if anything below throws, the game keeps running and Restart still works.
   requestAnimationFrame(frame);
-  const dt = Math.min(.05, (now - last) / 1000);
+  // A frame's timestamp can be a touch older than a performance.now() taken in a click handler: never step backwards.
+  const dt = clamp((now - last) / 1000, 0, .05);
   last = now;
   if (state === 'play') { update(dt); if (state !== 'title') updateHud(); }
   tickHerd(dt, state === 'title');
@@ -2015,27 +2736,48 @@ async function boot() {
     ART.starter[t] = [0, 1, 2].map(st => ({ front: drawStarter(t, st, false), back: drawStarter(t, st, true) }));
     STARTER_MATS[t] = ART.starter[t].map(a => ({ front: matSet(a.front), back: matSet(a.back) }));
   }
-  for (const k in WILD) { const fr = monFrames(WILD[k].id, WILD[k].tint); ICONS[k] = fr[0].toDataURL(); WILD_MATS[k] = fr.map(matSet); }
+  for (const k in WILD) { const fr = monFrames(WILD[k].id, WILD[k].tint); WILD_ART[k] = fr; ICONS[k] = fr[0].toDataURL(); WILD_MATS[k] = fr.map(c => matSet(c, true)); }
   for (const k in VFXDRAW) {
     const [n, w, h, fn, opts] = VFXDRAW[k];
-    VFX[k] = { w, h, mats: Array.from({ length: n }, (_, i) => smat(tex(draw(w, h, x => fn(x, i), opts)))) };
+    SRC.vfx[k] = Array.from({ length: n }, (_, i) => draw(w, h, x => fn(x, i), opts));
+    VFX[k] = { w, h, mats: SRC.vfx[k].map(c => smat(tex(c))) };
   }
-  for (const k in SMALL) { const [w, h, fn] = SMALL[k]; SM[k] = smat(tex(draw(w, h, fn))); }
+  for (const k in SMALL) { const [w, h, fn] = SMALL[k]; SRC.sm[k] = draw(w, h, fn); }
+  for (const k of ['vineA', 'vineB', 'thornA']) SRC.sm[k + 'd'] = flipV(SRC.sm[k]);
+  for (const k in SRC.sm) SM[k] = smat(tex(SRC.sm[k]));
   SM.ember = [SM.ember0, SM.ember1];
+  SM.fireball = [SM.fireball0, SM.fireball1];
+  SRC.tex.vine = draw(...TEXDRAW.vine);
+  SRC.tex.vortex = vortexCanvas();
+  TEX.vine = vineTex(SRC.tex.vine);
+  TEX.vortex = tex(SRC.tex.vortex);
+  VINE_MAT = vineMat(TEX.vine);
+  // Recruits: stage 0 is the wild sprite, stages 1 and 2 the drawn evolutions. The Wild Dex shows frame 0 of each.
+  for (const k in RECRUIT_NEED) {
+    const evo = [1, 2].map(st => evoFrames(k, st));
+    EVO_MATS[k] = [WILD_MATS[k], ...evo.map(fr => fr.map(c => matSet(c)))];
+    DEX_IMG[k] = [WILD_ART[k][0], evo[0][0], evo[1][0]].map(c => ({ src: c.toDataURL(), px: c.width }));
+  }
+  for (const t in STARTERS) DEX_IMG[t] = ART.starter[t].map(a => ({ src: a.front.toDataURL(), px: 48 }));
+  LOCK_ICON = draw(10, 12, x => { x.strokeStyle = '#5d6680'; x.lineWidth = 2; x.beginPath(); x.arc(5, 5, 2.6, Math.PI, 0); x.stroke(); r(x, 1, 5, 8, 6, '#f6c445'); r(x, 4, 7, 2, 2, '#1d2433'); }).toDataURL();
   buildWorld();
   player = sprite(STARTER_MATS.fire[0].front.n, 3, 3, .06);
   playerShadow = shadow(.9);
   buddy = sprite(STARTER_MATS.fire[0].front.n, 2.4, 2.4, .06);
   buddyShadow = shadow(.7);
-  VORTEX_TEX = vortexTexture();
   shieldMesh = new THREE.Mesh(new THREE.SphereGeometry(1.6, 12, 8), new THREE.MeshBasicMaterial({ color: '#9fc4ff', transparent: true, opacity: .4, wireframe: true }));
   shieldMesh.visible = false;
   scene.add(shieldMesh);
+  // Rock Shell: a stone-coloured cage while the shell is up.
+  shellMesh = new THREE.Mesh(new THREE.IcosahedronGeometry(1.5, 0), new THREE.MeshBasicMaterial({ color: '#c9a46a', transparent: true, opacity: .55, wireframe: true }));
+  shellMesh.visible = false;
+  scene.add(shellMesh);
+  $('#dexsearch').oninput = e => { dexQuery = e.target.value; renderDexList(); };
   radarCtx = $('#radar').getContext('2d');
   makeHerd();
   initSettings();
   try { const saved = localStorage.getItem('pocketwilds-partner'); if (saved && PARTNERS[saved] && isUnlocked(saved)) chosen = saved; } catch {}
-  if (matchMedia('(pointer: coarse)').matches) $('#hint').textContent = 'Left thumb moves · right thumb looks around · tap the circle for your ultimate';
+  if (matchMedia('(pointer: coarse)').matches) $('#hint').textContent = 'Left thumb moves (the camera follows) · right thumb looks around · circle = ultimate · E = boss';
   $('#loading').remove();
   toTitle();
   requestAnimationFrame(frame);
