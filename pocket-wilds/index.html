@@ -98,6 +98,10 @@ img.px { image-rendering: pixelated; }
   #hud #bossbar { left: calc(14px + env(safe-area-inset-left, 0px)); transform: none; width: calc(100vw - 150px); }
 }
 /* Touch-only HUD buttons (boss, full screen); phones have no E key. */
+/* Always reachable: bottom right on menus, next to Pause during a run. */
+#fsbtn { position: fixed; z-index: 40; right: calc(12px + env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+body.playing #fsbtn { bottom: auto; top: calc(14px + env(safe-area-inset-top, 0px)); right: calc(66px + env(safe-area-inset-right, 0px)); }
+@media (pointer: coarse) { body.playing #fsbtn { right: calc(118px + env(safe-area-inset-right, 0px)); } }
 .touch { display: none; }
 @media (pointer: coarse) { .touch { display: inline-block; } .hud-tr { display: flex; gap: 8px; } #radar { top: calc(70px + env(safe-area-inset-top, 0px)); } #hud, #stage { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; } button { touch-action: manipulation; } }
 .icon-btn { width: 44px; height: 44px; border-radius: 8px; border: 3px solid var(--panel-edge); background: var(--panel); color: var(--ink); font-family: var(--display); font-size: 1rem; }
@@ -406,6 +410,23 @@ label.btn.file { cursor: pointer; display: inline-block; }
 #help .box { width: min(900px, 100%); }
 #help .sheet { box-sizing: border-box; max-height: calc(100dvh - 48px); overflow-y: auto; }
 #help .sheet > .row { position: sticky; bottom: -18px; background: var(--panel); padding-block: 8px; margin-bottom: -18px; }
+/* Pre-run shop: same cards as level-ups, but they toggle, and unaffordable ones dim. */
+.shopbank { justify-content: center; gap: 8px; font-family: var(--display); font-size: 1.6rem; color: var(--gold); }
+.shopbank img { width: 30px; height: 30px; }
+#titlecoins { justify-content: flex-start; font-size: 1.3rem; }
+#titlecoins img { width: 24px; height: 24px; }
+.prepimg { width: 40px; height: 40px; }
+.choice.on { outline: 4px solid var(--gold); }
+.choice.off { opacity: .55; cursor: not-allowed; }
+.choice.off:hover { outline: none; }
+/* Wild Dex items: a card per item, silhouette until collected. */
+.dexitems { padding: 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 8px; text-align: left; }
+.itemcard { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 10px; align-items: start; padding: 8px 10px; background: #fffbef; border: 2px solid #d9d2bd; border-left: 6px solid var(--c); border-radius: 8px; }
+.itemcard img { width: 48px; height: 48px; }
+.itemcard b { font-family: var(--display); font-size: 1.05rem; display: block; }
+.itemcard p { margin: 2px 0 4px; font-size: .86rem; line-height: 1.25; }
+.itemcard.unknown { background: #ece6d2; }
+.itemcard.unknown img { filter: brightness(0) opacity(.4); }
 .fxlegend { display: grid; gap: 6px; border-top: 2px solid #d9d2bd; padding-top: 8px; }
 .fxlegend h4 { margin: 0; font-family: var(--display); font-size: 1rem; }
 .fxlegend p { margin: 0; font-size: .82rem; line-height: 1.3; }
@@ -428,6 +449,7 @@ label.btn.file { cursor: pointer; display: inline-block; }
 </style>
 
 <div id="stage"></div>
+<button class="icon-btn" id="fsbtn" aria-label="Full screen" title="Full screen">&#x26F6;</button>
 
 <div id="hud" hidden>
   <div id="me">
@@ -442,7 +464,7 @@ label.btn.file { cursor: pointer; display: inline-block; }
   </div>
   <span id="fps" hidden></span>
   <div id="top"><div id="zone"></div><div id="clock">0:00</div><div id="kills">0 defeated</div><div id="coinrow"><img id="coinimg" class="px" alt="Wild coins"><b id="coins">0</b></div></div>
-  <div class="hud-tr"><button class="icon-btn touch" id="bossbtn" aria-label="Interact">E</button><button class="icon-btn touch" id="fsbtn" aria-label="Full screen">&#x26F6;</button><button class="icon-btn" id="pausebtn" aria-label="Pause">II</button></div>
+  <div class="hud-tr"><button class="icon-btn touch" id="bossbtn" aria-label="Interact">E</button><button class="icon-btn" id="pausebtn" aria-label="Pause">II</button></div>
   <canvas id="radar" width="180" height="180" aria-label="Minimap"></canvas>
   <div id="bossbar" class="plate" hidden><b id="bossname">Boss</b><div class="bar"><i id="bossfill"></i></div></div>
   <div id="crosshair" hidden></div>
@@ -468,6 +490,7 @@ label.btn.file { cursor: pointer; display: inline-block; }
   <div class="box">
     <h1 class="title">Pocket Wilds</h1>
     <p class="tag">A pixel monster meadow. Pick a fire, water or grass partner, learn moves, evolve twice and survive ten minutes of wild monsters.</p>
+    <div class="row shopbank" id="titlecoins"><img id="titlecoinimg" class="px" alt="Wild coins"><b id="titlebank">0</b><span class="small">coins banked</span></div>
     <div class="menu">
       <button class="btn" id="playbtn">Play</button>
       <button class="btn ghost" data-open="dex">Wild Dex</button>
@@ -502,11 +525,13 @@ label.btn.file { cursor: pointer; display: inline-block; }
         <kbd>Mouse</kbd><span>Click the game to lock the mouse, then move it to turn the camera.</span>
         <kbd>W A S D</kbd><span>Move. Forward is wherever the camera faces.</span>
         <kbd>R</kbd><span>Use your ultimate when the circle is full. Defeating monsters fills it.</span>
-        <kbd>Coins</kbd><span>Monsters drop experience or a wild coin. Spend coins on chests (E): each gives a boost item for the run (Common to Legendary) or a move scroll, and each chest costs more than the last. A few blue chests are free, and bosses leave one.</span>
+        <kbd>Time</kbd><span>A Time Crystal is ultra rare and adds one minute to the run. The Items section of the Wild Dex lists every item, revealed once you collect it.</span>
+        <kbd>Bank</kbd><span>Coins you do not spend in a run are saved. Before the next run a shop offers 3 upgrades: buy any, all or none. They last that one run.</span>
+        <kbd>Coins</kbd><span>Monsters drop experience or a wild coin. Spend coins on chests (E): each gives a boost item for the run (Common to Legendary) or a move scroll, and each chest costs more than the last. A few blue chests are free, and the first boss beaten at each altar leaves one.</span>
         <kbd>Tab</kbd><span>Open the meadow map. In the level-up screen, F rerolls the picks and X skips them (twice per run each).</span>
         <kbd>Space</kbd><span>Jump. High enough and you clear ground monsters and low shots.</span>
         <kbd>Shift</kbd><span>Dash a short way in the direction you are moving. You can't be hit while dashing.</span>
-        <kbd>E</kbd><span>Interact. At a <b>boss altar</b> (red crystal) it calls that boss, whose chest is better. At a <b>chest</b> it opens it. Each works once per run. Bosses slam, charge and fire volleys, so watch for the red circle.</span>
+        <kbd>E</kbd><span>Interact. At a <b>boss altar</b> (red crystal) it calls that boss. The altar recharges 1 minute after the boss falls, and only the first win at each altar leaves a free chest. At a <b>chest</b> it opens it, once per run. Bosses slam, charge and fire volleys, so watch for the red circle.</span>
         <kbd>M</kbd><span>Turn sound on or off.</span>
         <kbd>Esc</kbd><span>Pause and open the menu. Press again to resume.</span>
         <kbd>Phone</kbd><span>The game goes full screen when a run starts (turn the phone sideways). Left thumb moves and the camera follows, right thumb looks around, the circle fires your ultimate, E calls a boss and &#x26F6; toggles full screen.</span>
@@ -515,10 +540,10 @@ label.btn.file { cursor: pointer; display: inline-block; }
       <p>Your moves fire on their own. Walk over the glowing orbs to gain experience and pick a new move or trait each level. Your partner only learns moves of its own type. You heal slowly when you avoid damage for a few seconds.</p>
       <p><b>Radar.</b> The circle at the top right shows monsters (coloured by type), bosses (big red dots), crates (brown) and items (gold). The gold ring is the fence at the edge of the meadow.</p>
       <p><b>Crates.</b> Break them by attacking or walking into them for coins, a Heal Berry, a Magnet (pulls in every orb), a Bomb (blasts everything nearby) or a Shield (6 seconds of safety).</p>
-      <p>Your partner evolves at level 12 and level 27, recruits included. A boss shows up every 2:00. Beat a boss once and it joins you as a playable partner, including Boulderback, the ground-type boss.</p>
+      <p>Your partner evolves at level 12 and level 27, recruits included. Bosses only come when you call them at an altar.</p>
       <p><b>Abilities and status effects.</b> Every partner has its own ability, like Overheat for the fire starter. Moves can also leave a status on monsters: fire <b>burns</b>, water <b>chills</b> (chill a monster three times and it <b>freezes</b> solid), grass <b>poisons</b> and ground <b>dazes</b>. Open the <b>Wild Dex</b> to read every partner's ability, stats and moves.</p>
-      <p><b>Recruits.</b> Each monster has a challenge (see the Wild Dex), such as defeating 150 of them, freezing 80 monsters or breaking 40 stones. Progress is kept between runs. Finish it and, in a later run, the monster may roam the map (one per run, more often the commoner it is), with an arrow pointing to it. It only fights if you get close, then runs. Bring it below a quarter of its HP and stay in its ring for 12 seconds; leave for 5 seconds and it resets. Bosses are Legendary: their challenges are harder, and capturing one adds a Legendary power-up to every partner's level-up picks.</p>
-      <p><b>The world.</b> Seven regions, each with its own look and favourite monsters. Trees, ponds and stones block the way; stones break when you hit them. Hordes close in from time to time, and glowing elites hit harder but drop coins.</p>
+      <p><b>Recruits.</b> Each monster has a challenge (see the Wild Dex), such as defeating 150 of them, freezing 80 monsters or breaking 40 stones. Progress is kept between runs. Finish it and, in a later run, the monster may roam the map (one per run, more often the commoner it is), with an arrow pointing to it. It only fights if you get close, then runs. Bring it below a quarter of its HP and stay in its ring: 12 seconds normally, longer if your type is strong against it (water on fire), shorter if weak (fire on water). Leave for 5 seconds and it resets. Bosses are Legendary: their challenges are harder, and capturing one adds a Legendary power-up to every partner's level-up picks.</p>
+      <p><b>The world.</b> Seven regions, each with its own look and its own monsters: fire in the badlands, water in the snow and marsh, grass in the woods, rock in the highlands. Regions change your damage too: fire is strong in the Ember Badlands and weak in Frost Hollow, water the other way round, and so on. Until level 10 the wilds stay calm: no region penalties or region monsters, and no elites, hordes or rare pets. The number beside the region name shows it, and the Wild Dex lists it per partner. Trees, ponds and stones block the way; stones break when you hit them. Hordes close in from time to time, and glowing elites hit harder but drop coins.</p>
       <h3>Type matchups</h3>
       <div class="chart"><table>
         <thead><tr><th>Move type</th><th>vs Fire</th><th>vs Water</th><th>vs Grass</th><th>vs Rock</th></tr></thead>
@@ -562,10 +587,12 @@ label.btn.file { cursor: pointer; display: inline-block; }
   <div class="box dexbox">
     <div class="dexhead">
       <h2>Wild Dex</h2>
+      <div class="dexfilter" id="dextabs" role="group" aria-label="Wild Dex section"><button data-dt="partners">Partners</button><button data-dt="items">Items</button></div>
       <span class="small" id="dexcount"></span>
       <button class="btn ghost" data-close>Back</button>
     </div>
-    <div class="dexgrid">
+    <div class="plate dexitems" id="dexitems" hidden></div>
+    <div class="dexgrid" id="dexgrid">
       <article class="plate dexcard" id="dexcard" aria-live="polite"></article>
       <aside class="plate dexlist" aria-label="All partners">
         <div class="dexfilter" id="dexfilter" role="group" aria-label="Filter by type"></div>
@@ -575,6 +602,16 @@ label.btn.file { cursor: pointer; display: inline-block; }
         <div class="fxlegend" id="fxlegend"></div>
       </aside>
     </div>
+  </div>
+</div>
+
+<div class="screen" id="shop" hidden>
+  <div class="box center">
+    <h2 style="font-size:2.3rem;color:var(--gold)">Prepare for the run</h2>
+    <p class="small" style="margin:0">Spend banked coins on any, all or none of these. They last for this run only. Keys 1, 2 and 3 work too.</p>
+    <div class="row shopbank"><img id="shopimg" class="px" alt="Wild coins"><b id="shopcoins">0</b><span class="small">coins in the bank</span></div>
+    <div class="choices" id="shopcards"></div>
+    <div class="row" style="justify-content:center"><button class="btn" id="shopstart">Start run</button><button class="btn ghost" id="shopback">Back</button></div>
   </div>
 </div>
 
@@ -647,9 +684,9 @@ function readJSON(k) { try { return JSON.parse(localStorage.getItem(k)) || {}; }
 function writeJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 // onload rather than img.decode(): decode() can stall while the tab is in the background.
 const loadImage = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
-const KEY_DEFAULTS = { jump: 'Space', dash: 'ShiftLeft', ult: 'KeyR', interact: 'KeyE', map: 'Tab', pause: 'KeyP', mute: 'KeyM', reroll: 'KeyF', skip: 'KeyX' };
+const KEY_DEFAULTS = { fs: 'KeyG', jump: 'Space', dash: 'ShiftLeft', ult: 'KeyR', interact: 'KeyE', map: 'Tab', pause: 'KeyP', mute: 'KeyM', reroll: 'KeyF', skip: 'KeyX' };
 const SET = Object.assign({ sens: 1, invertY: false, shake: !reduceMotion, shakeAmt: 1, popups: true, dmgNums: true, sfxVol: .8, musicVol: .6, master: .9, muted: false, muteBg: true,
-  quality: 'high', fps: 0, showFps: false, camDist: 11.5, fov: 55, autoUlt: false, showRadar: true, showStreak: true, showSlots: true, showHint: true }, readJSON('pocketwilds-settings'));
+  autoFs: true, quality: 'high', fps: 0, showFps: false, camDist: 11.5, fov: 55, autoUlt: false, showRadar: true, showStreak: true, showSlots: true, showHint: true }, readJSON('pocketwilds-settings'));
 // Version 2 moved the ultimate to R and made E interact: older saved keys reset once.
 if (SET.keysV !== 2) { SET.keys = {}; SET.keysV = 2; }
 SET.keys = Object.assign({}, KEY_DEFAULTS, SET.keys);
@@ -1131,6 +1168,7 @@ const SMALL = {
   // The Wild Orb: teal and gold with a green gem latch.
   orb: [20, 20, x => { e(x, 10, 10, 8.5, 8.5, '#e8b83a'); x.fillStyle = '#2aa79b'; x.beginPath(); x.arc(10, 10, 8.5, Math.PI, 0); x.fill(); e(x, 7, 6, 2.4, 1.6, '#8fe8dc'); r(x, 1.5, 9, 17, 2, '#1d2433'); poly(x, '#1d2433', 10, 5.5, 14, 10, 10, 14.5, 6, 10); poly(x, '#7fe05a', 10, 7, 12.5, 10, 10, 13, 7.5, 10); }],
   orbopen: [24, 24, x => { x.fillStyle = '#2aa79b'; x.beginPath(); x.arc(12, 8, 8.5, Math.PI, 0); x.fill(); x.fillStyle = '#e8b83a'; x.beginPath(); x.arc(12, 15, 8.5, 0, Math.PI); x.fill(); r(x, 3.5, 8, 17, 1.5, '#1d2433'); r(x, 3.5, 14, 17, 1.5, '#1d2433'); e(x, 12, 11.5, 6, 2.2, '#ffffff'); }],
+  it_time: [16, 16, x => { poly(x, '#a01868', 8, 1, 14, 6, 8, 15, 2, 6); poly(x, '#e0409a', 8, 3, 12, 6, 8, 12, 4, 6); poly(x, '#ffc4e4', 8, 3, 10, 6, 8, 8, 6, 6); r(x, 6, 4, 1, 1, '#ffffff'); }],
   it_candy: [16, 16, x => { poly(x, '#f2c230', 1, 5, 4, 8, 1, 11); poly(x, '#f2c230', 15, 5, 12, 8, 15, 11); e(x, 8, 8, 4.5, 4, '#ef6f94'); r(x, 6, 6, 2, 2, '#ffffff'); r(x, 9, 9, 1, 1, '#ffe6ee'); }],
   crate: [24, 24, x => { r(x, 2, 4, 20, 18, '#8a5a36'); r(x, 2, 4, 20, 3, '#b58a5a'); r(x, 2, 19, 20, 3, '#6b4429'); r(x, 2, 4, 3, 18, '#a8784a'); r(x, 19, 4, 3, 18, '#6b4429'); poly(x, '#6b4429', 5, 18, 7, 18, 19, 8, 19, 6, 17, 6, 5, 16); r(x, 11, 10, 2, 2, '#e8c070'); }],
 };
@@ -1268,16 +1306,23 @@ function groundH(x, z) {
 // Ponds sit on flat ground; they block movement like trees.
 const PONDS = [];
 // Regions: the nearest seed wins (w shrinks or grows a region), with wobbly borders. el biases which monsters spawn there.
+// aff scales the damage of each move type used there (fire is weak in the snow, strong in the badlands, and so on).
 // tint multiplies the grass texture; map = hsl for the full map; trees and props are what grows there.
 const BIOMES = [
   { name: 'Sunny Meadow', x: 0, z: 0, w: 1.25, tint: [1, 1, 1], map: [100, 58, 44], tp: .1, trees: ['oak', 'oak', 'pine', 'blossom'], props: ['flowers', 'flowers', 'tallgrass', 'tallgrass', 'bush', 'sunflower', 'mushroom', 'fern'] },
-  { name: 'Blossom Grove', x: -95, z: -70, w: 1, el: 'grass', tint: [1.4, 1, 1.3], map: [335, 45, 62], tp: .2, trees: ['blossom', 'blossom', 'blossom', 'oak'], props: ['flowers', 'flowers', 'flowers', 'mushroom', 'tallgrass', 'fern'] },
-  { name: 'Ember Badlands', x: 100, z: -65, w: 1, el: 'fire', tint: [2.05, .8, .72], map: [18, 55, 46], tp: .08, trees: ['deadtree'], props: ['ashrock', 'ashrock', 'stump', 'deadgrass', 'deadgrass'] },
-  { name: 'Frost Hollow', x: -95, z: 85, w: 1, el: 'water', tint: [2.5, 1.28, 3.5], map: [205, 45, 86], tp: .14, trees: ['snowpine'], props: ['icecrystal', 'icecrystal', 'snowbush', 'snowbush'] },
-  { name: 'Stone Highlands', x: 95, z: 90, w: 1, el: 'rock', tint: [1.75, 1.05, 1.75], map: [40, 12, 58], tp: .09, trees: ['pine', 'deadtree'], props: ['ashrock', 'stump', 'tallgrass', 'fern'] },
-  { name: 'Misty Marsh', x: 0, z: 135, w: 1, el: 'water', tint: [.85, .86, 1.15], map: [165, 35, 36], tp: .1, trees: ['oak', 'deadtree'], props: ['fern', 'fern', 'mushroom', 'mushroom', 'tallgrass'] },
-  { name: 'Deepwood', x: 0, z: -135, w: 1, el: 'grass', tint: [.72, .84, .6], map: [130, 45, 26], tp: .3, trees: ['oak', 'pine', 'pine'], props: ['fern', 'fern', 'mushroom', 'bush', 'tallgrass'] },
+  { name: 'Blossom Grove', aff: { grass: 1.2, ground: .9 }, x: -95, z: -70, w: 1, el: 'grass', tint: [1.4, 1, 1.3], map: [335, 45, 62], tp: .2, trees: ['blossom', 'blossom', 'blossom', 'oak'], props: ['flowers', 'flowers', 'flowers', 'mushroom', 'tallgrass', 'fern'] },
+  { name: 'Ember Badlands', aff: { fire: 1.3, water: .75, grass: .8, ground: 1.1 }, x: 100, z: -65, w: 1, el: 'fire', tint: [2.05, .8, .72], map: [18, 55, 46], tp: .08, trees: ['deadtree'], props: ['ashrock', 'ashrock', 'stump', 'deadgrass', 'deadgrass'] },
+  { name: 'Frost Hollow', aff: { water: 1.25, fire: .7, grass: .8, ground: .95 }, x: -95, z: 85, w: 1, el: 'water', tint: [2.5, 1.28, 3.5], map: [205, 45, 86], tp: .14, trees: ['snowpine'], props: ['icecrystal', 'icecrystal', 'snowbush', 'snowbush'] },
+  { name: 'Stone Highlands', aff: { ground: 1.3, grass: .85, water: .95 }, x: 95, z: 90, w: 1, el: 'rock', tint: [1.75, 1.05, 1.75], map: [40, 12, 58], tp: .09, trees: ['pine', 'deadtree'], props: ['ashrock', 'stump', 'tallgrass', 'fern'] },
+  { name: 'Misty Marsh', aff: { water: 1.2, grass: 1.15, fire: .75, ground: .85 }, x: 0, z: 135, w: 1, el: 'water', tint: [.85, .86, 1.15], map: [165, 35, 36], tp: .1, trees: ['oak', 'deadtree'], props: ['fern', 'fern', 'mushroom', 'mushroom', 'tallgrass'] },
+  { name: 'Deepwood', aff: { grass: 1.3, fire: 1.1, ground: .9 }, x: 0, z: -135, w: 1, el: 'grass', tint: [.72, .84, .6], map: [130, 45, 26], tp: .3, trees: ['oak', 'pine', 'pine'], props: ['fern', 'fern', 'mushroom', 'bush', 'tallgrass'] },
 ];
+// Below this level the wilds stay calm: no region penalties or region monsters, no elites, hordes or rare pets.
+const WILDS_LV = 10;
+const wildsAwake = () => S.level >= WILDS_LV;
+const baseAff = (b, el) => b.aff?.[el] ?? 1;
+const affOf = (b, el) => { const v = baseAff(b, el); return v < 1 && !wildsAwake() ? 1 : v; };
+const affText = (b, el) => { const v = Math.round((affOf(b, el) - 1) * 100); return v ? `${cap(el)} moves ${v > 0 ? '+' : '−'}${Math.abs(v)}% here` : ''; };
 function biomeAt(x, z) {
   const wx = x + Math.sin(z * .07) * 10 + Math.sin(z * .31) * 2.5, wz = z + Math.sin(x * .07) * 10 + Math.sin(x * .29) * 2.5;
   let best = BIOMES[0], bd = 1e9;
@@ -1398,8 +1443,8 @@ const MOVES = {
     stat: l => ({ dmg: 6 + 3 * (l - 1), every: .15, dur: .8 + .1 * l, cd: 2.4 * lv(l), reach: 6 + .5 * l, st: .08 }) },
   fireblast: { name: 'Fire Blast', el: 'fire', blurb: 'Launches a big fireball that explodes into a star of fire.', up: 'A bigger, harder explosion, more often.',
     stat: l => ({ dmg: 30 + 14 * (l - 1), cd: 3.4 * lv(l), r: 3 + .35 * l, reach: 22, st: .5 }) },
-  shuriken: { name: 'Water Shuriken', el: 'water', blurb: 'Throws spinning water stars at several monsters at once.', up: 'One more star and more damage.',
-    stat: l => ({ dmg: 10 + 4 * (l - 1), n: 1 + l, cd: 1.6 * lv(l), reach: 20, st: .25 }) },
+  shuriken: { name: 'Water Shuriken', el: 'water', blurb: 'Throws spinning water stars at several monsters at once.', up: 'More damage, and one more star every second level.',
+    stat: l => ({ dmg: 10 + 4 * (l - 1), n: 2 + Math.floor((l - 1) / 2), cd: 1.6 * lv(l), reach: 20, st: .25 }) },
   whirlpool: { name: 'Whirlpool', el: 'water', blurb: 'A spinning vortex pulls monsters in and keeps hurting them.', up: 'A bigger vortex that lasts longer.',
     stat: l => ({ dmg: 6 + 3 * (l - 1), every: .3, dur: 2.4 + .3 * l, cd: 4.2 * lv(l), r: 2.6 + .3 * l, reach: 18, st: .1 }) },
   aquaring: { name: 'Aqua Ring', el: 'water', blurb: 'A veil of water rings heals you every second.', up: 'Heals more each level.',
@@ -1425,7 +1470,7 @@ const MOVES = {
   bubbles: { name: 'Bubble Guard', el: 'water', blurb: 'Bubbles circle you and splash anything they touch.', up: 'One more bubble, harder hits, wider circle.',
     stat: l => ({ dmg: 5 + 3 * (l - 1), n: 1 + l, every: .45, r: 2.4 + .15 * l, st: .2 }) },
   vinewhip: { name: 'Vine Whip', el: 'grass', blurb: 'Lashes a leafy vine at the nearest monster and hits everything along it.', up: 'Longer reach and a harder lash. A second vine at level 4.',
-    stat: l => ({ dmg: 16 + 7 * (l - 1), n: l >= 4 ? 2 : 1, cd: 1.3 * lv(l), reach: 6.5 + .7 * (l - 1), st: .3 }) },
+    stat: l => ({ dmg: 18 + 8 * (l - 1), n: l >= 4 ? 2 : 1, cd: 1.2 * lv(l), reach: 10 + .8 * (l - 1), st: .3 }) },
   leaves: { name: 'Razor Leaf', el: 'grass', blurb: 'Sharp leaves fly out from you in every direction.', up: 'Two more leaves, more damage, quicker volleys.',
     stat: l => ({ dmg: 9 + 4 * (l - 1), n: 6 + 2 * (l - 1), cd: 1.5 * lv(l), reach: 7.8, pierce: 1, st: .12 }) },
   stomp: { name: 'Mud Stomp', el: 'ground', blurb: 'Shakes the ground around you and throws monsters back.', up: 'Bigger, harder and more frequent stomps.',
@@ -1645,7 +1690,7 @@ function artFor(id) {
 const PS = k => S.art.sm[k] || SM[k];
 const PV = k => S.art.vfx[k] || VFX[k];
 const PT = k => S.art.tex[k] || TEX[k];
-const PROG = Object.assign({ kills: {}, st: {}, fast: {}, ready: [], unlocked: [], survived5: false, bossBeaten: false, won: false }, readJSON('pocketwilds-progress'));
+const PROG = Object.assign({ items: {}, bank: 0, kills: {}, st: {}, fast: {}, ready: [], unlocked: [], survived5: false, bossBeaten: false, won: false }, readJSON('pocketwilds-progress'));
 const saveProg = () => writeJSON('pocketwilds-progress', PROG);
 const isUnlocked = id => !!STARTERS[id] || PROG.unlocked.includes(id);
 
@@ -1680,6 +1725,7 @@ const herd = [];
 
 function clearRun() {
   if (!S) return;
+  bankCoins();
   for (const list of [S.enemies, S.shots, S.gems, S.fx, S.anims]) for (const o of list) { scene.remove(o.mesh); if (o.shadow) scene.remove(o.shadow); if (o.parts) o.parts.forEach(p => scene.remove(p)); }
   for (const w of S.whips) { w.parts.forEach(p => scene.remove(p)); w.mesh.geometry.dispose(); }
   for (const en of S.enemies) { if (en.ice) scene.remove(en.ice); if (en.ring) scene.remove(en.ring); }
@@ -1703,9 +1749,9 @@ function newRun(pid) {
     enemies: [], shots: [], gems: [], fx: [], anims: [], orbs: {}, whips: [], jets: [], cones: [], zones: [], falls: [], eshots: [], wave: null,
     patches: [], bursts: [], blooms: [], rareK: rollRare(), rareT: rand(30, 120), py: groundH(0, 0), pv: 0, camY: groundH(0, 0), dashT: 0, dashCd: 0, mx: 0, mz: 1, art: artFor(a.style), ab: ABILITIES[a.ability],
     lastHit: -9, shield: 0, lastSummon: -9, crateT: 0,
-    spawnT: 0, nextBoss: 120, bossN: 0, pendingLv: 0, boss: null, lastPop: 0,
+    spawnT: 0, bossN: 0, pendingLv: 0, boss: null, lastPop: 0,
     fog: (() => { const f = canvas(128), x = f.getContext('2d'); x.fillStyle = 'rgba(20,26,40,.86)'; x.fillRect(0, 0, 128, 128); return f; })(), seen: new Uint8Array(SEEN_N * SEEN_N), fogT: 0,
-    coins: 0, opened: 0, nextHorde: 75, regionName: '', held: {}, dmgDone: 0, lastNum: 0, streak: 0, bestStreak: 0, lastKill: -9, rerolls: 2, skips: 2,
+    runLen: RUN_LENGTH, biome: BIOMES[0], coins: 0, opened: 0, nextHorde: 75, regionName: '', held: {}, dmgDone: 0, lastNum: 0, streak: 0, bestStreak: 0, lastKill: -9, rerolls: 2, skips: 2,
   };
   S.armor += S.ab.armor || 0;
   S.ab.init?.();
@@ -1715,7 +1761,7 @@ function newRun(pid) {
   for (let i = 0; i < 60; i++) spawnCrate();
   for (let i = 0; i < 90; i++) spawnStone();
   // Interactables (E): boss altars call that boss; chests give an item, for wild coins unless they are the rare free kind. Each works once.
-  S.altars = BOSS_ORDER.map(b => { const [x, z] = spawnPoint(30, WORLD_R * 1.7); return { kind: 'boss', boss: b, x, z, used: false, mesh: sprite(DECOR_MATS.altar, 2.6, 2.6, .04) }; });
+  S.altars = BOSS_ORDER.map(b => { const [x, z] = pointInType(WILD[b].el, 30); return { kind: 'boss', boss: b, x, z, used: false, mesh: sprite(DECOR_MATS.altar, 2.6, 2.6, .04) }; });
   S.altars.forEach(a => a.mesh.position.set(a.x, 0, a.z));
   for (let i = 0; i < 22; i++) { const [x, z] = spawnPoint(10, WORLD_R * 1.7); addChest(x, z, 'chest'); }
   for (let i = 0; i < 3; i++) { const [x, z] = spawnPoint(25, WORLD_R * 1.7); addChest(x, z, 'free'); }
@@ -1779,12 +1825,12 @@ function spawnPoint(minD, maxD) {
 }
 // Monsters start weak and grow with time and with your level.
 // Late-game moves and items multiply your damage, so monster HP has to grow faster than linearly to keep up.
-const hpScale = () => .7 + S.t / 150 + (S.t / 160) ** 2 + (S.level - 1) * .06;
-const dmgScale = () => .5 + Math.min(2.4, S.t / 260);
+const hpScale = () => .7 + S.t / 180 + (S.t / 240) ** 2 + (S.level - 1) * .04;
+const dmgScale = () => .45 + Math.min(1.4, S.t / 480);
 function spawn(kind, at) {
   const def = WILD[kind], [x, z] = at || spawnPoint(24, 32);
   const hpMul = def.boss ? (.6 + S.level * .1) * (1 + S.bossN * .35) : hpScale();
-  const en = { kind, def, el: def.el, x, z, kx: 0, kz: 0, hp: def.hp * hpMul, maxHp: def.hp * hpMul, spd: def.spd * rand(.9, 1.1) * (1 + clamp((S.t - 120) / 1200, 0, .35)), dmg: def.dmg * (def.boss ? Math.max(.75, dmgScale()) : dmgScale()), xp: Math.round(def.xp * (1 + S.t / 400)),
+  const en = { kind, def, el: def.el, x, z, kx: 0, kz: 0, hp: def.hp * hpMul, maxHp: def.hp * hpMul, spd: def.spd * rand(.9, 1.1) * (1 + clamp((S.t - 180) / 1800, 0, .2)), dmg: def.dmg * (def.boss ? Math.max(.75, dmgScale()) : dmgScale()), xp: Math.round(def.xp * (1 + S.t / 700)),
     r: def.r, size: def.size * (def.boss ? .85 : 1), boss: def.boss, born: S.t, flash: 0, dying: 0, orbT: {}, ph: rand(0, 4), mesh: sprite(WILD_MATS[kind][0].n, def.size, def.size, .07), shadow: shadow(def.r * 1.2) };
   S.enemies.push(en);
   return en;
@@ -1801,6 +1847,11 @@ function spawnBoss(kind, at) {
   sfx('boss');
   return en;
 }
+// A boss altar works again a minute after its boss is defeated. Only the first win at each altar leaves a free chest.
+const ALTAR_RESET = 60;
+function tickAltars() {
+  for (const a of S.altars) if (a.readyAt && S.t >= a.readyAt) { a.readyAt = 0; a.used = false; a.mesh.material = DECOR_MATS.altar; if (Math.hypot(a.x - S.x, a.z - S.z) < 30) popText(a.x, 3, a.z, 'Altar ready', '#ffe36e'); }
+}
 const nearAltar = () => S.altars.find(a => !a.used && Math.hypot(a.x - S.x, a.z - S.z) < 3.2);
 function interact() {
   const a = state === 'play' && nearAltar();
@@ -1808,34 +1859,46 @@ function interact() {
   if (a.kind !== 'boss') { openChest(a); return; }
   if (S.enemies.filter(en => en.boss && !en.rare && en.dying <= 0).length >= 2) { banner('Two bosses are already here', 'Beat one first'); return; }
   a.used = true; a.mesh.material = DECOR_MATS.altarUsed;
-  spawnBoss(a.boss, [a.x + 5, a.z]).altarLoot = true;
+  const en = spawnBoss(a.boss, [a.x + 5, a.z]);
+  en.altar = a; en.firstChest = !a.fought; a.fought = true;
+}
+// Monsters belong to regions: most of what appears at a spot is that region's type ([species, seconds into the run]). The meadow gets a mix.
+const REGION_MONS = { fire: [['kindlit', 0], ['cinderpaw', 60], ['blazemane', 220]], water: [['puplash', 0], ['rippig', 60]], grass: [['sprigcub', 0], ['mossaur', 60]], rock: [['pebblion', 40], ['gloomhog', 220]] };
+function pickMon(pool, t, x, z) {
+  const el = biomeAt(x, z).el;
+  if (el && wildsAwake() && Math.random() < .85) { const list = REGION_MONS[el].filter(m => t >= m[1]); if (list.length) return list[Math.floor(Math.random() * list.length)][0]; }
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+// A spot in a region of this type, at least minD from you. Used for rare pets and boss altars.
+function pointInType(el, minD) {
+  for (let i = 0; i < 300; i++) {
+    const a = rand(0, TAU), R = Math.sqrt(Math.random()) * (WORLD_R - 6), x = Math.cos(a) * R, z = Math.sin(a) * R;
+    if (biomeAt(x, z).el === el && Math.hypot(x - S.x, z - S.z) >= minD) return [x, z];
+  }
+  return spawnPoint(minD, minD + 25);
 }
 function spawnTick(dt) {
-  if (S.rareK && S.t >= S.rareT) { spawnRare(S.rareK); S.rareK = null; }
+  if (S.rareK && S.t >= S.rareT && wildsAwake()) { spawnRare(S.rareK); S.rareK = null; }
   S.spawnT -= dt;
   S.crateT -= dt;
   if (S.crateT <= 0) { S.crateT = 18; if (S.enemies.filter(en => en.obj && !en.solid).length < 60) spawnCrate(); }
   if (S.spawnT > 0 || S.enemies.length > 300) return;
-  S.spawnT = Math.max(.08, 1.35 - S.t * .003);
+  S.spawnT = Math.max(.14, 1.5 - S.t * .0024);
   const t = S.t, pool = ['kindlit', 'sprigcub', 'puplash'];
   if (t > 60) pool.push('cinderpaw', 'mossaur', 'rippig');
   if (t > 130) pool.push('pebblion');
   if (t > 220) pool.push('blazemane', 'gloomhog');
   if (t > 340) pool.push('pebblion', 'blazemane', 'gloomhog');
-  const n = 1 + Math.floor(t / 150) + (t > 60 && Math.random() < .3 ? 1 : 0);
-  // The region you are in favours its own kind of monster.
-  const el = biomeAt(S.x, S.z).el;
-  if (el) pool.push(...pool.filter(k => WILD[k].el === el), ...pool.filter(k => WILD[k].el === el));
-  for (let i = 0; i < n; i++) { const en = spawn(pool[Math.floor(Math.random() * pool.length)]); if (t > 90 && Math.random() < Math.min(.1, t / 5000)) makeElite(en); }
+  const n = 1 + Math.floor(t / 200) + (t > 90 && Math.random() < .25 ? 1 : 0);
+  for (let i = 0; i < n; i++) { const at = spawnPoint(24, 32), en = spawn(pickMon(pool, t, at[0], at[1]), at); if (wildsAwake() && Math.random() < Math.min(.06, t / 8000)) makeElite(en); }
   // Every so often a horde closes in from all sides.
-  if (t >= S.nextHorde && S.enemies.length < 260) {
-    S.nextHorde += 75;
-    const m = 14 + Math.floor(t / 25), off = rand(0, TAU);
-    for (let i = 0; i < m; i++) { const a = off + i / m * TAU, R = rand(20, 25), x = S.x + Math.cos(a) * R, z = S.z + Math.sin(a) * R; if (Math.hypot(x, z) < WORLD_R - 2) spawn(pool[Math.floor(Math.random() * pool.length)], [x, z]); }
+  if (t >= S.nextHorde && wildsAwake() && S.enemies.length < 240) {
+    S.nextHorde = t + 90;
+    const m = 10 + Math.floor(t / 35), off = rand(0, TAU);
+    for (let i = 0; i < m; i++) { const a = off + i / m * TAU, R = rand(20, 25), x = S.x + Math.cos(a) * R, z = S.z + Math.sin(a) * R; if (Math.hypot(x, z) < WORLD_R - 2) spawn(pickMon(pool, t, x, z), [x, z]); }
     banner('A horde is closing in!', 'Keep moving');
     sfx('warn');
   }
-  if (t >= S.nextBoss) { S.nextBoss += 120; spawnBoss(BOSS_ORDER[S.bossN % BOSS_ORDER.length]); }
 
 }
 
@@ -1861,6 +1924,7 @@ const ITEMS = {
   bomb: { name: 'Bomb', w: 14, use: () => { shock(S.x, S.z, 16, 120 * S.dmg, 'ground', 14, '#ffcf3a'); for (let i = 0; i < 10; i++) anim('spark', S.x + rand(-6, 6), rand(.5, 2), S.z + rand(-6, 6), 2.4, 14, { cy: .5 }); addShake(.5); sfx('ult_ground'); } },
   shield: { name: 'Shield', w: 12, use: () => { S.shield = 6; sfx('item'); } },
   candy: { name: 'Star Candy', w: 7, use: () => { gainXp(S.need - S.xp); sfx('item'); } },
+  time: { name: 'Time Crystal', w: 0, use: () => { S.runLen += 60; banner('Time Crystal!', 'One more minute added to this run'); sfx('unlock'); } },
 };
 // Held items: boosts from chests that stay for the run and stack (up to max). Shown in the pause Items panel.
 const HELD = {
@@ -1879,7 +1943,7 @@ const HELD = {
   crown: { name: 'Wild Crown', rar: 'Epic', max: 1, desc: '+20% damage, +1 armor and +20 max HP.', apply: () => { S.dmg *= 1.2; S.armor += 1; S.maxHp += 20; S.hp += 20; } },
   core: { name: 'Ancient Core', rar: 'Legendary', max: 1, desc: '+30% damage and moves recharge 15% faster.', apply: () => { S.dmg *= 1.3; S.cd *= .85; } },
 };
-const RAR_COLOR = { Common: '#9a96a0', Uncommon: '#3fb850', Rare: '#4a9be8', Epic: '#b070e0', Legendary: '#f2a20a' };
+const RAR_COLOR = { Common: '#9a96a0', Uncommon: '#3fb850', Rare: '#4a9be8', Epic: '#b070e0', Legendary: '#f2a20a', Ultra: '#e0409a' };
 // Chance out of 100 per rarity. luck boosts Rare and up (boss chests).
 const RAR_W = { Common: 58, Uncommon: 29, Rare: 10, Epic: 2.5, Legendary: .5 };
 function dropItem(x, z, kind) {
@@ -1903,6 +1967,7 @@ function openChest(a) {
     S.coins -= price; S.opened++;
   }
   a.used = true; a.mesh.material = DECOR_MATS[a.kind === 'chest' ? 'chestOpen' : 'freechestOpen'];
+  if (crystalsLeft() && Math.random() < .01) { usePickup({ kind: 'time', x: a.x, z: a.z }); return; }
   if (Math.random() < .2) { usePickup({ kind: 'scroll', x: a.x, z: a.z }); return; }
   const k = pickHeld(a.luck || 1), H = HELD[k], big = H.rar === 'Epic' || H.rar === 'Legendary';
   usePickup({ kind: 'held:' + k, x: a.x, z: a.z });
@@ -1916,7 +1981,11 @@ function addChest(x, z, kind, luck) {
   S.altars.push({ kind, x, z, luck, used: false, mesh });
 }
 // Picking up: held items apply and stack; a move scroll teaches a new move of your type, or levels one up.
+// At most 3 Time Crystals a run, or long runs would feed themselves.
+const crystalsLeft = () => S.runLen < RUN_LENGTH + 180 && !S.gems.some(g => g.kind === 'time');
+const noteItem = k => { PROG.items[k] = (PROG.items[k] || 0) + 1; };
 function usePickup(g) {
+  noteItem(g.kind.replace('held:', ''));
   if (g.kind === 'scroll') {
     const mine = Object.keys(MOVES).filter(k => MOVES[k].el === S.type), fresh = mine.filter(k => !S.moves[k]), up = mine.filter(k => S.moves[k] && S.moves[k].l < MAX_MOVE);
     const k = fresh.length ? fresh[Math.floor(Math.random() * fresh.length)] : up[Math.floor(Math.random() * up.length)];
@@ -1967,8 +2036,8 @@ function killEnemy(en) {
   S.ab.kill?.(en);
   if (en.ice) { scene.remove(en.ice); en.ice = null; }
   if (en.atk?.tele) { scene.remove(en.atk.tele); en.atk.tele = null; }
-  // Bosses leave a Star Candy, a berry, coins and a free chest (better if you called them at an altar).
-  if (en.boss) { dropItem(en.x + 1, en.z, 'candy'); dropItem(en.x - 1, en.z, 'berry'); dropCoin(en.x, en.z - 1, 15); addChest(en.x, en.z + 1.5, 'free', en.altarLoot ? 4 : 2); }
+  // Bosses leave a Star Candy, a berry and coins; the first win at an altar also leaves a free chest.
+  if (en.boss) { dropItem(en.x + 1, en.z, 'candy'); dropItem(en.x - 1, en.z, 'berry'); dropCoin(en.x, en.z - 1, 15); if (en.firstChest) addChest(en.x, en.z + 1.5, 'free', 4); if (en.altar) en.altar.readyAt = S.t + ALTAR_RESET; }
   S.kills++;
   S.streak = S.t - S.lastKill < 2.5 ? S.streak + 1 : 1; S.lastKill = S.t; S.bestStreak = Math.max(S.bestStreak, S.streak);
   S.ult = Math.min(S.ultNeed, S.ult + (en.boss ? 40 : 1));
@@ -1977,16 +2046,18 @@ function killEnemy(en) {
   if (en.boss) { setFlag('bossBeaten'); if (S.t - en.born < 60) PROG.fast[en.kind] = (PROG.fast[en.kind] || 0) + 1; }
   checkUnlocks();
   anim('dust', en.x, .1, en.z, en.boss ? 5 : 1.8, 14);
+  // The one item monsters can drop: the ultra rare Time Crystal.
+  if (crystalsLeft() && Math.random() < (en.boss ? .08 : en.elite ? .01 : .0005)) dropItem(en.x + .8, en.z + .8, 'time');
   // A monster drops experience or a wild coin, never both (elites and bosses drop both).
   if (en.elite || en.boss) { dropGem(en.x, en.z, en.xp); if (en.elite) dropCoin(en.x + .6, en.z, 3); }
-  else if (Math.random() < .14) dropCoin(en.x, en.z, en.xp >= 5 ? 2 : 1);
+  else if (Math.random() < .14 * (S.coinMul || 1)) dropCoin(en.x, en.z, en.xp >= 5 ? 2 : 1);
   else dropGem(en.x, en.z, en.xp);
   if (en.boss) {
     const other = S.enemies.find(o => o.boss && o !== en && o.dying <= 0);
     S.boss = other || null;
     $('#bossbar').hidden = !other;
     if (other) $('#bossname').innerHTML = `${other.def.name} <span class="type" style="background:${TYPE_COLOR[other.el]}">${other.el}</span>`;
-    banner(`${en.def.name} fainted!`, 'It left a Star Candy, coins and a free chest');
+    banner(`${en.def.name} fainted!`, `It left ${en.firstChest ? 'a Star Candy, coins and a free chest' : 'a Star Candy and coins'}. Its altar recharges in ${ALTAR_RESET} s`);
   }
 }
 // ---------- recruiting: challenge, then it appears in the wild, then capture it ----------
@@ -2013,12 +2084,12 @@ function rollRare() {
   return Math.random() < RARE_CHANCE[DEX[k].rarity] ? k : null;
 }
 function spawnRare(k) {
-  const en = spawn(k, spawnPoint(45, 70));
+  const en = spawn(k, pointInType(WILD[k].el, 45)); // rare pets roam their home region
   en.rare = true; en.atkT = 1.5; en.flee = 0; en.wait = 0; en.ux = 0; en.uz = 1;
   if (en.boss) en.hp = en.maxHp *= 1.6;
   else { en.hp = en.maxHp *= 10; en.size *= 1.2; en.r *= 1.2; }
   $('#rarept img').src = ICONS[k];
-  $('#capui b').textContent = `${DEX[k].rarity} ${WILD[k].name}`;
+  $('#capui b').textContent = `${DEX[k].rarity} ${WILD[k].name} · ${capInfo(k, S.type).label} catch`;
   banner(`A rare ${WILD[k].name} is roaming the meadow!`, 'Follow the arrow, weaken it, then stay in its ring');
   sfx('boss');
 }
@@ -2042,12 +2113,20 @@ function holdRare(en) {
   if (!en.rare || en.hp > en.maxHp * .25) return;
   en.hp = Math.max(en.hp, 1);
   if (en.weak) return;
-  en.weak = true; en.cap = 0; en.out = 0; en.flee = 0; en.burn = en.poison = en.seed = null;
+  const ci = capInfo(en.kind, S.type);
+  en.capNeed = ci.secs; en.weak = true; en.cap = 0; en.out = 0; en.flee = 0; en.burn = en.poison = en.seed = null;
   en.ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: '#f6c445', transparent: true, opacity: .95, depthWrite: false }));
   en.ring.scale.setScalar(CAP_R); scene.add(en.ring);
-  banner(`${WILD[en.kind].name} is weakened!`, `Stay in its ring for ${CAP_NEED} seconds to capture it`);
+  banner(`${WILD[en.kind].name} is weakened!`, `${ci.label} catch for a ${S.type} partner: stay in its ring for ${ci.secs} seconds`);
 }
 const CAP_R = 3.6, CAP_NEED = 12, CAP_GRACE = 5;
+// Catch time depends on your type against the pet's. Hard: the same type, or moves strong against it (water on fire).
+// Easy: moves weak against it (fire on water). Everything else is normal.
+// Legendaries take a quarter longer on top.
+function capInfo(k, type) {
+  const m = PARTNERS[k].type === type ? 2 : eff(type, WILD[k].el), label = m > 1 ? 'Hard' : m < 1 ? 'Easy' : 'Normal';
+  return { label, secs: Math.round(CAP_NEED * (m > 1 ? 1.5 : m < 1 ? .67 : 1) * (DEX[k].rarity === 'Legendary' ? 1.25 : 1)) };
+}
 // Stay in the ring to fill the timer. Out of the ring for 5 s and it resets and the pet runs off.
 function tickCapture(en, d, dt) {
   if (!en.weak) return;
@@ -2058,7 +2137,7 @@ function tickCapture(en, d, dt) {
     banner(`${WILD[en.kind].name} broke free!`, 'Catch up and stay in the ring');
     sfx('weak');
   }
-  if (en.cap >= CAP_NEED) beginCapture(en);
+  if (en.cap >= en.capNeed) beginCapture(en);
 }
 // Screen-space helpers above the rare and above the player.
 const uiV = new THREE.Vector3();
@@ -2083,8 +2162,8 @@ function updateRareUI() {
   const fill = ui.querySelector('i'), txt = ui.querySelector('small');
   ui.classList.toggle('weak', !!en.weak);
   if (en.weak) {
-    fill.style.width = en.cap / CAP_NEED * 100 + '%';
-    txt.textContent = en.cap <= 0 ? 'Step into the ring' : en.out > 0 ? `Back in the ring! ${Math.ceil(CAP_GRACE - en.out)} s` : `Capturing… ${Math.ceil(CAP_NEED - en.cap)} s`;
+    fill.style.width = en.cap / en.capNeed * 100 + '%';
+    txt.textContent = en.cap <= 0 ? 'Step into the ring' : en.out > 0 ? `Back in the ring! ${Math.ceil(CAP_GRACE - en.out)} s` : `Capturing… ${Math.ceil(en.capNeed - en.cap)} s`;
   } else { fill.style.width = en.hp / en.maxHp * 100 + '%'; txt.textContent = 'Weaken it'; }
 }
 // ---------- capture animation: throw, absorb, three shakes, click, stars ----------
@@ -2209,7 +2288,7 @@ function dash() {
 function hurt(d) {
   if (S.inv > 0 || S.shield > 0 || S.dashT > 0) return;
   d = S.ab.hurt?.(d) ?? d;
-  S.inv = .5;
+  S.inv = .65;
   if (d <= 0) return; // blocked (Rock Shell)
   S.hp -= Math.max(1, d - S.armor);
   S.lastHit = S.t;
@@ -2244,7 +2323,7 @@ function freeze(en, t) {
 }
 function thaw(en) { en.freeze = 0; if (en.ice) { scene.remove(en.ice); en.ice = null; } }
 // Extra damage a monster takes from its statuses and the partner's ability.
-const takeMul = (en, el) => (en.freeze > 0 ? 1.25 : 1) * (en.soak > 0 ? 1.15 : 1) * (en.melt > 0 ? 1.25 : 1) * (S.ab.dmgTo?.(en, el) ?? 1);
+const takeMul = (en, el) => affOf(S.biome, el) * (en.freeze > 0 ? 1.25 : 1) * (en.soak > 0 ? 1.15 : 1) * (en.melt > 0 ? 1.25 : 1) * (S.ab.dmgTo?.(en, el) ?? 1);
 // Damage over time: no knockback, sound or new statuses.
 function dotHit(en, dmg, el) {
   if (en.dying > 0) return;
@@ -2642,7 +2721,7 @@ const EVOLVE_AT = [12, 27]; // levels for the first and second evolution
 function gainXp(v) {
   S.xp += v * (S.xpMul || 1);
   // About 1.7x the old curve: levels came too fast.
-  while (S.xp >= S.need && S.level < MAX_LEVEL) { S.xp -= S.need; S.level++; S.need = Math.floor(10 + S.level * 5.6 + S.level * S.level * .32); S.pendingLv++; }
+  while (S.xp >= S.need && S.level < MAX_LEVEL) { S.xp -= S.need; S.level++; S.need = Math.floor(10 + S.level * 4.6 + S.level * S.level * .26); S.pendingLv++; }
   if (S.level >= MAX_LEVEL) S.xp = S.need; // capped: keep the bar full
 }
 function setPortrait() {
@@ -2746,14 +2825,16 @@ function renderKit() {
 // =====================================================================
 // Screens & menus
 // =====================================================================
-const SCREENS = ['title', 'select', 'help', 'settings', 'credits', 'dex', 'pause', 'bigmap', 'levelup', 'over'];
+const SCREENS = ['title', 'select', 'help', 'settings', 'credits', 'dex', 'pause', 'bigmap', 'shop', 'levelup', 'over'];
 function showScreen(id) {
   screen = id;
   for (const s of SCREENS) $('#' + s).hidden = s !== id;
   const inMenu = state === 'title';
+  document.body.classList.toggle('playing', id === null);
+  if (id === 'title') { $('#titlebank').textContent = PROG.bank; $('#titlecoinimg').src = SRC.sm.wcoin.toDataURL(); }
   $('#hud').hidden = inMenu;
 }
-function openSub(id) { returnTo = screen; if (id === 'settings') { waitKey = null; renderSettings(); } if (id === 'dex') { dexSel = chosen; dexStage = 0; renderDex(); } showScreen(id); $('#' + id).querySelector('button, input')?.focus(); }
+function openSub(id) { returnTo = screen; if (id === 'settings') { waitKey = null; resetAsk = false; renderSettings(); } if (id === 'dex') { dexSel = chosen; dexStage = 0; renderDex(); } showScreen(id); $('#' + id).querySelector('button, input')?.focus(); }
 function closeSub() { showScreen(returnTo); $('#' + returnTo)?.querySelector('button')?.focus(); }
 let bannerTimer;
 function banner(text, sub = '') {
@@ -2771,14 +2852,69 @@ function toTitle() {
   $('#playbtn').focus();
 }
 function toSelect() { state = 'title'; showScreen('select'); renderPicks(); $('.pick.on')?.focus(); }
+// Pre-run shop: unspent coins are banked, and before each run 3 random upgrades are offered. Buy any, all or none; they last that one run.
+const PREP = {
+  power: { name: 'Power Snack', icon: 'it_band', c: '#e8483a', price: 40, desc: '+15% damage.', apply: () => S.dmg *= 1.15 },
+  hide: { name: 'Tough Hide', icon: 'it_heart', c: '#e8483a', price: 30, desc: '+30 max HP.', apply: () => { S.maxHp += 30; S.hp += 30; } },
+  boots: { name: 'Swift Boots', icon: 'it_feather', c: '#4a9be8', price: 30, desc: '+10% move speed.', apply: () => S.spd *= 1.1 },
+  focus: { name: 'Focus Tea', icon: 'it_claw', c: '#4a9be8', price: 40, desc: 'Moves recharge 10% faster.', apply: () => S.cd *= .9 },
+  tonic: { name: 'Status Tonic', icon: 'it_charm', c: '#b070e0', price: 30, desc: 'Status effects happen 25% more often.', apply: () => S.stBonus = (S.stBonus || 1) * 1.25 },
+  scholar: { name: 'Field Notes', icon: 'it_lens', c: '#4ccf5c', price: 45, desc: '+20% experience.', apply: () => S.xpMul = (S.xpMul || 1) * 1.2 },
+  purse: { name: 'Lucky Purse', icon: 'it_coin', c: '#c8961e', price: 35, desc: 'Monsters drop coins 50% more often.', apply: () => S.coinMul = 1.5 },
+  move: { name: 'Practice Scroll', icon: 'it_scroll', c: '#f08030', price: 50, desc: 'Start with a second random move.', apply: () => { const l = Object.keys(MOVES).filter(k => MOVES[k].el === S.type && !S.moves[k]); S.moves[l[Math.floor(Math.random() * l.length)]] = { l: 1, t: .5, a: 0 }; renderKit(); } },
+  head: { name: 'Head Start', icon: 'it_candy', c: '#f08030', price: 60, desc: 'Start two levels up, with both picks.', apply: () => { gainXp(S.need); gainXp(S.need); } },
+  ult: { name: 'Charged Up', icon: 'it_core', c: '#f6c445', price: 25, desc: 'Start with your ultimate ready.', apply: () => S.ult = S.ultNeed },
+  packs: { name: 'Second Thoughts', icon: 'it_lode', c: '#9a96a0', price: 20, desc: '+3 rerolls and +2 skips on level-ups.', apply: () => { S.rerolls += 3; S.skips += 2; } },
+};
+let shopOffers = [], shopCart = new Set();
+const cartCost = () => [...shopCart].reduce((a, k) => a + PREP[k].price, 0);
+function bankCoins() { if (!S?.coins) return; S.banked = (S.banked || 0) + S.coins; PROG.bank += S.coins; S.coins = 0; saveProg(); }
 function startGame() {
-  if (matchMedia('(pointer: coarse)').matches && !document.fullscreenElement) goFullscreen();
+  if (SET.autoFs) goFullscreen();
+  newRun(chosen); // this banks any coins from the run being left
+  shopCart = new Set();
+  shopOffers = Object.keys(PREP).sort(() => Math.random() - .5).slice(0, 3);
+  // No point showing the shop if nothing on it is affordable.
+  if (PROG.bank < Math.min(...shopOffers.map(k => PREP[k].price))) { beginRun(); return; }
+  state = 'title';
+  unlockMouse();
+  renderShop();
+  showScreen('shop');
+  $('#shopstart').focus();
+}
+function renderShop() {
+  const left = PROG.bank - cartCost();
+  $('#shopcoins').textContent = left;
+  $('#shopimg').src = SRC.sm.wcoin.toDataURL();
+  $('#shopstart').textContent = shopCart.size ? `Start run · spend ${cartCost()} coins` : 'Start run without upgrades';
+  $('#shopcards').innerHTML = shopOffers.map((k, i) => {
+    const P = PREP[k], on = shopCart.has(k), can = on || P.price <= left;
+    return `<button class="choice plate ${on ? 'on' : ''} ${can ? '' : 'off'}" data-prep="${k}" aria-pressed="${on}" style="--c:${P.c}" ${can ? '' : 'aria-disabled="true"'}>
+      <div class="head"><span class="kind">${P.price} coins</span>${on ? '<span class="new">Selected</span>' : ''}</div>
+      <img class="px prepimg" alt="" src="${SRC.sm[P.icon].toDataURL()}"><h3>${P.name}</h3><p>${P.desc}</p>
+      <span class="key">${can ? `[${i + 1}]` : `${P.price - left} more coins`}</span></button>`;
+  }).join('');
+  $('#shopcards').querySelectorAll('button').forEach(b => b.onclick = () => {
+    const k = b.dataset.prep;
+    if (shopCart.has(k)) shopCart.delete(k); else if (PREP[k].price <= PROG.bank - cartCost()) shopCart.add(k); else { sfx('weak'); return; }
+    sfx('item'); renderShop(); $(`[data-prep="${k}"]`).focus();
+  });
+}
+function beginRun() {
+  const bought = [...shopCart];
   newRun(chosen);
+  // Coins are only taken here, so leaving the shop costs nothing.
+  PROG.bank -= bought.reduce((a, k) => a + PREP[k].price, 0);
+  if (bought.length) saveProg();
+  S.prep = bought.map(k => PREP[k].name);
+  for (const k of bought) PREP[k].apply();
+  shopCart = new Set();
   state = 'play';
   showScreen(null);
   $('#hint').hidden = !SET.showHint;
   last = performance.now();
   lockMouse();
+  if (S.prep.length) banner('Ready for this run', S.prep.join(' · '));
 }
 function setPause(on) {
   if (on && state === 'play') { state = 'pause'; renderPauseInfo(); showScreen('pause'); unlockMouse(); $('#resumebtn').focus(); }
@@ -2802,8 +2938,9 @@ function renderPauseInfo() {
   $('#pitemcount').textContent = `${held.reduce((n, [, c]) => n + c, 0)} in total`;
   $('#pitems').innerHTML = held.map(([k, c]) => `<button data-it="${k}" class="${k === pauseItem ? 'on' : ''}" style="--c:${RAR_COLOR[HELD[k].rar]}" aria-label="${HELD[k].name}"><img class="px" alt="" src="${SRC.sm['it_' + k].toDataURL()}">${c > 1 ? `<em>×${c}</em>` : ''}</button>`).join('');
   const it = HELD[pauseItem];
-  $('#pitem').innerHTML = !held.length ? '<p class="note">No items yet. Open chests on the map with E: they cost wild coins, which monsters sometimes drop. Bosses leave a free chest.</p>'
+  $('#pitem').innerHTML = !held.length ? '<p class="note">No items yet. Open chests on the map with E: they cost wild coins, which monsters sometimes drop. The first boss at each altar leaves a free chest.</p>'
     : it ? `<div class="abil"><b>${it.name}</b><span class="st" style="background:${RAR_COLOR[it.rar]};color:#fff">${it.rar}</span> <span class="small" style="color:var(--soft)">×${S.held[pauseItem]} of ${it.max}</span><p>${it.desc}</p></div>` : '<p class="note">Pick an item to see what it does.</p>';
+  if (S.prep?.length) $('#pitem').insertAdjacentHTML('beforeend', `<p class="note"><b>Prepared for this run:</b> ${S.prep.join(', ')}</p>`);
   $('#pitems').querySelectorAll('button').forEach(b => b.onclick = () => { pauseItem = b.dataset.it; renderPauseInfo(); $(`[data-it="${pauseItem}"]`).focus(); });
   // Stats against the partner's base (evolutions count as base).
   const ev = 1.2 ** S.stage, row = (l, v, base, f, better = v > base + 1e-9) => `<span>${l}</span><b class="${better ? 'up' : ''}">${f(v)}</b>`;
@@ -2896,6 +3033,7 @@ function drawBigMap() {
     + row(iconURL('free', DECOR_CV.freechest), 'Free chest found', cnt.free, '#3f7fd8')
     + (cnt.item ? row(iconURL('berry', SRC.sm.berry), 'Item on the ground', cnt.item, '#ffe36e') : '')
     + `<h3>Your run</h3>` + row(iconURL('wc', SRC.sm.wcoin), 'Wild coins', S.coins, '#c8961e')
+    + `<h3>Your moves by region</h3>` + BIOMES.map(b => { const v = Math.round((baseAff(b, S.type) - 1) * 100); return `<div class="maprow"><span>${b.name}</span><b style="color:${v > 0 ? '#1f8a3a' : v < 0 ? '#b23a2e' : 'inherit'}">${v ? (v > 0 ? '+' : '−') + Math.abs(v) + '%' : '='}</b></div>`; }).join('')
     + `<p class="note">${rare ? `${WILD[rare.kind].name} is out there. Follow the arrow above your partner.` : S.rareK ? 'Something rare may still turn up this run.' : 'Explore to find more chests. Drag to move the map, wheel or + to zoom.'}</p>`;
 }
 function mapZoom(f) { MV.zoom = clamp(MV.zoom * f, 1, 8); if (MV.zoom === 1) MV.cx = MV.cz = 0; drawBigMap(); }
@@ -2922,6 +3060,7 @@ function toggleMap() {
 }
 function endRun(win, maxed = false) {
   state = 'over';
+  bankCoins();
   unlockMouse();
   if (win) setFlag('won');
   saveProg();
@@ -2933,7 +3072,7 @@ function endRun(win, maxed = false) {
   $('#againbtn').textContent = win || maxed ? 'Play again' : 'Try again';
   $('#oversub').textContent = (maxed ? `${nm} reached level ${MAX_LEVEL}, as strong as it gets. Start a new run to go again.` : win ? `${nm} held out for all ten minutes.` : 'The wild monsters were too many this time.') + (record && !win ? ' New best time with this partner.' : '')
     + (S.newUnlocks.length ? ` Unlocked this run: ${S.newUnlocks.join(', ')}.` : '');
-  $('#overstats').innerHTML = [[fmt(S.t), 'Survived'], [S.kills, 'Defeated'], [Math.round(S.dmgDone), 'Damage'], [`×${S.bestStreak}`, 'Best streak'], [S.level, 'Level'], [fmt(Math.max(prev, S.t)), 'Best']]
+  $('#overstats').innerHTML = [[fmt(S.t), 'Survived'], [S.kills, 'Defeated'], [Math.round(S.dmgDone), 'Damage'], [`×${S.bestStreak}`, 'Best streak'], [S.level, 'Level'], [fmt(Math.max(prev, S.t)), 'Best'], [`+${S.banked || 0}`, `Coins banked (${PROG.bank})`]]
     .map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('');
   showScreen('over');
   $('#againbtn').focus();
@@ -2963,7 +3102,7 @@ function renderPicks() {
     + tKeys.map(k => { const tr = TRAINERS[k], open = trainerOpen(tr);
       return `<button class="rc plate ${trainerId === k && open ? 'on' : ''} ${open ? '' : 'locked'}" data-tr="${k}"><img class="px" alt="" src="${tr.icon}"><b>${tr.name}</b><span>${open ? 'Walks with your partner' : tr.how}</span></button>`; }).join('');
   const b = best[chosen];
-  $('#best').textContent = b ? `Best with ${PARTNERS[chosen].names[0]}: ${fmt(b)}` : 'Survive 10:00 to become champion.';
+  $('#best').textContent = (b ? `Best with ${PARTNERS[chosen].names[0]}: ${fmt(b)}` : 'Survive 10:00 to become champion.') + ` · ${PROG.bank} coins banked`;
   document.querySelectorAll('[data-t]').forEach(el => {
     el.onclick = () => {
       if (!isUnlocked(el.dataset.t)) return;
@@ -3012,7 +3151,39 @@ function moveNums(k) {
   if (a.st) out.push([STATUS[partnerStatus(PARTNERS[dexSel])].name, `${Math.round(a.st * 100)}%`]);
   return out;
 }
+// Every item in the game. Its details stay hidden until you have collected one; rarity and where to find it always show.
+const RAR_ORDER = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Ultra'];
+function itemBook() {
+  const held = Object.entries(HELD).map(([k, H]) => ({ k, name: H.name, rar: H.rar, desc: H.desc, icon: 'it_' + k, how: 'Chests', value: `Stacks to ${H.max} · ${RAR_W[H.rar]}% of chest items` }));
+  return [...held,
+    { k: 'wcoin', name: 'Wild Coin', rar: 'Common', icon: 'wcoin', desc: 'Buys chests during a run. Coins you keep go to your bank for the pre-run shop.', how: 'Monsters, crates, stones', value: '1 to 3 coins, 15 from a boss' },
+    { k: 'berry', name: 'Heal Berry', rar: 'Common', icon: 'berry', desc: 'Heals 30 HP.', how: 'Crates, bosses', value: 'Used on pickup' },
+    { k: 'magnet', name: 'Magnet', rar: 'Uncommon', icon: 'it_magnet', desc: 'Pulls in every orb and coin on the map.', how: 'Crates', value: 'Used on pickup' },
+    { k: 'bomb', name: 'Bomb', rar: 'Uncommon', icon: 'it_bomb', desc: 'Blasts everything nearby.', how: 'Crates', value: 'Used on pickup' },
+    { k: 'shield', name: 'Shield', rar: 'Uncommon', icon: 'it_shield', desc: '6 seconds of safety.', how: 'Crates', value: 'Used on pickup' },
+    { k: 'scroll', name: 'Move Scroll', rar: 'Uncommon', icon: 'it_scroll', desc: 'Teaches a new move of your type, or levels one up.', how: 'Chests', value: 'About 1 chest in 5' },
+    { k: 'candy', name: 'Star Candy', rar: 'Rare', icon: 'it_candy', desc: 'An instant level.', how: 'Bosses', value: 'One per boss' },
+    { k: 'time', name: 'Time Crystal', rar: 'Ultra', icon: 'it_time', desc: 'Adds one minute to the current run.', how: 'Very rarely from anything you defeat or open', value: '+60 s, up to 3 per run' },
+  ].sort((a, b) => RAR_ORDER.indexOf(a.rar) - RAR_ORDER.indexOf(b.rar));
+}
+function renderDexItems() {
+  const book = itemBook(), got = book.filter(i => PROG.items[i.k]).length;
+  $('#dexcount').textContent = `${got} of ${book.length} items collected`;
+  $('#dexitems').innerHTML = book.map(i => {
+    const n = PROG.items[i.k] || 0;
+    return `<div class="itemcard ${n ? '' : 'unknown'}" style="--c:${RAR_COLOR[i.rar]}">
+      <img class="px" alt="" src="${SRC.sm[i.icon].toDataURL()}">
+      <div><span class="st" style="background:var(--c);color:#fff">${i.rar}</span><b>${n ? i.name : '???'}</b>
+      <p>${n ? i.desc : 'Collect one to see what it does.'}</p>
+      <div class="nums"><span>Found in <b>${i.how}</b></span>${n ? `<span>${i.value}</span><span>Collected <b>×${n}</b></span>` : ''}</div></div></div>`;
+  }).join('');
+}
+let dexTab = 'partners';
 function renderDex() {
+  const onItems = dexTab === 'items';
+  $('#dexgrid').hidden = onItems; $('#dexitems').hidden = !onItems;
+  $('#dextabs').querySelectorAll('button').forEach(b => { const on = b.dataset.dt === dexTab; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); b.onclick = () => { dexTab = b.dataset.dt; renderDex(); $(`[data-dt="${dexTab}"]`).focus(); }; });
+  if (onItems) { renderDexItems(); return; }
   const ids = dexOrder(), open = ids.filter(isUnlocked).length;
   $('#dexcount').textContent = `${open} of ${ids.length} recruited`;
   $('#dexprogfill').style.width = open / ids.length * 100 + '%';
@@ -3051,8 +3222,8 @@ function renderDexCard() {
   // The three recruiting steps, with the current one highlighted.
   const how = !p.need ? '' : `<div class="steps">
       <div class="${have >= p.need ? 'ok' : 'now'}"><b>1 · Complete the challenge</b><span>${DEX[k].ch[2]}. Progress is kept between runs.</span><div class="bar"><i style="width:${have / p.need * 100}%"></i></div><small>${have} / ${p.need}</small></div>
-      <div class="${done ? 'now' : ''}"><b>2 · It appears in the wild</b><span>Each run, one finished challenge gets a chance to appear: ${Math.round(RARE_CHANCE[p.rarity] * 100)}% for this ${p.rarity.toLowerCase()} monster. It roams the map and an arrow points to it. It fights back only if you get close, then runs.</span></div>
-      <div><b>3 · Weaken and capture it</b><span>Bring it below a quarter of its HP, then stay in its ring for ${CAP_NEED} seconds. Leave for ${CAP_GRACE} seconds and the timer resets as it runs off.</span></div>
+      <div class="${done ? 'now' : ''}"><b>2 · It appears in the wild</b><span>From level 10, one finished challenge per run gets a chance to appear: ${Math.round(RARE_CHANCE[p.rarity] * 100)}% for this ${p.rarity.toLowerCase()} monster. It roams the map and an arrow points to it. It fights back only if you get close, then runs.</span></div>
+      <div><b>3 · Weaken and capture it</b><span>Bring it below a quarter of its HP, then stay in its ring. With your ${PARTNERS[chosen].type} partner this is a <b>${capInfo(k, PARTNERS[chosen].type).label.toLowerCase()} catch: ${capInfo(k, PARTNERS[chosen].type).secs} seconds</b>. A type strong against it is harder to catch with, a weak one easier. Leave the ring for ${CAP_GRACE} seconds and the timer resets as it runs off.</span></div>
     </div>${LEGEND_TRAIT[k] ? `<p class="note"><b>Legendary power-up:</b> capturing it adds ${TRAITS[LEGEND_TRAIT[k]].name} to every partner's level-up picks. ${TRAITS[LEGEND_TRAIT[k]].desc.replace('Legendary: ', '')}</p>` : ''}`;
   if (s === 'unseen') {
     el.innerHTML = `<div class="dextop"><div class="portrait">${dexImg(k, 0, 'big', 'shadow')}</div>
@@ -3093,6 +3264,8 @@ function renderDexCard() {
         <div class="abil"><b>${STATUS[sid].name}${sid === 'chill' ? ' and Freeze' : ''}</b><p>Its ${p.type} moves can cause it. ${STATUS[sid].desc}${sid === 'chill' ? ' ' + STATUS.freeze.desc : ''}</p></div>
         <h4>Stats ${st ? `<small>as ${name}</small>` : ''}</h4>
         <div class="sbars">${rows.map(([l, v, mx, t, c]) => `<span>${l}</span><div class="bar"><i style="width:${Math.max(4, Math.min(100, v / mx * 100))}%;background:${c}"></i></div><b>${t}</b>`).join('')}</div>
+        <h4>Regions</h4>
+        <p>${BIOMES.filter(b => baseAff(b, p.type) !== 1).map(b => { const v = Math.round((baseAff(b, p.type) - 1) * 100); return `<span class="tagl" style="color:${v > 0 ? '#1f8a3a' : '#b23a2e'}">${b.name} ${v > 0 ? '+' : '−'}${Math.abs(v)}%</span>`; }).join(' ')}</p>
         <h4>Matchups</h4>
         <p><b>Super effective on</b> ${strong.map(badgeT).join(' ')}</p>
         <p><b>Not very effective on</b> ${weak.map(badgeT).join(' ')}</p>
@@ -3137,11 +3310,15 @@ const SET_TABS = {
   keys: { name: 'Keys', sub: 'Change keys', c: '#f6c445', rows: [] },
   ui: { name: 'Interface', sub: 'What the HUD shows', c: '#e8483a', rows: [
     ['toggle', 'showRadar', 'Minimap'], ['toggle', 'showStreak', 'Kill streak counter'], ['toggle', 'showSlots', 'Move slots', 'The move icons at the bottom left'],
-    ['toggle', 'showHint', 'Control hints', 'The line of controls at the start of a run'] ] },
+    ['toggle', 'showHint', 'Control hints', 'The line of controls at the start of a run'], ['toggle', 'autoFs', 'Full screen by default', 'Goes full screen on your first click or key press and when a run starts'] ] },
 };
-const KEY_NAMES = { jump: 'Jump', dash: 'Dash', ult: 'Ultimate', interact: 'Interact (chests, altars)', map: 'Meadow map', pause: 'Pause', mute: 'Mute', reroll: 'Reroll (level-up)', skip: 'Skip (level-up)' };
+const KEY_NAMES = { fs: 'Full screen', jump: 'Jump', dash: 'Dash', ult: 'Ultimate', interact: 'Interact (chests, altars)', map: 'Meadow map', pause: 'Pause', mute: 'Mute', reroll: 'Reroll (level-up)', skip: 'Skip (level-up)' };
 const keyLabel = c => ({ Space: 'Space', Tab: 'Tab', ShiftLeft: 'Shift', ShiftRight: 'Right Shift', ControlLeft: 'Ctrl', AltLeft: 'Alt', Enter: 'Enter' }[c] || c.replace(/^Key|^Digit/, '').replace(/^Arrow/, '↑ '));
-let setTab = 'sound', waitKey = null;
+let setTab = 'sound', waitKey = null, resetAsk = false;
+function resetGame() {
+  try { for (const k of Object.keys(localStorage)) if (k.startsWith('pocketwilds')) localStorage.removeItem(k); } catch {}
+  location.reload();
+}
 const saveSet = () => writeJSON('pocketwilds-settings', SET);
 function applySettings() {
   applyVolumes();
@@ -3153,7 +3330,7 @@ function applySettings() {
 }
 function renderSettings() {
   $('#settabs').innerHTML = Object.entries(SET_TABS).map(([k, t]) => `<button data-st="${k}" class="${k === setTab ? 'on' : ''}" style="--c:${t.c}" aria-pressed="${k === setTab}"><b>${t.name}</b><span>${t.sub}</span></button>`).join('');
-  $('#settabs').querySelectorAll('button').forEach(b => b.onclick = () => { setTab = b.dataset.st; renderSettings(); $(`[data-st="${setTab}"]`).focus(); });
+  $('#settabs').querySelectorAll('button').forEach(b => b.onclick = () => { setTab = b.dataset.st; resetAsk = false; renderSettings(); $(`[data-st="${setTab}"]`).focus(); });
   const T = SET_TABS[setTab];
   const rows = setTab === 'keys'
     ? Object.keys(KEY_NAMES).map(k => `<div class="srow"><div><b>${KEY_NAMES[k]}</b></div><button class="keybtn" data-key="${k}">${waitKey === k ? 'Press a key…' : keyLabel(SET.keys[k])}</button></div>`).join('')
@@ -3164,8 +3341,14 @@ function renderSettings() {
       if (kind === 'range') return `<div class="srow col">${head}<div class="rng"><input type="range" data-set="${key}" min="${ex[0]}" max="${ex[1]}" step="${ex[2]}" value="${SET[key]}" aria-label="${label}"><output>${ex[3](SET[key])}</output></div></div>`;
       return `<div class="srow col wide">${head}<div class="seg" role="group" aria-label="${label}">${ex.map(([v, l]) => `<button data-set="${key}" data-v="${v}" class="${SET[key] == v ? 'on' : ''}">${l}</button>`).join('')}</div></div>`;
     }).join('');
+  // Interface also holds the full reset, behind a second click because it cannot be undone.
+  const resetRow = setTab !== 'ui' ? '' : `<div class="srow col wide"><div><b>Reset whole game</b><span>Deletes all recruited partners, challenge progress, kill counts, best times and settings on this device. This cannot be undone.</span></div>
+    <div class="row tight">${resetAsk ? '<button class="btn" id="resetyes">Yes, delete everything</button><button class="btn ghost" id="resetno">Cancel</button>' : '<button class="btn ghost" id="resetbtn">Reset game</button>'}</div></div>`;
   $('#setpanel').style.setProperty('--c', T.c);
-  $('#setpanel').innerHTML = `<header><b>${T.name}</b><span>${T.sub}</span></header><div class="srows">${rows}</div>`;
+  $('#setpanel').innerHTML = `<header><b>${T.name}</b><span>${T.sub}</span></header><div class="srows">${rows}${resetRow}</div>`;
+  $('#resetbtn')?.addEventListener('click', () => { resetAsk = true; renderSettings(); $('#resetno').focus(); });
+  $('#resetno')?.addEventListener('click', () => { resetAsk = false; renderSettings(); $('#resetbtn').focus(); });
+  $('#resetyes')?.addEventListener('click', resetGame);
   $('#setpanel').querySelectorAll('input[type=checkbox]').forEach(el => el.onchange = () => { SET[el.dataset.set] = el.checked; saveSet(); applySettings(); });
   $('#setpanel').querySelectorAll('input[type=range]').forEach(el => el.oninput = () => {
     const row = T.rows.find(r => r[1] === el.dataset.set);
@@ -3203,6 +3386,7 @@ addEventListener('keydown', e => {
   keys.add(e.code);
   const K = SET.keys, is = a => e.code === K[a] || (a === 'dash' && K.dash === 'ShiftLeft' && e.code === 'ShiftRight');
   if (state === 'levelup' && /^Digit[123]$/.test(e.code)) $('#choices').children[+e.code.slice(5) - 1]?.click();
+  if (screen === 'shop' && /^Digit[123]$/.test(e.code)) $('#shopcards').children[+e.code.slice(5) - 1]?.click();
   if (state === 'levelup' && is('reroll')) $('#rerollbtn').click();
   if (state === 'levelup' && is('skip')) $('#skipbtn').click();
   if (is('map') && (state === 'play' || screen === 'pause' || screen === 'bigmap')) { e.preventDefault(); toggleMap(); }
@@ -3211,10 +3395,12 @@ addEventListener('keydown', e => {
   if (is('dash') && !e.repeat) dash();
   if (is('jump') && state === 'play') { e.preventDefault(); if (!e.repeat) jump(); }
   if (is('mute') && !e.repeat) toggleMute();
+  if (is('fs') && !e.repeat) $('#fsbtn').click();
   if (e.code === 'Enter' && screen === 'title' && document.activeElement === document.body) toSelect();
   if (e.code === 'Escape' || is('pause')) {
     if (performance.now() - lastUnlockPause < 300) return;
     if (['help', 'settings', 'credits', 'dex'].includes(screen)) closeSub();
+    else if (screen === 'shop') toSelect();
     else if (screen === 'bigmap') setPause(false);
     else if (state === 'play') setPause(true);
     else if (state === 'pause') setPause(false);
@@ -3276,13 +3462,26 @@ $('#pausebtn').onclick = () => setPause(true);
 $('#bossbtn').onclick = interact;
 $('#dashbtn').addEventListener('pointerdown', e => { e.preventDefault(); dash(); });
 $('#jumpbtn').addEventListener('pointerdown', e => { e.preventDefault(); jump(); });
-$('#fsbtn').onclick = () => document.fullscreenElement ? document.exitFullscreen() : goFullscreen();
+// The button also sets the default: leave full screen with it and the game stops going back on its own.
+$('#fsbtn').onclick = () => { SET.autoFs = !fsNow(); saveSet(); if (fsNow()) (document.exitFullscreen || document.webkitExitFullscreen).call(document); else goFullscreen(); };
+if (!(document.fullscreenEnabled || document.webkitFullscreenEnabled)) $('#fsbtn').hidden = true; // iPhone Safari has no page full screen
+// Full screen by default. Browsers only allow it from a click or key press, so the first one does it.
+const firstGesture = e => {
+  if (e.target.closest?.('#fsbtn') || e.code === 'Escape') return;
+  removeEventListener('click', firstGesture, true); removeEventListener('keydown', firstGesture, true);
+  if (SET.autoFs) goFullscreen();
+};
+addEventListener('click', firstGesture, true); addEventListener('keydown', firstGesture, true);
 // Phones: fill the screen and prefer landscape. iPhone Safari has no page fullscreen, so failures are ignored.
+const fsNow = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
 function goFullscreen() {
+  if (fsNow()) return;
   const el = document.documentElement, req = el.requestFullscreen || el.webkitRequestFullscreen;
   req?.call(el, { navigationUI: 'hide' })?.then?.(() => screen.orientation?.lock?.('landscape').catch(() => {}), () => {});
 }
 $('#resumebtn').onclick = () => setPause(false);
+$('#shopstart').onclick = beginRun;
+$('#shopback').onclick = toSelect;
 $('#mapbtn').onclick = toggleMap;
 $('#mapback').onclick = () => { showScreen('pause'); $('#resumebtn').focus(); };
 $('#restartbtn').onclick = startGame;
@@ -3302,6 +3501,7 @@ document.querySelectorAll('[data-close]').forEach(b => b.onclick = closeSub);
 const fwd = new THREE.Vector3(), right = new THREE.Vector3();
 function update(dt) {
   S.t += dt;
+  S.biome = biomeAt(S.x, S.z);
   fwd.set(Math.sin(yaw), 0, Math.cos(yaw));
   right.set(-Math.cos(yaw), 0, Math.sin(yaw));
   let f = 0, s = 0;
@@ -3359,6 +3559,7 @@ function update(dt) {
   tickMoves(dt);
   tickUlts(dt);
   tickExtras(dt);
+  tickAltars();
   if ((S.fogT -= dt) <= 0) { S.fogT = .5; revealFog(); }
 
   for (const en of S.enemies) {
@@ -3473,7 +3674,7 @@ function update(dt) {
     if (g.pull) { const v = Math.min(d, 20 * dt); g.x += dx / (d || 1) * v; g.z += dz / (d || 1) * v; }
     g.mesh.position.set(g.x, .2 + Math.abs(Math.sin(S.t * 4 + g.x)) * .25, g.z);
     if (d < .9) {
-      if (g.kind === 'coin') { S.coins += g.v; sfx('pickup'); }
+      if (g.kind === 'coin') { S.coins += g.v; sfx('pickup'); noteItem('wcoin'); }
       else if (g.kind !== 'xp') usePickup(g);
       else { gainXp(g.v); sfx('pickup'); }
       scene.remove(g.mesh); g.gone = true;
@@ -3493,7 +3694,7 @@ function update(dt) {
   S.fx = S.fx.filter(fx => !fx.gone);
 
   if (SET.autoUlt && S.ult >= S.ultNeed && nearest(1, 14).length) useUlt();
-  if (S.t >= RUN_LENGTH) return endRun(true);
+  if (S.t >= S.runLen) return endRun(true);
   if (S.pendingLv > 0 && state === 'play') openLevelUp();
 }
 // Boss attacks: telegraphed ground slam, a tracked charge, or a radial volley.
@@ -3643,10 +3844,16 @@ function updateHud() {
   abl.classList.toggle('hot', !!am?.hot);
   if (abl.dataset.t !== (am?.text || '')) { abl.dataset.t = am?.text || ''; abl.title = abl.ariaLabel = `${S.ab.name}${am ? ': ' + am.text : ''}`; }
   $('#clock').textContent = fmt(S.t);
-  $('#kills').textContent = `${S.kills} defeated · ${fmt(Math.max(0, RUN_LENGTH - S.t))} to go`;
+  $('#kills').textContent = `${S.kills} defeated · ${fmt(Math.max(0, S.runLen - S.t))} to go`;
   $('#coins').textContent = S.coins;
-  const reg = biomeAt(S.x, S.z).name;
-  if (reg !== S.regionName) { if (S.regionName) banner(reg, 'You crossed into a new region'); S.regionName = reg; $('#zone').textContent = reg; }
+  const reg = S.biome.name + (wildsAwake() ? '+' : '');
+  if (wildsAwake() && !S.awake) { S.awake = true; banner('The wilds are stirring', 'Regions take full effect. Hordes, elites and rare pets can appear'); sfx('warn'); }
+  if (reg !== S.regionName) {
+    const at = affText(S.biome, S.type), v = affOf(S.biome, S.type);
+    if (S.regionName && S.regionName.replace('+', '') !== S.biome.name.replace('+', '')) banner(S.biome.name, at || 'Your moves work as normal here');
+    S.regionName = reg;
+    $('#zone').innerHTML = S.biome.name + (at ? ` <span style="color:${v > 1 ? '#7fe05a' : '#ff8a7a'}">${v > 1 ? '+' : '−'}${Math.abs(Math.round((v - 1) * 100))}%</span>` : '');
+  }
   const u = S.ult / S.ultNeed, ub = $('#ultbtn');
   ub.style.setProperty('--p', u * 100 + '%');
   ub.disabled = u < 1;
@@ -3658,8 +3865,9 @@ function updateHud() {
   $('#streak').hidden = !live;
   if (live) { $('#streakn').textContent = `×${S.streak}`; $('#streak').classList.toggle('hot', S.streak >= 50); }
   for (const el of $('#slots').children) { const w = S.moves[el.dataset.k], P = MOVES[el.dataset.k].stat(w.l), cd = (P.cd || 0) * S.cd; el.firstChild.style.height = cd ? clamp(w.t / cd, 0, 1) * 100 + '%' : '0'; }
-  const na = nearAltar();
-  $('#prompt').hidden = !na;
+  const na = nearAltar(), wait = !na && S.altars.find(a => a.kind === 'boss' && a.used && Math.hypot(a.x - S.x, a.z - S.z) < 3.2);
+  $('#prompt').hidden = !na && !wait;
+  if (wait) $('#prompt').textContent = wait.readyAt ? `Altar recharging: ${Math.ceil(wait.readyAt - S.t)} s` : `${WILD[wait.boss].name} is still out there`;
   if (na) $('#prompt').innerHTML = `<kbd>${keyLabel(SET.keys.interact)}</kbd>${na.kind === 'boss' ? `Call ${WILD[na.boss].name}` : na.kind === 'free' ? 'Open the free chest' : `Open chest · ${chestPrice()} coins${S.coins < chestPrice() ? ' (not enough)' : ''}`}`;
   if (S.boss) $('#bossfill').style.width = Math.max(0, S.boss.hp / S.boss.maxHp * 100) + '%';
 }

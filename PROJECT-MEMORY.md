@@ -97,6 +97,22 @@ HD-2D survivor game: pixel sprites in a 3D meadow, camera behind the player, aut
 
 **Patching warning.** A block replace by "start marker to next marker" once deleted the Settings and Help CSS, because other rules sat between the markers. Check what a cut removes (compare CSS selectors against git HEAD) before trusting it.
 
+**Regions in play, capture difficulty, full screen.**
+- Spawns: 85% of monsters at a spot are that region's type (`pickMon`, `REGION_MONS`); the meadow is mixed. Timed bosses (`BOSS_OF`), boss altars and rare pets use their home region (`pointInType`).
+- Region damage: `BIOMES[].aff` scales moves by type via `takeMul` (`S.biome`). Fire +30% Ember Badlands, -30% Frost Hollow; water +25% Frost, -25% Ember, and so on. Shown beside the region name, in the Wild Dex and on the map.
+- Capture difficulty: `capInfo(k, type)`. Same type or super effective = Hard (18 s), not very effective = Easy (8 s), else Normal (12 s); Legendary x1.25.
+- Coin bank and shop: unspent run coins go to `PROG.bank` (`bankCoins`, on run end, restart or quit), shown on the title and select screens. `startGame` opens the `#shop` screen with 3 random `PREP` upgrades when one is affordable; toggle any, all or none (keys 1-3). `beginRun` takes the coins and applies them for that run only (`S.prep`, listed on pause). Lucky Purse raises `S.coinMul`.
+- Reset: Settings > Interface, two-step button; `resetGame` removes only `pocketwilds*` localStorage keys and reloads.
+- Full screen: `#fsbtn` is outside the HUD, on every screen. `SET.autoFs` default on: first click or key press and each run start (browsers require a gesture). Key G. Leaving via the button turns the default off. Real switching is unverified in the hidden preview pane.
+
+**Balance pass and items (latest; supersedes older notes).**
+- Calm until `WILDS_LV` 10: no region penalties (`affOf`; `baseAff` is the raw table for the Dex and map), no region monsters, elites, hordes or rare pets. Bonuses still apply.
+- Bosses only from altars. No timed bosses. An altar recharges `ALTAR_RESET` 60 s after its boss falls (`tickAltars`); only the first win per altar leaves a free chest.
+- Curves: `hpScale` .7 + t/180 + (t/240)^2 + .04(L-1); `dmgScale` .45 + min(1.4, t/480); XP need 10 + 4.6L + .26L^2; hit invulnerability .65 s; Water Shuriken 2-4 stars; Vine Whip reach 10+, damage 18+.
+- Bot runs (no dash, jump, shop or altars): 3 wins, 3 losses at 7:40-9:55. Ground ends very strong late; fire is weakest. Watch these first.
+- Time Crystal: ultra rare `ITEMS.time`, +60 s (`S.runLen`), max 3 per run (`crystalsLeft`), the only item monsters drop.
+- Wild Dex Items tab: `itemBook`, `renderDexItems`, hidden until collected (`PROG.items`, `noteItem`).
+
 ## Ideas not done yet
 - Rename moves to original names (see rules).
 - More types (electric, ice), real playtesting on the hosted site.
