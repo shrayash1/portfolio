@@ -110,6 +110,8 @@ HD-2D survivor game: pixel sprites in a 3D meadow, camera behind the player, aut
 - Bosses only from altars. No timed bosses. An altar recharges `ALTAR_RESET` 60 s after its boss falls (`tickAltars`); only the first win per altar leaves a free chest.
 - Curves: `hpScale` .7 + t/180 + (t/240)^2 + .04(L-1); `dmgScale` .45 + min(1.4, t/480); XP need 10 + 4.6L + .26L^2; hit invulnerability .65 s; Water Shuriken 2-4 stars; Vine Whip reach 10+, damage 18+.
 - Bot runs (no dash, jump, shop or altars): 3 wins, 3 losses at 7:40-9:55. Ground ends very strong late; fire is weakest. Watch these first.
+- Coin rate (`coinRatio`, replaces the old 14%): coins per XP orb by held coins: 1/8 under 100, 1/16 from 100, 0 from `COIN_FULL` 200. The user asked for few coins and unchanged XP orbs, so orb values are not scaled. The cap also stops crate, stone, elite and boss coins.
+- Water walking: `pushOut` skips ponds, so the player and monsters cross them. `tickWater` keeps `S.wetT` at 5 s while grounded on a pond; `WATER_FX` by type: fire -5% damage, water and grass +5%, ground -15% speed (the user set only the fire 5% and the 5 s). Damage goes through `takeMul`.
 - Time Crystal: ultra rare `ITEMS.time`, +60 s (`S.runLen`), max 3 per run (`crystalsLeft`), the only item monsters drop.
 - Wild Dex Items tab: `itemBook`, `renderDexItems`, hidden until collected (`PROG.items`, `noteItem`).
 

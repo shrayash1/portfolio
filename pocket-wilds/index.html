@@ -118,6 +118,7 @@ body.playing #fsbtn { bottom: auto; top: calc(14px + env(safe-area-inset-top, 0p
 #prompt { position: absolute; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); padding: 8px 16px; border-radius: 99px; background: rgba(29,36,51,.9); border: 3px solid var(--gold); color: var(--panel); font-weight: 700; white-space: nowrap; }
 #prompt kbd { background: var(--gold); color: var(--ink); margin-right: 6px; }
 #zone { font-family: var(--display); font-size: .85rem; color: var(--gold); }
+#wet { font-weight: 600; font-size: .8rem; white-space: nowrap; }
 #coinrow { display: flex; align-items: center; justify-content: center; gap: 4px; font-family: var(--display); }
 #coinimg { width: 18px; height: 18px; }
 /* Pointer above the player: the rare's icon with an arrow orbiting toward it. */
@@ -463,7 +464,7 @@ label.btn.file { cursor: pointer; display: inline-block; }
    <div id="kit" hidden></div>
   </div>
   <span id="fps" hidden></span>
-  <div id="top"><div id="zone"></div><div id="clock">0:00</div><div id="kills">0 defeated</div><div id="coinrow"><img id="coinimg" class="px" alt="Wild coins"><b id="coins">0</b></div></div>
+  <div id="top"><div id="zone"></div><div id="wet" hidden></div><div id="clock">0:00</div><div id="kills">0 defeated</div><div id="coinrow"><img id="coinimg" class="px" alt="Wild coins"><b id="coins">0</b></div></div>
   <div class="hud-tr"><button class="icon-btn touch" id="bossbtn" aria-label="Interact">E</button><button class="icon-btn" id="pausebtn" aria-label="Pause">II</button></div>
   <canvas id="radar" width="180" height="180" aria-label="Minimap"></canvas>
   <div id="bossbar" class="plate" hidden><b id="bossname">Boss</b><div class="bar"><i id="bossfill"></i></div></div>
@@ -527,7 +528,8 @@ label.btn.file { cursor: pointer; display: inline-block; }
         <kbd>R</kbd><span>Use your ultimate when the circle is full. Defeating monsters fills it.</span>
         <kbd>Time</kbd><span>A Time Crystal is ultra rare and adds one minute to the run. The Items section of the Wild Dex lists every item, revealed once you collect it.</span>
         <kbd>Bank</kbd><span>Coins you do not spend in a run are saved. Before the next run a shop offers 3 upgrades: buy any, all or none. They last that one run.</span>
-        <kbd>Coins</kbd><span>Monsters drop experience or a wild coin. Spend coins on chests (E): each gives a boost item for the run (Common to Legendary) or a move scroll, and each chest costs more than the last. A few blue chests are free, and the first boss beaten at each altar leaves one.</span>
+        <kbd>Water</kbd><span>You can walk on ponds, and so can monsters. Each step on water sets an effect for 5 s: fire attacks 5% weaker, water and grass attack 5% harder, and ground moves 15% slower.</span>
+        <kbd>Coins</kbd><span>Monsters drop experience or a wild coin: about 1 coin per 8 orbs, 1 per 16 once you hold 100, and none at 200 until you spend some. Spend coins on chests (E): each gives a boost item for the run (Common to Legendary) or a move scroll, and each chest costs more than the last. A few blue chests are free, and the first boss beaten at each altar leaves one.</span>
         <kbd>Tab</kbd><span>Open the meadow map. In the level-up screen, F rerolls the picks and X skips them (twice per run each).</span>
         <kbd>Space</kbd><span>Jump. High enough and you clear ground monsters and low shots.</span>
         <kbd>Shift</kbd><span>Dash a short way in the direction you are moving. You can't be hit while dashing.</span>
@@ -1303,7 +1305,7 @@ function groundH(x, z) {
   const n = Math.floor(h / TERRACE), f = h / TERRACE - n, c = clamp((f - .8) / .2, 0, 1);
   return (n + c * c * (3 - 2 * c)) * TERRACE;
 }
-// Ponds sit on flat ground; they block movement like trees.
+// Ponds sit on flat ground. Everything can walk on them; see WATER_FX for what that does to you.
 const PONDS = [];
 // Regions: the nearest seed wins (w shrinks or grows a region), with wobbly borders. el biases which monsters spawn there.
 // aff scales the damage of each move type used there (fire is weak in the snow, strong in the badlands, and so on).
@@ -1329,12 +1331,12 @@ function biomeAt(x, z) {
   for (const b of BIOMES) { const d = Math.hypot(wx - b.x, wz - b.z) * b.w; if (d < bd) { bd = d; best = b; } }
   return best;
 }
-// Trees and ponds block movement. They sit in a coarse grid (each listed in its 3x3 cells) so collision checks stay cheap.
+// Trees block movement (ponds share the grid but do not). They sit in a coarse grid (each listed in its 3x3 cells) so collision checks stay cheap.
 const TREES = [], TREE_GRID = {};
 const cellKey = (x, z) => Math.floor(x / 16) * 1000 + Math.floor(z / 16);
 const treesAt = (x, z) => TREE_GRID[cellKey(x, z)] || [];
 function addTree(t) { TREES.push(t); for (let a = -16; a <= 16; a += 16) for (let b = -16; b <= 16; b += 16) (TREE_GRID[cellKey(t.x + a, t.z + b)] ||= []).push(t); }
-function pushOut(o, rad) { for (const t of treesAt(o.x, o.z)) { const tx = o.x - t.x, tz = o.z - t.z, td = Math.hypot(tx, tz), m = t.r + rad; if (td < m && td > 0) { o.x = t.x + tx / td * m; o.z = t.z + tz / td * m; } } }
+function pushOut(o, rad) { for (const t of treesAt(o.x, o.z)) { if (t.pond) continue; const tx = o.x - t.x, tz = o.z - t.z, td = Math.hypot(tx, tz), m = t.r + rad; if (td < m && td > 0) { o.x = t.x + tx / td * m; o.z = t.z + tz / td * m; } } }
 let DECOR_MATS, DECOR_CV, MAP_BG, SKY;
 const DECOR_OBJS = [];
 // Width, height and anchor per decor sprite.
@@ -1374,7 +1376,7 @@ function buildWorld() {
     if (Math.max(...hh) - Math.min(...hh) > .05 || TREES.some(q => Math.hypot(q.x - x, q.z - z) < q.r + sz * .6)) continue;
     const m = new THREE.Mesh(planeG, pondMat);
     m.position.set(x, .05, z); m.scale.set(sz, 1, sz * .75); scene.add(m);
-    addTree({ x, z, r: sz * .36, pond: true });
+    addTree({ x, z, r: sz * .36, pond: true, a: sz * .47, b: sz * .34 });
     mx.beginPath(); mx.ellipse(mapPx(x), mapPx(z), sz * .5 / MAP_SPAN * row, sz * .38 / MAP_SPAN * row, 0, 0, TAU); mx.fill();
     i++;
   }
@@ -1751,7 +1753,7 @@ function newRun(pid) {
     lastHit: -9, shield: 0, lastSummon: -9, crateT: 0,
     spawnT: 0, bossN: 0, pendingLv: 0, boss: null, lastPop: 0,
     fog: (() => { const f = canvas(128), x = f.getContext('2d'); x.fillStyle = 'rgba(20,26,40,.86)'; x.fillRect(0, 0, 128, 128); return f; })(), seen: new Uint8Array(SEEN_N * SEEN_N), fogT: 0,
-    runLen: RUN_LENGTH, biome: BIOMES[0], coins: 0, opened: 0, nextHorde: 75, regionName: '', held: {}, dmgDone: 0, lastNum: 0, streak: 0, bestStreak: 0, lastKill: -9, rerolls: 2, skips: 2,
+    runLen: RUN_LENGTH, biome: BIOMES[0], coins: 0, wetT: 0, opened: 0, nextHorde: 75, regionName: '', held: {}, dmgDone: 0, lastNum: 0, streak: 0, bestStreak: 0, lastKill: -9, rerolls: 2, skips: 2,
   };
   S.armor += S.ab.armor || 0;
   S.ab.init?.();
@@ -2030,9 +2032,9 @@ function hitEnemy(en, dmg, el, kx = 0, kz = 0, fx = true, st = 0) {
 }
 function killEnemy(en) {
   en.dying = .3;
-  if (en.solid) { anim('dust', en.x, .1, en.z, en.size * 1.2, 14); sfx('rock'); bump('stone'); if (Math.random() < .5) dropCoin(en.x, en.z, 2); else dropGem(en.x, en.z, 3); return; }
+  if (en.solid) { anim('dust', en.x, .1, en.z, en.size * 1.2, 14); sfx('rock'); bump('stone'); if (coinRatio() && Math.random() < .5) dropCoin(en.x, en.z, 2); else dropGem(en.x, en.z, 3); return; }
   // Crates: mostly a coin or a berry, sometimes a magnet, bomb or shield.
-  if (en.obj) { anim('dust', en.x, .1, en.z, 1.8, 14); sfx('crate'); if (Math.random() < .55) dropCoin(en.x, en.z, 2); else dropItem(en.x, en.z); return; }
+  if (en.obj) { anim('dust', en.x, .1, en.z, 1.8, 14); sfx('crate'); if (coinRatio() && Math.random() < .55) dropCoin(en.x, en.z, 2); else dropItem(en.x, en.z); return; }
   S.ab.kill?.(en);
   if (en.ice) { scene.remove(en.ice); en.ice = null; }
   if (en.atk?.tele) { scene.remove(en.atk.tele); en.atk.tele = null; }
@@ -2050,7 +2052,7 @@ function killEnemy(en) {
   if (crystalsLeft() && Math.random() < (en.boss ? .08 : en.elite ? .01 : .0005)) dropItem(en.x + .8, en.z + .8, 'time');
   // A monster drops experience or a wild coin, never both (elites and bosses drop both).
   if (en.elite || en.boss) { dropGem(en.x, en.z, en.xp); if (en.elite) dropCoin(en.x + .6, en.z, 3); }
-  else if (Math.random() < .14 * (S.coinMul || 1)) dropCoin(en.x, en.z, en.xp >= 5 ? 2 : 1);
+  else if (Math.random() < coinRatio() / (1 + coinRatio())) dropCoin(en.x, en.z, en.xp >= 5 ? 2 : 1);
   else dropGem(en.x, en.z, en.xp);
   if (en.boss) {
     const other = S.enemies.find(o => o.boss && o !== en && o.dying <= 0);
@@ -2268,7 +2270,10 @@ function dropGem(x, z, v) {
   if (S.gems.length > 400) { S.gems[Math.floor(Math.random() * S.gems.length)].v += v; return; }
   addPickup(x, z, v, 'xp', SM[v >= 20 ? 'xp2' : v >= 5 ? 'xp1' : 'xp0'], v >= 20 ? 1 : .7);
 }
-function dropCoin(x, z, v) { addPickup(x, z, v, 'coin', SM.wcoin, .75); }
+// Coins per XP orb, by how many you are holding: 1 per 8 orbs, 1 per 16 from 100 coins, none from 200 until you spend some.
+const COIN_FULL = 200;
+const coinRatio = () => S.coins >= COIN_FULL ? 0 : (S.coins >= 100 ? 1 / 16 : 1 / 8) * (S.coinMul || 1);
+function dropCoin(x, z, v) { if (S.coins < COIN_FULL) addPickup(x, z, v, 'coin', SM.wcoin, .75); }
 function shock(cx, cz, r, dmg, el, knock, fxRing, st = 0) {
   if (fxRing) ring(r, fxRing, .55);
   for (const en of S.enemies) {
@@ -2323,7 +2328,23 @@ function freeze(en, t) {
 }
 function thaw(en) { en.freeze = 0; if (en.ice) { scene.remove(en.ice); en.ice = null; } }
 // Extra damage a monster takes from its statuses and the partner's ability.
-const takeMul = (en, el) => affOf(S.biome, el) * (en.freeze > 0 ? 1.25 : 1) * (en.soak > 0 ? 1.15 : 1) * (en.melt > 0 ? 1.25 : 1) * (S.ab.dmgTo?.(en, el) ?? 1);
+// Walking on water lasts 5 s after your last step on it, and depends on your type.
+const WET_TIME = 5;
+const WATER_FX = {
+  fire: { dmg: .95, text: 'Attack −5%', c: '#ff8a7a' },
+  water: { dmg: 1.05, text: 'Attack +5%', c: '#7fe05a' },
+  grass: { dmg: 1.05, text: 'Attack +5%', c: '#7fe05a' },
+  ground: { spd: .85, text: 'Speed −15%', c: '#ff8a7a' },
+};
+const wetFx = () => S.wetT > 0 ? WATER_FX[S.type] : {};
+const onWater = (x, z) => treesAt(x, z).some(q => q.pond && ((x - q.x) / q.a) ** 2 + ((z - q.z) / q.b) ** 2 < 1);
+function tickWater(dt, grounded) {
+  S.wetT = Math.max(0, S.wetT - dt);
+  if (!grounded || !onWater(S.x, S.z)) return;
+  if (!S.wetT) { const fx = WATER_FX[S.type]; popText(S.x, 2.6, S.z, fx.text, fx.c); sfx('splash'); }
+  S.wetT = WET_TIME;
+}
+const takeMul = (en, el) => (wetFx().dmg ?? 1) * affOf(S.biome, el) * (en.freeze > 0 ? 1.25 : 1) * (en.soak > 0 ? 1.15 : 1) * (en.melt > 0 ? 1.25 : 1) * (S.ab.dmgTo?.(en, el) ?? 1);
 // Damage over time: no knockback, sound or new statuses.
 function dotHit(en, dmg, el) {
   if (en.dying > 0) return;
@@ -2860,7 +2881,7 @@ const PREP = {
   focus: { name: 'Focus Tea', icon: 'it_claw', c: '#4a9be8', price: 40, desc: 'Moves recharge 10% faster.', apply: () => S.cd *= .9 },
   tonic: { name: 'Status Tonic', icon: 'it_charm', c: '#b070e0', price: 30, desc: 'Status effects happen 25% more often.', apply: () => S.stBonus = (S.stBonus || 1) * 1.25 },
   scholar: { name: 'Field Notes', icon: 'it_lens', c: '#4ccf5c', price: 45, desc: '+20% experience.', apply: () => S.xpMul = (S.xpMul || 1) * 1.2 },
-  purse: { name: 'Lucky Purse', icon: 'it_coin', c: '#c8961e', price: 35, desc: 'Monsters drop coins 50% more often.', apply: () => S.coinMul = 1.5 },
+  purse: { name: 'Lucky Purse', icon: 'it_coin', c: '#c8961e', price: 35, desc: 'Monsters drop coins 50% more often, until you hold 200.', apply: () => S.coinMul = 1.5 },
   move: { name: 'Practice Scroll', icon: 'it_scroll', c: '#f08030', price: 50, desc: 'Start with a second random move.', apply: () => { const l = Object.keys(MOVES).filter(k => MOVES[k].el === S.type && !S.moves[k]); S.moves[l[Math.floor(Math.random() * l.length)]] = { l: 1, t: .5, a: 0 }; renderKit(); } },
   head: { name: 'Head Start', icon: 'it_candy', c: '#f08030', price: 60, desc: 'Start two levels up, with both picks.', apply: () => { gainXp(S.need); gainXp(S.need); } },
   ult: { name: 'Charged Up', icon: 'it_core', c: '#f6c445', price: 25, desc: 'Start with your ultimate ready.', apply: () => S.ult = S.ultNeed },
@@ -3520,13 +3541,14 @@ function update(dt) {
   const vx = fwd.x * f + right.x * s, vz = fwd.z * f + right.z * s;
   if (S.moving) { const vl = Math.hypot(vx, vz); S.mx = vx / vl; S.mz = vz / vl; }
   S.dashCd -= dt;
+  const spd = S.spd * (wetFx().spd ?? 1);
   if (S.dashT > 0) {
     // Dash: a quick burst in the last direction you moved, untouchable while it lasts.
     S.dashT -= dt;
-    S.x += S.mx * S.spd * 3.2 * dt; S.z += S.mz * S.spd * 3.2 * dt;
+    S.x += S.mx * spd * 3.2 * dt; S.z += S.mz * spd * 3.2 * dt;
     if (Math.random() < .6) anim(S.ab.dig ? PV('dust') : 'dust', S.x, .1, S.z, S.ab.dig ? 1.6 : 1, 16);
     if (S.dashT <= 0) S.ab.dashEnd?.();
-  } else { S.x += vx * S.spd * dt; S.z += vz * S.spd * dt; }
+  } else { S.x += vx * spd * dt; S.z += vz * spd * dt; }
   pushOut(S, .45);
   // Height: gravity when above the ground (jumps and walking off ledges); a quick climb when stepping up.
   const gnd = groundH(S.x, S.z);
@@ -3536,6 +3558,7 @@ function update(dt) {
   } else S.py = Math.min(gnd, S.py + 10 * dt);
   const pd = Math.hypot(S.x, S.z);
   if (pd > WORLD_R) { S.x *= WORLD_R / pd; S.z *= WORLD_R / pd; }
+  tickWater(dt, S.py <= gnd + .05);
   if (S.moving) {
     if (Math.abs(f) > .2) S.faceBack = f > 0;
     if (Math.abs(s) > .2) S.faceRight = s > 0;
@@ -3845,7 +3868,7 @@ function updateHud() {
   if (abl.dataset.t !== (am?.text || '')) { abl.dataset.t = am?.text || ''; abl.title = abl.ariaLabel = `${S.ab.name}${am ? ': ' + am.text : ''}`; }
   $('#clock').textContent = fmt(S.t);
   $('#kills').textContent = `${S.kills} defeated · ${fmt(Math.max(0, S.runLen - S.t))} to go`;
-  $('#coins').textContent = S.coins;
+  $('#coins').textContent = S.coins >= COIN_FULL ? `${S.coins} · full` : S.coins;
   const reg = S.biome.name + (wildsAwake() ? '+' : '');
   if (wildsAwake() && !S.awake) { S.awake = true; banner('The wilds are stirring', 'Regions take full effect. Hordes, elites and rare pets can appear'); sfx('warn'); }
   if (reg !== S.regionName) {
@@ -3854,6 +3877,9 @@ function updateHud() {
     S.regionName = reg;
     $('#zone').innerHTML = S.biome.name + (at ? ` <span style="color:${v > 1 ? '#7fe05a' : '#ff8a7a'}">${v > 1 ? '+' : '−'}${Math.abs(Math.round((v - 1) * 100))}%</span>` : '');
   }
+  const wet = $('#wet'), wfx = wetFx();
+  wet.hidden = !wfx.text;
+  if (wfx.text) { wet.textContent = `On water: ${wfx.text} · ${Math.ceil(S.wetT)} s`; wet.style.color = wfx.c; }
   const u = S.ult / S.ultNeed, ub = $('#ultbtn');
   ub.style.setProperty('--p', u * 100 + '%');
   ub.disabled = u < 1;
