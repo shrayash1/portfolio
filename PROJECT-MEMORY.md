@@ -1,6 +1,6 @@
 # Project memory: shrayash-portfolio + Pocket Wilds
 
-Read this first in a new chat instead of the whole codebase. Last updated 3 November 2026 (recruit challenges, hills, dash).
+Read this first in a new chat instead of the whole codebase. Last updated 4 November 2026 (recruit challenges, hills, dash).
 
 ## Who and rules
 - Shrayash Pradhan, Unity game developer (Dark Matter: KidSage Colorbook, Super World Saga, Spell Splatter, Frog Jump).
@@ -82,6 +82,20 @@ HD-2D survivor game: pixel sprites in a 3D meadow, camera behind the player, aut
 **Settings, HUD, minimap (latest).** Settings is a tabbed panel (`SET_TABS`, `renderSettings`, `applySettings`) with sections Sound (master, music, effects, mute in background), Graphics (quality = pixel ratio, FPS limit 30/60, shake + intensity, damage numbers, FPS counter), Controls (sensitivity, invert, camera distance (wheel too), field of view, auto ultimate), Keys (rebindable `SET.keys`; movement is fixed) and Interface (minimap, streak, move slots, hints). HUD: round portrait `#avatar` with an XP ring and level pill, next to a plate with name, type and status. Minimap (`drawRadar`, 180 px canvas): `MAP_BG` terrain turned with the camera, N/E/S/W letters, item icons, and boss/rare portraits in rings. Help scrolls inside the sheet with Back pinned.
 
 **Simple HUD and interact (latest).** The HUD is a round portrait (XP ring, level pill), then a dark plate with name, types, the next-evolution silhouette with its level, and a slim HP bar (no XP bar). The ability is a small ring icon in the type colour that fills with its meter (`#abil`, `--m`). Keys: R = ultimate, E = interact, F = reroll (key settings version 2 resets old saved keys once). There is no free boss summon: each run places 3 boss altars (red crystal; E calls that boss, who drops 2 extra boost items) and 4 shrines (gold; E gives a boost item, sometimes a scroll), each usable once (`S.altars`, `interact`, `nearAltar`, `#prompt`). They show on the minimap and big map. The timed boss every 2:00 is still on.
+
+**Big world, economy, capture rework (latest; supersedes older notes where they conflict).**
+- World: `WORLD_R` 160, `MAP_SPAN`. Seven regions (`BIOMES`, `biomeAt`) with their own tint, decor and favourite monsters; region name in `#zone`. Decor is baked once (`DECOR_OBJS`) and distance-culled (`cullDecor`, `CULL_D` follows Quality). Trees and ponds use a grid (`addTree`, `treesAt`, `pushOut`). `MAP_BG` is painted in `buildWorld`.
+- Enemies: `hpScale` and `dmgScale` are gentle early, steep late. Elites (`makeElite`), hordes every 75 s (`S.nextHorde`). A simple bot lasted 4-5.5 min with no dash or dodging.
+- Economy: monsters drop XP or a wild coin (`dropCoin`, 14%), never items. Chests are in `S.altars` (kind `chest` costs `chestPrice()`, kind `free` is blue; bosses leave one). `HELD` items have rarity (`RAR_W`, `pickHeld(luck)`); 20% of chests give a move scroll. Crates give coins, berry, magnet, bomb or shield. Star Candy only from bosses.
+- Recruiting: one rare per run at most (`rollRare`, `RARE_CHANCE` by rarity). It roams from 45-70 m away (`rareMove`), never does contact damage, fires when you are within 11 m, then flees. Under 25% HP it is `weak`: slow walk, ring appears. Stay in ring `CAP_NEED` 12 s; out for `CAP_GRACE` 5 s resets and it runs. UI: `#rarept` pointer, `#capui` overhead (`updateRareUI`).
+- Capture animation: `state === 'capture'`, `beginCapture`, `tickCaptureAnim`, `captureCamera`, card `#capcard`. Beats follow the catching sequence (throw, absorb, three shakes, click, stars) with our own original Wild Orb (`SM.orb`), not a copied ball.
+- Sizes: `partnerSize` keeps partners near wild monster size; wild bosses at 85%.
+- World map: `#bigmap`, north up, `drawBigMap`, zoom and drag (`MV`), fog of war (`S.fog`, `S.seen`, `revealFog`), fits any screen (side list wide, below when tall).
+- Testing warning: bot or test runs write to the real localStorage. Back up to sessionStorage first; a window variable dies on reload.
+
+**Physics and jump.** Partner height is `S.py` with gravity (`S.pv`); Space jumps (1.9 m, clears contact and low shots), and walking off a ledge falls. The player sprite, shots, enemy shots, orbits, vine parts and moving flames are `userData.flat` and use world height, so they do not follow the terrain. `shoot` aims at the target's height via `aimTarget` and lobs over ledges by raising gravity and launch speed; hills stop shots. Start area is flat (inside `groundH`).
+
+**Patching warning.** A block replace by "start marker to next marker" once deleted the Settings and Help CSS, because other rules sat between the markers. Check what a cut removes (compare CSS selectors against git HEAD) before trusting it.
 
 ## Ideas not done yet
 - Rename moves to original names (see rules).

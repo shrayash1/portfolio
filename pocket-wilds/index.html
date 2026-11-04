@@ -107,10 +107,37 @@ img.px { image-rendering: pixelated; }
   width: 100px; height: 100px; border-radius: 50%; border: 4px solid var(--panel-edge); background: conic-gradient(var(--gold) var(--p, 0%), var(--panel) 0); color: var(--ink);
   display: grid; place-content: center; text-align: center; font-weight: 700; font-size: .78rem; line-height: 1.1; }
 #dashbtn { position: absolute; bottom: calc(34px + env(safe-area-inset-bottom, 0px)); right: calc(132px + env(safe-area-inset-right, 0px)); pointer-events: auto; width: 70px; height: 70px; border-radius: 50%; border: 4px solid var(--panel-edge); background: var(--panel); color: var(--ink); font-family: var(--display); font-size: 1rem; touch-action: none; }
-@media (pointer: coarse) { #dashbtn { display: block; } }
+#jumpbtn { position: absolute; bottom: calc(112px + env(safe-area-inset-bottom, 0px)); right: calc(118px + env(safe-area-inset-right, 0px)); pointer-events: auto; width: 64px; height: 64px; border-radius: 50%; border: 4px solid var(--panel-edge); background: var(--panel); color: var(--ink); font-family: var(--display); font-size: .95rem; touch-action: none; }
+@media (pointer: coarse) { #dashbtn, #jumpbtn { display: block; } }
 .ultkey { display: block; margin: 2px auto 0; width: max-content; font-size: .75rem; }
 #prompt { position: absolute; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); padding: 8px 16px; border-radius: 99px; background: rgba(29,36,51,.9); border: 3px solid var(--gold); color: var(--panel); font-weight: 700; white-space: nowrap; }
 #prompt kbd { background: var(--gold); color: var(--ink); margin-right: 6px; }
+#zone { font-family: var(--display); font-size: .85rem; color: var(--gold); }
+#coinrow { display: flex; align-items: center; justify-content: center; gap: 4px; font-family: var(--display); }
+#coinimg { width: 18px; height: 18px; }
+/* Pointer above the player: the rare's icon with an arrow orbiting toward it. */
+#rarept { position: absolute; width: 44px; height: 44px; margin: -34px 0 0 -22px; display: grid; place-items: center; }
+#rarept i { position: absolute; inset: -14px; }
+#rarept i::before { content: ""; position: absolute; left: 50%; top: 0; margin-left: -9px; border-left: 9px solid transparent; border-right: 9px solid transparent; border-bottom: 14px solid var(--gold); filter: drop-shadow(0 1px 0 #1d2433); }
+#rarept img { width: 40px; height: 40px; border-radius: 50%; background: #fffbef; border: 3px solid var(--gold); box-sizing: border-box; }
+#rarept small { position: absolute; top: 100%; margin-top: 2px; font: 700 .72rem var(--ui); color: #fff; text-shadow: 0 1px 2px #000; white-space: nowrap; }
+/* Over the rare: name and HP, then the capture timer. */
+#capui { position: absolute; transform: translate(-50%, -100%); min-width: 130px; padding: 4px 10px 5px; display: grid; gap: 2px; text-align: center; background: rgba(29,36,51,.9); color: var(--panel); border: 2px solid var(--gold); border-radius: 10px; }
+#capui b { font-family: var(--display); font-size: .85rem; white-space: nowrap; }
+#capui small { font-weight: 700; font-size: .78rem; color: var(--gold); white-space: nowrap; }
+#capui .bar { height: 7px; border-width: 1px; }
+#capui .bar > i { background: var(--hp-lo); transition: none; }
+#capui.weak .bar > i { background: var(--gold); }
+/* Capture moment: the HUD steps aside for the animation. */
+#hud.cine > :not(#capflash):not(#capcard) { opacity: 0; }
+#capflash { position: absolute; inset: 0; background: #fff; opacity: 0; transition: opacity .25s; pointer-events: none; }
+#capflash.on { opacity: .85; transition: none; }
+#capcard { position: absolute; left: 50%; bottom: 12%; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 10px 20px; white-space: nowrap; }
+#capcard img { width: 56px; height: 56px; }
+#capcard div { display: grid; text-align: left; }
+#capcard .kick { font-family: var(--display); font-size: 1.5rem; color: #b5562a; line-height: 1; }
+#capcard b { font-family: var(--display); font-size: 1.15rem; }
+#capcard small { font-size: .85rem; color: var(--soft); }
 #ultbtn b { display: block; font-family: var(--display); font-size: .95rem; }
 #ultbtn.ready { box-shadow: 0 0 0 6px rgba(246,196,69,.45); animation: pulse .9s infinite alternate; }
 #ultbtn:disabled { cursor: default; }
@@ -132,10 +159,13 @@ img.px { image-rendering: pixelated; }
 .screen { position: fixed; inset: 0; display: grid; place-items: center; background: var(--scrim); overflow-y: auto;
   padding-block: calc(20px + env(safe-area-inset-top, 0px)) calc(20px + env(safe-area-inset-bottom, 0px));
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-.screen.clear { background: linear-gradient(to bottom, rgba(20,26,40,0) 15%, rgba(20,26,40,.88) 60%); align-items: end; }
+.screen.clear { background: linear-gradient(to right, rgba(20,26,40,.88), rgba(20,26,40,.6) 36%, rgba(20,26,40,0) 60%); place-items: center start; padding-left: clamp(16px, 6vw, 96px); }
+.screen.clear .box { width: min(520px, 100%); }
+@media (max-aspect-ratio: 1/1) { .screen.clear { background: linear-gradient(to bottom, rgba(20,26,40,0) 25%, rgba(20,26,40,.9) 60%); place-items: end start; } }
 .box { width: min(960px, 100%); display: grid; gap: 16px; }
 .narrow { width: min(620px, 100%); }
-.title { font-size: clamp(3rem, 11vw, 6.4rem); line-height: .92; color: var(--gold); text-shadow: 0 4px 0 #b5562a, 0 8px 0 var(--night); }
+@media (max-height: 640px) { .screen.clear .menu { gap: 6px; } .screen.clear .menu .btn { padding: 5px 16px; font-size: 1rem; } .screen.clear .box { gap: 8px; } .screen.clear .tag { font-size: .95rem; } }
+.title { font-size: clamp(2.4rem, 5.4vw, 4.4rem); line-height: .92; color: var(--gold); text-shadow: 0 4px 0 #b5562a, 0 8px 0 var(--night); }
 .tag { font-size: 1.1rem; max-width: 60ch; margin: 0; }
 .menu { display: grid; gap: 10px; width: min(320px, 100%); }
 .menu .btn { width: 100%; text-align: left; }
@@ -321,11 +351,26 @@ label.btn.file { cursor: pointer; display: inline-block; }
 .pausekit { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 760px; }
 .pausekit .mv { width: min(240px, 100%); text-align: left; }
 #pause .menu { width: min(560px, 100%); grid-template-columns: 1fr 1fr; }
-.mapgrid { display: grid; grid-template-columns: minmax(0, 560px) minmax(220px, 1fr); gap: 14px; align-items: start; }
-@media (max-width: 760px) { .mapgrid { grid-template-columns: minmax(0, 1fr); } }
-#mapcv { width: 100%; height: auto; aspect-ratio: 1; padding: 0; image-rendering: pixelated; background: #2a4a2e; }
-#maplegend p { display: flex; align-items: center; gap: 10px; }
-#maplegend i { flex: none; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #1d2433; }
+/* World map: fills the screen on any shape. Side list on wide screens, below the map on tall ones. */
+#bigmap { padding: 8px; place-items: stretch; overflow: hidden; }
+.mapwrap { height: calc(100dvh - 16px); display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 8px; min-width: 0; }
+.maphead { display: flex; align-items: center; gap: 6px 14px; flex-wrap: wrap; padding: 6px 12px; }
+.maphead h2 { font-size: clamp(1.2rem, 3vw, 1.8rem); }
+#mapregion { font-weight: 700; color: #b5562a; }
+.mapexp { font-size: .85rem; font-weight: 700; color: var(--soft); }
+.maphead .btn { margin-left: auto; padding: 5px 16px; font-size: 1rem; }
+.mapgrid { display: grid; grid-template-columns: minmax(0, 1fr) clamp(190px, 24vw, 280px); gap: 8px; min-height: 0; }
+@media (max-aspect-ratio: 1/1) { .mapgrid { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 32%; } }
+.mapframe { position: relative; min-width: 0; min-height: 0; overflow: hidden; background: #161d2b; padding: 0; }
+#mapcv { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+.mapzoom { position: absolute; right: 10px; bottom: 10px; display: grid; gap: 6px; }
+.mapzoom button { width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--panel-edge); background: var(--panel); color: var(--ink); font-family: var(--display); font-size: 1.1rem; }
+.maplist { padding: 10px; overflow-y: auto; display: grid; gap: 6px; align-content: start; text-align: left; }
+.maplist h3 { font-size: 1.05rem; margin-top: 4px; }
+.maprow { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: .9rem; line-height: 1.15; }
+.maprow img { flex: none; width: 26px; height: 26px; border-radius: 50%; object-fit: contain; background: #fffbef; border: 2px solid var(--c, #3a4660); box-sizing: border-box; }
+.maprow b { margin-left: auto; font-family: var(--display); }
+.maplist .note { margin: 0; font-size: .85rem; }
 /* Settings: section tabs on the left, the section's rows on the right. */
 .setbox { width: min(1100px, 100%); }
 .setbox .dexhead .btn { margin-left: 0; }
@@ -358,7 +403,7 @@ label.btn.file { cursor: pointer; display: inline-block; }
 .keybtn { min-width: 110px; padding: 7px 12px; border: 2px solid var(--panel-edge); border-radius: 8px; background: var(--ink); color: var(--panel); font-family: var(--display); }
 /* Help fits the screen: it scrolls inside the sheet and Back stays in view. */
 #help .box { width: min(900px, 100%); }
-#help .sheet { max-height: calc(100vh - 60px); overflow-y: auto; }
+#help .sheet { box-sizing: border-box; max-height: calc(100dvh - 48px); overflow-y: auto; }
 #help .sheet > .row { position: sticky; bottom: -18px; background: var(--panel); padding-block: 8px; margin-bottom: -18px; }
 .fxlegend { display: grid; gap: 6px; border-top: 2px solid #d9d2bd; padding-top: 8px; }
 .fxlegend h4 { margin: 0; font-family: var(--display); font-size: 1rem; }
@@ -395,7 +440,7 @@ label.btn.file { cursor: pointer; display: inline-block; }
    <div id="kit" hidden></div>
   </div>
   <span id="fps" hidden></span>
-  <div id="top"><div id="clock">0:00</div><div id="kills">0 defeated</div></div>
+  <div id="top"><div id="zone"></div><div id="clock">0:00</div><div id="kills">0 defeated</div><div id="coinrow"><img id="coinimg" class="px" alt="Wild coins"><b id="coins">0</b></div></div>
   <div class="hud-tr"><button class="icon-btn touch" id="bossbtn" aria-label="Interact">E</button><button class="icon-btn touch" id="fsbtn" aria-label="Full screen">&#x26F6;</button><button class="icon-btn" id="pausebtn" aria-label="Pause">II</button></div>
   <canvas id="radar" width="180" height="180" aria-label="Minimap"></canvas>
   <div id="bossbar" class="plate" hidden><b id="bossname">Boss</b><div class="bar"><i id="bossfill"></i></div></div>
@@ -404,9 +449,14 @@ label.btn.file { cursor: pointer; display: inline-block; }
   <div id="streak" hidden><small>Streak</small><b id="streakn">×0</b></div>
   <div id="slots" aria-label="Moves"></div>
   <button id="dashbtn" class="touch" aria-label="Dash">Dash</button>
+  <button id="jumpbtn" class="touch" aria-label="Jump">Jump</button>
   <button id="ultbtn" disabled aria-label="Ultimate (R)"><span><b id="ultname">Inferno</b><span id="ultpct">0%</span><kbd class="ultkey">R</kbd></span></button>
   <div id="prompt" hidden></div>
-  <div class="hint" id="hint">Click to lock the mouse, then move it to look around · WASD to move · Shift to dash · R for ultimate · E at altars and shrines · Esc to pause</div>
+  <div id="rarept" hidden><i></i><img class="px" alt=""><small></small></div>
+  <div id="capui" hidden><b></b><div class="bar"><i></i></div><small></small></div>
+  <div id="capflash"></div>
+  <div id="capcard" class="plate" hidden></div>
+  <div class="hint" id="hint">Click to lock the mouse, then move it to look around · WASD to move · Space to jump · Shift to dash · R for ultimate · E at chests and altars · Esc to pause</div>
   <div id="banner"><div class="plate" id="bannerbox"></div></div>
   <div id="hurt"></div>
   <div id="stick" hidden><i></i></div>
@@ -433,7 +483,7 @@ label.btn.file { cursor: pointer; display: inline-block; }
     <h2 style="font-size:clamp(2rem,6vw,3rem);color:var(--gold)">Choose your partner</h2>
     <div class="picks" id="picks"></div>
     <h3 class="sect">Recruits <span class="small" id="recruitcount"></span></h3>
-    <p class="small" style="margin:0">Finish a monster's challenge and it appears in the wild in your next run. Weaken it, then stand in its golden ring to capture it. Legendary bosses have harder challenges and unlock a power-up.</p>
+    <p class="small" style="margin:0">Finish a monster's challenge and it may roam the map in a later run, more often the commoner it is. Weaken it, then stay in its ring to capture it. Legendary bosses have harder challenges and unlock a power-up.</p>
     <div class="recruits" id="recruits"></div>
     <div id="trainerrow" hidden>
       <h3 class="sect">Trainer</h3>
@@ -451,10 +501,11 @@ label.btn.file { cursor: pointer; display: inline-block; }
         <kbd>Mouse</kbd><span>Click the game to lock the mouse, then move it to turn the camera.</span>
         <kbd>W A S D</kbd><span>Move. Forward is wherever the camera faces.</span>
         <kbd>R</kbd><span>Use your ultimate when the circle is full. Defeating monsters fills it.</span>
-        <kbd>Drops</kbd><span>Crates, stones and bosses drop boost items that last the whole run (Power Band, Status Charm, Venom Fang and more) and move scrolls that teach or level up a move. See them in the pause screen.</span>
+        <kbd>Coins</kbd><span>Monsters drop experience or a wild coin. Spend coins on chests (E): each gives a boost item for the run (Common to Legendary) or a move scroll, and each chest costs more than the last. A few blue chests are free, and bosses leave one.</span>
         <kbd>Tab</kbd><span>Open the meadow map. In the level-up screen, F rerolls the picks and X skips them (twice per run each).</span>
+        <kbd>Space</kbd><span>Jump. High enough and you clear ground monsters and low shots.</span>
         <kbd>Shift</kbd><span>Dash a short way in the direction you are moving. You can't be hit while dashing.</span>
-        <kbd>E</kbd><span>Interact. At a <b>boss altar</b> (red crystal) it calls that boss, who drops extra loot. At a <b>shrine</b> (gold) it gives a boost item. Each works once per run. Bosses slam, charge and fire volleys, so watch for the red circle.</span>
+        <kbd>E</kbd><span>Interact. At a <b>boss altar</b> (red crystal) it calls that boss, whose chest is better. At a <b>chest</b> it opens it. Each works once per run. Bosses slam, charge and fire volleys, so watch for the red circle.</span>
         <kbd>M</kbd><span>Turn sound on or off.</span>
         <kbd>Esc</kbd><span>Pause and open the menu. Press again to resume.</span>
         <kbd>Phone</kbd><span>The game goes full screen when a run starts (turn the phone sideways). Left thumb moves and the camera follows, right thumb looks around, the circle fires your ultimate, E calls a boss and &#x26F6; toggles full screen.</span>
@@ -462,11 +513,11 @@ label.btn.file { cursor: pointer; display: inline-block; }
       </div>
       <p>Your moves fire on their own. Walk over the glowing orbs to gain experience and pick a new move or trait each level. Your partner only learns moves of its own type. You heal slowly when you avoid damage for a few seconds.</p>
       <p><b>Radar.</b> The circle at the top right shows monsters (coloured by type), bosses (big red dots), crates (brown) and items (gold). The gold ring is the fence at the edge of the meadow.</p>
-      <p><b>Crates and drops.</b> Break crates by attacking or walking into them. Crates and some monsters drop a Heal Berry, Magnet (pulls in every orb), Bomb (blasts everything nearby), Shield (6 seconds of safety) or Star Candy (an instant level).</p>
+      <p><b>Crates.</b> Break them by attacking or walking into them for coins, a Heal Berry, a Magnet (pulls in every orb), a Bomb (blasts everything nearby) or a Shield (6 seconds of safety).</p>
       <p>Your partner evolves at level 12 and level 27, recruits included. A boss shows up every 2:00. Beat a boss once and it joins you as a playable partner, including Boulderback, the ground-type boss.</p>
       <p><b>Abilities and status effects.</b> Every partner has its own ability, like Overheat for the fire starter. Moves can also leave a status on monsters: fire <b>burns</b>, water <b>chills</b> (chill a monster three times and it <b>freezes</b> solid), grass <b>poisons</b> and ground <b>dazes</b>. Open the <b>Wild Dex</b> to read every partner's ability, stats and moves.</p>
-      <p><b>Recruits.</b> Each monster has a challenge (see the Wild Dex), such as defeating 150 of them, freezing 80 monsters or breaking 40 stones. Progress is kept between runs. Finish it and the monster appears in the wild in your next run inside a golden ring: bring it below a quarter of its HP, then stand in the ring until it is caught. Bosses are Legendary: their challenges are harder, and capturing one adds a Legendary power-up to every partner's level-up picks.</p>
-      <p><b>The meadow.</b> Hills roll across the map. Trees and stones block the way; stones break when you hit them.</p>
+      <p><b>Recruits.</b> Each monster has a challenge (see the Wild Dex), such as defeating 150 of them, freezing 80 monsters or breaking 40 stones. Progress is kept between runs. Finish it and, in a later run, the monster may roam the map (one per run, more often the commoner it is), with an arrow pointing to it. It only fights if you get close, then runs. Bring it below a quarter of its HP and stay in its ring for 12 seconds; leave for 5 seconds and it resets. Bosses are Legendary: their challenges are harder, and capturing one adds a Legendary power-up to every partner's level-up picks.</p>
+      <p><b>The world.</b> Seven regions, each with its own look and favourite monsters. Trees, ponds and stones block the way; stones break when you hit them. Hordes close in from time to time, and glowing elites hit harder but drop coins.</p>
       <h3>Type matchups</h3>
       <div class="chart"><table>
         <thead><tr><th>Move type</th><th>vs Fire</th><th>vs Water</th><th>vs Grass</th><th>vs Rock</th></tr></thead>
@@ -543,7 +594,7 @@ label.btn.file { cursor: pointer; display: inline-block; }
       <section class="plate pcol"><h3>Items <small id="pitemcount"></small></h3><div class="pitems" id="pitems"></div><div id="pitem"></div></section>
       <section class="plate pcol"><h3>Stats <small>green = better than base</small></h3><div id="pstats"></div></section>
     </div>
-    <p class="small pkeys"><kbd>Esc</kbd> resume · <kbd>WASD</kbd> move · <kbd>Mouse</kbd> camera · <kbd>Shift</kbd> dash · <kbd>R</kbd> ultimate · <kbd>E</kbd> interact · <kbd>Tab</kbd> map</p>
+    <p class="small pkeys"><kbd>Esc</kbd> resume · <kbd>WASD</kbd> move · <kbd>Mouse</kbd> camera · <kbd>Space</kbd> jump · <kbd>Shift</kbd> dash · <kbd>R</kbd> ultimate · <kbd>E</kbd> interact · <kbd>Tab</kbd> map</p>
     <div class="row pbtns">
       <button class="btn ghost" id="quitbtn">Quit to title</button>
       <button class="btn ghost" id="restartbtn">Restart</button>
@@ -557,11 +608,14 @@ label.btn.file { cursor: pointer; display: inline-block; }
 </div>
 
 <div class="screen" id="bigmap" hidden>
-  <div class="box">
-    <div class="dexhead"><h2>Meadow map</h2><span class="small">Up is the way the camera faces · Tab or Esc closes</span><button class="btn ghost" id="mapback">Back</button></div>
+  <div class="mapwrap">
+    <div class="maphead plate"><h2>World map</h2><span id="mapregion"></span><span class="mapexp" id="mapexp"></span><button class="btn ghost" id="mapback">Back</button></div>
     <div class="mapgrid">
-      <canvas id="mapcv" width="560" height="560" class="plate" aria-label="Map of the meadow"></canvas>
-      <div class="plate sheet" id="maplegend"></div>
+      <div class="mapframe plate">
+        <canvas id="mapcv" aria-label="Map of the world"></canvas>
+        <div class="mapzoom"><button id="mapin" aria-label="Zoom in">+</button><button id="mapout" aria-label="Zoom out">&minus;</button><button id="mapfit" aria-label="Show everything">Fit</button></div>
+      </div>
+      <div class="plate maplist" id="maplegend"></div>
     </div>
   </div>
 </div>
@@ -584,7 +638,7 @@ const $ = s => document.querySelector(s);
 const rand = (a, b) => a + Math.random() * (b - a);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const TAU = Math.PI * 2;
-const RUN_LENGTH = 600, WORLD_R = 75;
+const RUN_LENGTH = 600, WORLD_R = 160, MAP_SPAN = WORLD_R * 2.3;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const TYPE_COLOR = { fire: '#f08030', water: '#6890f0', grass: '#78c850', ground: '#d8b860', rock: '#b8a038' };
 const cap = s => s[0].toUpperCase() + s.slice(1);
@@ -592,7 +646,7 @@ function readJSON(k) { try { return JSON.parse(localStorage.getItem(k)) || {}; }
 function writeJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 // onload rather than img.decode(): decode() can stall while the tab is in the background.
 const loadImage = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
-const KEY_DEFAULTS = { dash: 'ShiftLeft', ult: 'KeyR', interact: 'KeyE', map: 'Tab', pause: 'KeyP', mute: 'KeyM', reroll: 'KeyF', skip: 'KeyX' };
+const KEY_DEFAULTS = { jump: 'Space', dash: 'ShiftLeft', ult: 'KeyR', interact: 'KeyE', map: 'Tab', pause: 'KeyP', mute: 'KeyM', reroll: 'KeyF', skip: 'KeyX' };
 const SET = Object.assign({ sens: 1, invertY: false, shake: !reduceMotion, shakeAmt: 1, popups: true, dmgNums: true, sfxVol: .8, musicVol: .6, master: .9, muted: false, muteBg: true,
   quality: 'high', fps: 0, showFps: false, camDist: 11.5, fov: 55, autoUlt: false, showRadar: true, showStreak: true, showSlots: true, showHint: true }, readJSON('pocketwilds-settings'));
 // Version 2 moved the ultimate to R and made E interact: older saved keys reset once.
@@ -675,7 +729,13 @@ const SYNTH = {
   levelup: t => arp(t, [523, 659, 784, 1047], .07, { dur: .14, vol: .14 }),
   evolve: t => arp(t, [392, 523, 659, 784, 1047, 1319, 1568], .09, { type: 'triangle', dur: .25, vol: .2 }),
   boss: t => { tone(t, { f: 110, f2: 104, dur: .6, vol: .25 }); tone(t + .3, { f: 98, f2: 92, dur: .6, vol: .25 }); },
+  jump: t => tone(t, { type: 'square', f: 280, f2: 620, dur: .14, vol: .12 }),
+  land: t => tone(t, { type: 'triangle', f: 140, f2: 70, dur: .08, vol: .2 }),
   dash: t => hiss(t, { kind: 'bandpass', f: 600, f2: 2400, q: 1.2, dur: .18, vol: .25 }),
+  orbthrow: t => hiss(t, { f: 700, f2: 2200, q: 1.5, dur: .55, vol: .2 }),
+  orbabsorb: t => { arp(t, [523, 784, 1047, 1568], .07, { type: 'sine', dur: .2, vol: .16 }); hiss(t, { kind: 'highpass', f: 3000, dur: .5, vol: .12 }); },
+  orbtick: t => { tone(t, { type: 'triangle', f: 260, f2: 170, dur: .09, vol: .35 }); tone(t + .1, { type: 'triangle', f: 210, f2: 150, dur: .07, vol: .22 }); },
+  orbclick: t => { tone(t, { f: 1400, dur: .04, vol: .25 }); arp(t + .12, [659, 784, 988, 1319, 1568, 2093], .09, { dur: .22, vol: .17 }); },
   ultReady: t => arp(t, [880, 1320], .08, { type: 'triangle', dur: .15, vol: .15 }),
   ult_fire: t => { hiss(t, { kind: 'lowpass', f: 2400, f2: 200, dur: 1.1, vol: .45 }); tone(t, { type: 'sawtooth', f: 90, f2: 45, dur: 1, vol: .12 }); },
   ult_water: t => { hiss(t, { f: 300, f2: 1800, q: .7, dur: .6, vol: .4 }); hiss(t + .5, { f: 1800, f2: 300, q: .7, dur: .7, vol: .35 }); },
@@ -1061,6 +1121,15 @@ const SMALL = {
   it_plate: [16, 16, x => { poly(x, '#9a96a0', 2, 3, 8, 1, 14, 3, 13, 10, 8, 15, 3, 10); poly(x, '#d4d0d8', 4, 4, 8, 3, 12, 4, 11, 9, 8, 12, 5, 9); }],
   it_coin: [16, 16, x => { e(x, 8, 8, 6, 6, '#f2c230'); e(x, 8, 8, 4, 4, '#ffe36e'); r(x, 7, 5, 2, 6, '#c8961e'); }],
   it_shiny: [16, 16, x => { e(x, 8, 9, 6, 5, '#e8e070'); e(x, 7, 8, 3.5, 3, '#fffbe0'); r(x, 5, 5, 2, 2, '#ffffff'); }],
+  wcoin: [14, 14, x => { e(x, 7, 7, 5.5, 5.5, '#c8961e'); e(x, 7, 7, 4, 4, '#ffd23a'); poly(x, '#5cae4a', 5, 9, 7, 3, 9, 9); r(x, 5, 5, 1, 1, '#fff7c8'); }],
+  it_lode: [16, 16, x => { poly(x, '#5a5560', 3, 13, 5, 4, 11, 3, 13, 11); poly(x, '#3f7fd8', 6, 11, 7, 6, 10, 6, 10, 11); }],
+  it_heart: [16, 16, x => { e(x, 5.5, 6, 3.5, 3.5, '#e8483a'); e(x, 10.5, 6, 3.5, 3.5, '#e8483a'); poly(x, '#e8483a', 2, 7, 14, 7, 8, 14); r(x, 4, 4, 2, 2, '#ffc4c4'); }],
+  it_lens: [16, 16, x => { e(x, 7, 7, 5, 5, '#5a5560'); e(x, 7, 7, 3.5, 3.5, '#9fe0f4'); r(x, 5, 5, 2, 2, '#ffffff'); poly(x, '#5a5560', 10, 11, 12, 9, 15, 13, 13, 15); }],
+  it_crown: [16, 16, x => { poly(x, '#f2c230', 2, 13, 2, 5, 5, 9, 8, 3, 11, 9, 14, 5, 14, 13); r(x, 7, 9, 2, 2, '#e8483a'); r(x, 3, 11, 10, 1, '#c8961e'); }],
+  it_core: [16, 16, x => { poly(x, '#a8640a', 8, 1, 14, 8, 8, 15, 2, 8); poly(x, '#f2a20a', 8, 3, 12, 8, 8, 13, 4, 8); e(x, 8, 8, 2, 2, '#fff2c0'); }],
+  // The Wild Orb: teal and gold with a green gem latch.
+  orb: [20, 20, x => { e(x, 10, 10, 8.5, 8.5, '#e8b83a'); x.fillStyle = '#2aa79b'; x.beginPath(); x.arc(10, 10, 8.5, Math.PI, 0); x.fill(); e(x, 7, 6, 2.4, 1.6, '#8fe8dc'); r(x, 1.5, 9, 17, 2, '#1d2433'); poly(x, '#1d2433', 10, 5.5, 14, 10, 10, 14.5, 6, 10); poly(x, '#7fe05a', 10, 7, 12.5, 10, 10, 13, 7.5, 10); }],
+  orbopen: [24, 24, x => { x.fillStyle = '#2aa79b'; x.beginPath(); x.arc(12, 8, 8.5, Math.PI, 0); x.fill(); x.fillStyle = '#e8b83a'; x.beginPath(); x.arc(12, 15, 8.5, 0, Math.PI); x.fill(); r(x, 3.5, 8, 17, 1.5, '#1d2433'); r(x, 3.5, 14, 17, 1.5, '#1d2433'); e(x, 12, 11.5, 6, 2.2, '#ffffff'); }],
   it_candy: [16, 16, x => { poly(x, '#f2c230', 1, 5, 4, 8, 1, 11); poly(x, '#f2c230', 15, 5, 12, 8, 15, 11); e(x, 8, 8, 4.5, 4, '#ef6f94'); r(x, 6, 6, 2, 2, '#ffffff'); r(x, 9, 9, 1, 1, '#ffe6ee'); }],
   crate: [24, 24, x => { r(x, 2, 4, 20, 18, '#8a5a36'); r(x, 2, 4, 20, 3, '#b58a5a'); r(x, 2, 19, 20, 3, '#6b4429'); r(x, 2, 4, 3, 18, '#a8784a'); r(x, 19, 4, 3, 18, '#6b4429'); poly(x, '#6b4429', 5, 18, 7, 18, 19, 8, 19, 6, 17, 6, 5, 16); r(x, 11, 10, 2, 2, '#e8c070'); }],
 };
@@ -1108,8 +1177,16 @@ const DECOR = {
   sunflower: [14, 26, x => { r(x, 6, 10, 2, 16, '#3f8a3e'); e(x, 4, 18, 3, 1.5, '#5cae4a', -.5); for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; e(x, 7 + Math.cos(a) * 4, 7 + Math.sin(a) * 4, 2.2, 2.2, '#ffcf2e'); } e(x, 7, 7, 3, 3, '#7a4a22'); }],
   altar: [32, 32, x => { r(x, 4, 24, 24, 6, '#6f6a72'); r(x, 8, 16, 16, 9, '#9a96a0'); r(x, 8, 16, 16, 2, '#c4c0c8'); poly(x, '#c2321e', 12, 16, 16, 2, 20, 16); poly(x, '#ff6a5a', 14, 15, 16, 5, 17, 15); r(x, 3, 22, 3, 8, '#5a5560'); r(x, 26, 22, 3, 8, '#5a5560'); }],
   altarUsed: [32, 32, x => { r(x, 4, 24, 24, 6, '#6f6a72'); r(x, 8, 16, 16, 9, '#9a96a0'); r(x, 8, 16, 16, 2, '#c4c0c8'); poly(x, '#5a5560', 12, 16, 16, 9, 20, 16); }],
-  shrine: [28, 32, x => { r(x, 4, 12, 20, 18, '#8a5a36'); poly(x, '#b5562a', 1, 13, 14, 3, 27, 13); r(x, 9, 17, 10, 10, '#3a2418'); e(x, 14, 22, 3.5, 3.5, '#ffd23a'); r(x, 13, 19, 2, 2, '#fff7c8'); }],
-  shrineUsed: [28, 32, x => { r(x, 4, 12, 20, 18, '#6b4429'); poly(x, '#7a4a32', 1, 13, 14, 3, 27, 13); r(x, 9, 17, 10, 10, '#2a1a12'); }],
+  deadtree: [32, 48, x => { r(x, 14, 18, 5, 28, '#5a4436'); r(x, 14, 18, 2, 28, '#7a5e4a'); poly(x, '#5a4436', 15, 24, 4, 12, 7, 10, 16, 20); poly(x, '#5a4436', 18, 20, 28, 6, 30, 9, 19, 26); poly(x, '#5a4436', 15, 16, 12, 3, 15, 2, 18, 16); }],
+  snowpine: [40, 64, x => { r(x, 18, 50, 5, 12, '#5a3a24'); for (let i = 0; i < 4; i++) { const y = 8 + i * 11, w = 7 + i * 4; poly(x, '#3f6e78', 20 - w, y + 14, 20, y, 20 + w, y + 14); poly(x, '#eaf6fb', 20 - w + 3, y + 8, 20, y + 1, 20 + w - 3, y + 8); } }],
+  snowbush: [32, 24, x => { e(x, 16, 16, 14, 7, '#7fa8b4'); e(x, 10, 11, 7, 6, '#d6ecf4'); e(x, 20, 10, 8, 6, '#eef8fc'); }],
+  icecrystal: [20, 26, x => { poly(x, '#6fb8e0', 3, 25, 6, 8, 10, 25); poly(x, '#a8dcf6', 7, 25, 10, 1, 14, 25); poly(x, '#6fb8e0', 12, 25, 15, 11, 18, 25); r(x, 9, 7, 1, 12, '#ffffff'); }],
+  ashrock: [32, 22, x => { poly(x, '#3a3236', 2, 21, 6, 8, 14, 3, 25, 6, 30, 14, 30, 21); poly(x, '#5a4e50', 6, 18, 8, 10, 14, 6, 22, 8, 25, 14, 20, 18); r(x, 13, 12, 5, 1, '#e8632a'); r(x, 17, 13, 1, 4, '#e8632a'); }],
+  deadgrass: [24, 18, x => { for (let i = 0; i < 7; i++) { const X = 3 + i * 3, h = 7 + (i * 5) % 8; poly(x, i % 2 ? '#a8843a' : '#c8a850', X, 18, X + (i % 3 - 1) * 2, 18 - h, X + 2, 18); } }],
+  chest: [28, 24, x => { r(x, 3, 10, 22, 13, '#8a5a36'); r(x, 3, 5, 22, 6, '#a8703f'); r(x, 3, 10, 22, 2, '#5a3a24'); r(x, 12, 8, 4, 6, '#ffd23a'); r(x, 13, 10, 2, 2, '#7a5a10'); r(x, 3, 5, 2, 18, '#c8961e'); r(x, 23, 5, 2, 18, '#c8961e'); }],
+  chestOpen: [28, 24, x => { r(x, 3, 12, 22, 11, '#6b4429'); r(x, 3, 3, 22, 5, '#7a5230'); r(x, 5, 9, 18, 3, '#2a1a12'); }],
+  freechest: [28, 24, x => { r(x, 3, 10, 22, 13, '#3f7fd8'); r(x, 3, 5, 22, 6, '#6aa8f0'); r(x, 3, 10, 22, 2, '#2a4f8a'); r(x, 12, 8, 4, 6, '#ffffff'); r(x, 3, 5, 2, 18, '#d6f0ff'); r(x, 23, 5, 2, 18, '#d6f0ff'); }],
+  freechestOpen: [28, 24, x => { r(x, 3, 12, 22, 11, '#2a4f8a'); r(x, 3, 3, 22, 5, '#3a66a8'); r(x, 5, 9, 18, 3, '#14243f'); }],
   stump: [24, 18, x => { r(x, 4, 6, 16, 11, '#6b4429'); e(x, 12, 6, 8, 3, '#b58a5a'); e(x, 12, 6, 5, 1.8, '#8a6a46'); r(x, 6, 9, 2, 7, '#8a5a36'); }],
 };
 function groundTexture() {
@@ -1157,7 +1234,7 @@ function tex(c, repeat) {
 }
 function smat(t, color = '#ffffff') { return new THREE.SpriteMaterial({ map: t, alphaTest: .5, color, fog: true }); }
 // n / m = normal / mirrored, fn / fm = hit-flash tints of each. Wild monsters also get a [normal, mirrored] pair per status tint.
-const TINTS = { burn: '#ffa070', chill: '#80c4ff', freeze: '#a8dcff', poison: '#cc8cff', daze: '#ffe070', soak: '#8fb0ff', melt: '#ff7050', mist: '#d0d0e0', seed: '#c0f070' };
+const TINTS = { burn: '#ffa070', chill: '#80c4ff', freeze: '#a8dcff', poison: '#cc8cff', daze: '#ffe070', elite: '#ffc860', soak: '#8fb0ff', melt: '#ff7050', mist: '#d0d0e0', seed: '#c0f070' };
 function matSet(c, tinted) {
   const a = tex(c), b = tex(mirror(c)), o = { n: smat(a), m: smat(b), fn: smat(a, '#ff8a8a'), fm: smat(b, '#ff8a8a') };
   if (tinted) o.tint = Object.fromEntries(Object.entries(TINTS).map(([k, col]) => [k, [smat(a, col), smat(b, col)]]));
@@ -1172,76 +1249,126 @@ function sprite(material, w, h = w, cy = .06) { const s = new THREE.Sprite(mater
 
 // Rolling hills: smooth bumps placed in a sunflower spiral, kept away from the centre so runs start on flat ground.
 // Game logic stays flat (y = height above ground); frame() lifts every scene object by groundH just for drawing.
-const HILLS = Array.from({ length: 16 }, (_, i) => { const a = i * 2.39996, R = 20 + (i * 37) % 52; return [Math.cos(a) * R, Math.sin(a) * R, 1.8 + (i * 7) % 5 * .7, 6 + (i * 3) % 6]; });
+const HILLS = Array.from({ length: 70 }, (_, i) => {
+  const a = i * 2.39996, R = 20 + (i * 37) % (WORLD_R - 12), x = Math.cos(a) * R, z = Math.sin(a) * R;
+  return [x, z, (1.8 + (i * 7) % 5 * .7) * (x > 40 && z > 40 ? 1.7 : 1), 6 + (i * 3) % 8];
+});
 // Terraced: the smooth height is cut into flat ledges 2 m apart joined by short steep cliffs.
 const TERRACE = 2;
 function groundH(x, z) {
   let h = 0;
   for (const [hx, hz, a, sg] of HILLS) { const d2 = (x - hx) ** 2 + (z - hz) ** 2; if (d2 < 9 * sg * sg) h += a * Math.exp(-d2 / (2 * sg * sg)); }
+  // The start area stays flat: runs begin in the open and the title shot has a clean horizon.
+  const R0 = clamp((Math.hypot(x, z) - 24) / 22, 0, 1);
+  h *= R0 * R0 * (3 - 2 * R0);
   const n = Math.floor(h / TERRACE), f = h / TERRACE - n, c = clamp((f - .8) / .2, 0, 1);
   return (n + c * c * (3 - 2 * c)) * TERRACE;
 }
 // Ponds sit on flat ground; they block movement like trees.
 const PONDS = [];
-// Trees block movement (TREES); decor materials are kept for the per-run breakable stones.
-const TREES = [];
-let DECOR_MATS;
+// Regions: the nearest seed wins (w shrinks or grows a region), with wobbly borders. el biases which monsters spawn there.
+// tint multiplies the grass texture; map = hsl for the full map; trees and props are what grows there.
+const BIOMES = [
+  { name: 'Sunny Meadow', x: 0, z: 0, w: 1.25, tint: [1, 1, 1], map: [100, 58, 44], tp: .1, trees: ['oak', 'oak', 'pine', 'blossom'], props: ['flowers', 'flowers', 'tallgrass', 'tallgrass', 'bush', 'sunflower', 'mushroom', 'fern'] },
+  { name: 'Blossom Grove', x: -95, z: -70, w: 1, el: 'grass', tint: [1.4, 1, 1.3], map: [335, 45, 62], tp: .2, trees: ['blossom', 'blossom', 'blossom', 'oak'], props: ['flowers', 'flowers', 'flowers', 'mushroom', 'tallgrass', 'fern'] },
+  { name: 'Ember Badlands', x: 100, z: -65, w: 1, el: 'fire', tint: [2.05, .8, .72], map: [18, 55, 46], tp: .08, trees: ['deadtree'], props: ['ashrock', 'ashrock', 'stump', 'deadgrass', 'deadgrass'] },
+  { name: 'Frost Hollow', x: -95, z: 85, w: 1, el: 'water', tint: [2.5, 1.28, 3.5], map: [205, 45, 86], tp: .14, trees: ['snowpine'], props: ['icecrystal', 'icecrystal', 'snowbush', 'snowbush'] },
+  { name: 'Stone Highlands', x: 95, z: 90, w: 1, el: 'rock', tint: [1.75, 1.05, 1.75], map: [40, 12, 58], tp: .09, trees: ['pine', 'deadtree'], props: ['ashrock', 'stump', 'tallgrass', 'fern'] },
+  { name: 'Misty Marsh', x: 0, z: 135, w: 1, el: 'water', tint: [.85, .86, 1.15], map: [165, 35, 36], tp: .1, trees: ['oak', 'deadtree'], props: ['fern', 'fern', 'mushroom', 'mushroom', 'tallgrass'] },
+  { name: 'Deepwood', x: 0, z: -135, w: 1, el: 'grass', tint: [.72, .84, .6], map: [130, 45, 26], tp: .3, trees: ['oak', 'pine', 'pine'], props: ['fern', 'fern', 'mushroom', 'bush', 'tallgrass'] },
+];
+function biomeAt(x, z) {
+  const wx = x + Math.sin(z * .07) * 10 + Math.sin(z * .31) * 2.5, wz = z + Math.sin(x * .07) * 10 + Math.sin(x * .29) * 2.5;
+  let best = BIOMES[0], bd = 1e9;
+  for (const b of BIOMES) { const d = Math.hypot(wx - b.x, wz - b.z) * b.w; if (d < bd) { bd = d; best = b; } }
+  return best;
+}
+// Trees and ponds block movement. They sit in a coarse grid (each listed in its 3x3 cells) so collision checks stay cheap.
+const TREES = [], TREE_GRID = {};
+const cellKey = (x, z) => Math.floor(x / 16) * 1000 + Math.floor(z / 16);
+const treesAt = (x, z) => TREE_GRID[cellKey(x, z)] || [];
+function addTree(t) { TREES.push(t); for (let a = -16; a <= 16; a += 16) for (let b = -16; b <= 16; b += 16) (TREE_GRID[cellKey(t.x + a, t.z + b)] ||= []).push(t); }
+function pushOut(o, rad) { for (const t of treesAt(o.x, o.z)) { const tx = o.x - t.x, tz = o.z - t.z, td = Math.hypot(tx, tz), m = t.r + rad; if (td < m && td > 0) { o.x = t.x + tx / td * m; o.z = t.z + tz / td * m; } } }
+let DECOR_MATS, DECOR_CV, MAP_BG, SKY;
+const DECOR_OBJS = [];
+// Width, height and anchor per decor sprite.
+const DECOR_SIZE = { oak: [6, 8, .03], pine: [5, 8, .03], blossom: [6, 8, .03], deadtree: [4.2, 6.5, .03], snowpine: [5, 8, .03], bush: [2.6, 1.95, .05], snowbush: [2.6, 1.95, .05], tallgrass: [1.5, 1.25, .02], deadgrass: [1.4, 1.1, .02], flowers: [1.1, .8, .02], mushroom: [1.1, 1, .04], fern: [1.6, 1.25, .03], sunflower: [.8, 1.5, .03], stump: [1.5, 1.1, .05], icecrystal: [1.4, 1.8, .04], ashrock: [1.9, 1.3, .05] };
 function buildWorld() {
-  const geo = new THREE.PlaneGeometry(WORLD_R * 2.6, WORLD_R * 2.6, 300, 300).rotateX(-Math.PI / 2), pos = geo.attributes.position;
-  // Unlit ground needs baked shading to read as hills: brighter on sunlit slopes and tops, darker on the far side.
-  const col = new Float32Array(pos.count * 3);
+  const N = 400, geo = new THREE.PlaneGeometry(MAP_SPAN, MAP_SPAN, N, N).rotateX(-Math.PI / 2), pos = geo.attributes.position, cell = MAP_SPAN / N, row = N + 1;
+  // Heights first, so slopes come from neighbours instead of recomputing the hills.
+  const hs = new Float32Array(pos.count), col = new Float32Array(pos.count * 3);
+  for (let i = 0; i < pos.count; i++) { hs[i] = groundH(pos.getX(i), pos.getZ(i)); pos.setY(i, hs[i]); }
+  // The same terrain is painted once onto the map image used by the minimap and the full map.
+  const mapC = MAP_BG = canvas(row), mx = mapC.getContext('2d'), img = mx.createImageData(row, row);
   for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i), z = pos.getZ(i), h = groundH(x, z);
-    pos.setY(i, h);
-    const sx = groundH(x + .5, z) - groundH(x - .5, z), sz = groundH(x, z + .5) - groundH(x, z - .5);
-    const k = clamp(.95 + (sz - sx) * .3 + h * .02, .62, 1.2), cliff = Math.hypot(sx, sz) > .45;
-    // Cliff faces read as layered earth: tint the grass texture to tan, in alternating bands.
+    const ix = i % row, iy = (i - ix) / row, x = pos.getX(i), z = pos.getZ(i), h = hs[i];
+    const sx = (hs[iy * row + Math.min(N, ix + 1)] - hs[iy * row + Math.max(0, ix - 1)]) / (2 * cell), sz = (hs[Math.min(N, iy + 1) * row + ix] - hs[Math.max(0, iy - 1) * row + ix]) / (2 * cell);
+    const k = clamp(.95 + (sz - sx) * .3 + h * .02, .62, 1.2), cliff = Math.hypot(sx, sz) > .45, b = biomeAt(x, z);
+    // Cliff faces read as layered earth, in alternating bands; everything else takes its region's tint.
     if (cliff) { const band = Math.floor(h * 3) % 2 ? .78 : 1; col.set([1.6 * k * band, .62 * k * band, .95 * k * band], i * 3); }
-    else col.set([k, k, k], i * 3);
+    else col.set([b.tint[0] * k, b.tint[1] * k, b.tint[2] * k], i * 3);
+    const out = Math.hypot(x, z) > WORLD_R + 1;
+    const [R, G, B] = out ? [30, 58, 38] : cliff ? [176, 134, 84] : hsl2rgb(b.map[0] / 360, b.map[1] / 100, clamp(b.map[2] / 100 * (.72 + (k - .62) * .62), 0, 1));
+    img.data.set([R, G, B, 255], i * 4);
   }
+  mx.putImageData(img, 0, 0);
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
-  const ground = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex(groundTexture(), [WORLD_R * 2.6 / 8, WORLD_R * 2.6 / 8]), vertexColors: true }));
+  const ground = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex(groundTexture(), [MAP_SPAN / 8, MAP_SPAN / 8]), vertexColors: true }));
   ground.userData.flat = true;
   scene.add(ground);
-  // Ponds on flat spots of the meadow.
+  const mapPx = v => (v / MAP_SPAN + .5) * row;
+  // Ponds on flat ground, most of them in the marsh.
   const pondTex = tex(draw(64, 48, x => { e(x, 32, 24, 30, 22, '#3f9ad8'); e(x, 31, 23, 25, 17, '#5fc0f0'); for (let i = 0; i < 7; i++) r(x, 14 + i * 6, 16 + (i % 3) * 7, 4, 1, '#d6f4ff'); }, { dark: false }));
-  for (let i = 0, tries = 0; i < 7 && tries < 200; tries++) {
-    const a = rand(0, TAU), R = rand(16, WORLD_R - 10), x = Math.cos(a) * R, z = Math.sin(a) * R, s = rand(5, 9);
-    const hs = [[0, 0], [s * .5, 0], [-s * .5, 0], [0, s * .4], [0, -s * .4]].map(([ox, oz]) => groundH(x + ox, z + oz));
-    if (Math.max(...hs) - Math.min(...hs) > .05 || PONDS.some(q => Math.hypot(q.x - x, q.z - z) < q.r + s)) continue;
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: pondTex, alphaTest: .5 }));
-    m.position.set(x, .05, z); m.scale.set(s, 1, s * .75); scene.add(m);
-    PONDS.push({ x, z, r: s * .36 }); TREES.push({ x, z, r: s * .36 });
+  const planeG = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), pondMat = new THREE.MeshBasicMaterial({ map: pondTex, alphaTest: .5 });
+  mx.fillStyle = '#5fc0f0';
+  for (let i = 0, tries = 0; i < 30 && tries < 900; tries++) {
+    const marsh = i < 12, a = rand(0, TAU), R = marsh ? rand(0, 45) : rand(18, WORLD_R - 10), x = (marsh ? 0 : 0) + Math.cos(a) * R, z = (marsh ? 135 : 0) + Math.sin(a) * R, sz = rand(5, 11);
+    if (Math.hypot(x, z) > WORLD_R - 8) continue;
+    const hh = [[0, 0], [sz * .5, 0], [-sz * .5, 0], [0, sz * .4], [0, -sz * .4]].map(([ox, oz]) => groundH(x + ox, z + oz));
+    if (Math.max(...hh) - Math.min(...hh) > .05 || TREES.some(q => Math.hypot(q.x - x, q.z - z) < q.r + sz * .6)) continue;
+    const m = new THREE.Mesh(planeG, pondMat);
+    m.position.set(x, .05, z); m.scale.set(sz, 1, sz * .75); scene.add(m);
+    addTree({ x, z, r: sz * .36, pond: true });
+    mx.beginPath(); mx.ellipse(mapPx(x), mapPx(z), sz * .5 / MAP_SPAN * row, sz * .38 / MAP_SPAN * row, 0, 0, TAU); mx.fill();
     i++;
   }
-  // Dirt clearings as flat pixel decals.
+  // Dirt clearings as flat pixel decals (not on snow).
   const dirt = draw(64, 64, x => { e(x, 32, 32, 30, 24, '#b8955e'); e(x, 30, 30, 24, 18, '#c9a670'); for (let i = 0; i < 60; i++) r(x, 10 + Math.random() * 44, 12 + Math.random() * 40, 1, 1, '#a5824e'); }, { dark: false });
   const dirtMat = new THREE.MeshBasicMaterial({ map: tex(dirt), alphaTest: .5 });
-  for (let i = 0; i < 14; i++) {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), dirtMat);
-    const R = rand(10, WORLD_R - 8), t = rand(0, TAU), s = rand(5, 11);
-    m.position.set(Math.cos(t) * R, .06, Math.sin(t) * R); m.scale.set(s, 1, s * rand(.7, 1)); m.rotation.y = rand(0, TAU);
+  for (let i = 0; i < 45; i++) {
+    const R = Math.sqrt(Math.random()) * (WORLD_R - 8), t = rand(0, TAU), x = Math.cos(t) * R, z = Math.sin(t) * R, sz = rand(5, 11);
+    if (biomeAt(x, z).el === 'water') continue;
+    const m = new THREE.Mesh(planeG, dirtMat);
+    m.position.set(x, .06, z); m.scale.set(sz, 1, sz * rand(.7, 1)); m.rotation.y = rand(0, TAU);
     scene.add(m);
   }
-  const sky = new THREE.Mesh(new THREE.CylinderGeometry(220, 220, 140, 48, 1, true), new THREE.MeshBasicMaterial({ map: tex(skyTexture(), [3, 1]), side: THREE.BackSide, fog: false }));
-  sky.position.y = 38;
-  sky.userData.flat = true;
-  scene.add(sky);
-  const D = DECOR_MATS = Object.fromEntries(Object.entries(DECOR).map(([k, [w, h, fn]]) => [k, smat(tex(draw(w, h, fn)))]));
-  const place = (n, min, fn) => { for (let i = 0; i < n; i++) { const R = Math.sqrt(rand((min / WORLD_R) ** 2, 1)) * (WORLD_R - 3), t = rand(0, TAU); fn(Math.cos(t) * R, Math.sin(t) * R); } };
-  place(45, 14, (x, z) => { const s = rand(.9, 1.3), pine = Math.random() < .4, sp = sprite(D[pine ? 'pine' : 'oak'], (pine ? 5 : 6) * s, 8 * s, .03); sp.position.set(x, 0, z); shadow(2 * s).position.set(x, .02, z); TREES.push({ x, z, r: (pine ? .55 : .7) * s }); });
-  place(45, 6, (x, z) => sprite(D.bush, 2.6, 1.95, .05).position.set(x, 0, z));
-  place(14, 12, (x, z) => { const s = rand(.9, 1.2); sprite(D.blossom, 6 * s, 8 * s, .03).position.set(x, 0, z); shadow(2 * s).position.set(x, .02, z); TREES.push({ x, z, r: .7 * s }); });
-  place(60, 4, (x, z) => sprite(D.mushroom, 1.1, 1, .04).position.set(x, 0, z));
-  place(70, 4, (x, z) => sprite(D.fern, 1.6, 1.25, .03).position.set(x, 0, z));
-  place(40, 4, (x, z) => sprite(D.sunflower, .8, 1.5, .03).position.set(x, 0, z));
-  place(150, 3, (x, z) => sprite(D.tallgrass, 1.5, 1.25, .02).position.set(x, 0, z));
-  place(160, 3, (x, z) => sprite(D.flowers, 1.1, .8, .02).position.set(x, 0, z));
-  place(12, 10, (x, z) => sprite(D.stump, 1.5, 1.1, .05).position.set(x, 0, z));
-  // A wooden fence marks the edge of the meadow; a forest wall stands behind it.
+  SKY = new THREE.Mesh(new THREE.CylinderGeometry(220, 220, 140, 48, 1, true), new THREE.MeshBasicMaterial({ map: tex(skyTexture(), [3, 1]), side: THREE.BackSide, fog: false }));
+  SKY.position.y = 38;
+  SKY.userData.flat = true;
+  scene.add(SKY);
+  DECOR_CV = Object.fromEntries(Object.entries(DECOR).map(([k, [w, h, fn]]) => [k, draw(w, h, fn)]));
+  const D = DECOR_MATS = Object.fromEntries(Object.entries(DECOR_CV).map(([k, c]) => [k, smat(tex(c))]));
+  // ponytail: one sprite per decor item; distance culling in cullDecor keeps draw calls down. Use instancing if phones struggle.
+  const anyPick = l => l[Math.floor(Math.random() * l.length)];
+  for (let i = 0; i < 1900; i++) {
+    const R = Math.sqrt(Math.random()) * (WORLD_R - 3), t = rand(0, TAU), x = Math.cos(t) * R, z = Math.sin(t) * R, b = biomeAt(x, z);
+    if (R < 5 || (R < 14 && z < 2) || treesAt(x, z).some(q => q.pond && Math.hypot(q.x - x, q.z - z) < q.r + 1.5)) continue;
+    const isTree = R > 13 && Math.random() < b.tp, k = anyPick(isTree ? b.trees : b.props), [w, h, cy] = DECOR_SIZE[k], sc = isTree ? rand(.9, 1.3) : rand(.85, 1.15);
+    sprite(D[k], w * sc, h * sc, cy).position.set(x, 0, z);
+    if (isTree) { shadow(2 * sc).position.set(x, .02, z); addTree({ x, z, r: (k === 'deadtree' ? .35 : k === 'oak' || k === 'blossom' ? .7 : .55) * sc }); mx.fillStyle = 'rgba(16,48,28,.75)'; mx.fillRect(mapPx(x) - 1, mapPx(z) - 1, 2, 2); }
+  }
+  // A wooden fence marks the edge of the world; a forest wall stands behind it.
   for (let t = 0; t < TAU; t += 2.4 / (WORLD_R + 1)) sprite(D.fence, 2.6, 1.95, .05).position.set(Math.cos(t) * (WORLD_R + 1), 0, Math.sin(t) * (WORLD_R + 1));
-  for (let t = 0; t < TAU; t += .045) { const pine = sprite(D.pine, 6, 9.5, .03), R = WORLD_R + 5 + rand(0, 6); pine.position.set(Math.cos(t) * R, 0, Math.sin(t) * R); }
-  for (let t = 0; t < TAU; t += .07) { const oak = sprite(D.oak, 7, 9.5, .03), R = WORLD_R + 12 + rand(0, 6); oak.position.set(Math.cos(t) * R, 0, Math.sin(t) * R); }
+  for (let t = 0; t < TAU; t += 4 / WORLD_R) { const pine = sprite(D.pine, 6, 9.5, .03), R = WORLD_R + 5 + rand(0, 6); pine.position.set(Math.cos(t) * R, 0, Math.sin(t) * R); }
+  for (let t = 0; t < TAU; t += 6 / WORLD_R) { const oak = sprite(D.oak, 7, 9.5, .03), R = WORLD_R + 12 + rand(0, 6); oak.position.set(Math.cos(t) * R, 0, Math.sin(t) * R); }
+  // Decor never moves: bake its height once so the per-frame lift can skip it.
+  for (const o of scene.children) if (!o.userData.flat) { o.position.y += groundH(o.position.x, o.position.z); o.userData.flat = true; DECOR_OBJS.push(o); }
+}
+// Hide decor past the fog; run every few frames.
+let CULL_D = 105;
+function cullDecor() {
+  const x = S ? S.x : 0, z = S ? S.z : 0, d2 = CULL_D * CULL_D;
+  for (const o of DECOR_OBJS) o.visible = (o.position.x - x) ** 2 + (o.position.z - z) ** 2 < d2;
 }
 
 // =====================================================================
@@ -1555,6 +1682,7 @@ function clearRun() {
   for (const list of [S.enemies, S.shots, S.gems, S.fx, S.anims]) for (const o of list) { scene.remove(o.mesh); if (o.shadow) scene.remove(o.shadow); if (o.parts) o.parts.forEach(p => scene.remove(p)); }
   for (const w of S.whips) { w.parts.forEach(p => scene.remove(p)); w.mesh.geometry.dispose(); }
   for (const en of S.enemies) { if (en.ice) scene.remove(en.ice); if (en.ring) scene.remove(en.ring); }
+  $('#rarept').hidden = $('#capui').hidden = true;
   for (const b of S.blooms) scene.remove(b.mesh);
   for (const a of S.altars || []) scene.remove(a.mesh);
   for (const k in S.orbs) S.orbs[k].forEach(m => scene.remove(m));
@@ -1572,24 +1700,24 @@ function newRun(pid) {
     newUnlocks: [], lastSave: 0, ultWasReady: false,
     moves: { [a.move]: { l: 1, t: .5, a: 0 } }, traits: {},
     enemies: [], shots: [], gems: [], fx: [], anims: [], orbs: {}, whips: [], jets: [], cones: [], zones: [], falls: [], eshots: [], wave: null,
-    patches: [], bursts: [], blooms: [], rares: PROG.ready.filter(k => !isUnlocked(k)), rareT: 25, dashT: 0, dashCd: 0, mx: 0, mz: 1, art: artFor(a.style), ab: ABILITIES[a.ability],
+    patches: [], bursts: [], blooms: [], rareK: rollRare(), rareT: rand(30, 120), py: groundH(0, 0), pv: 0, camY: groundH(0, 0), dashT: 0, dashCd: 0, mx: 0, mz: 1, art: artFor(a.style), ab: ABILITIES[a.ability],
     lastHit: -9, shield: 0, lastSummon: -9, crateT: 0,
     spawnT: 0, nextBoss: 120, bossN: 0, pendingLv: 0, boss: null, lastPop: 0,
-    held: {}, dmgDone: 0, lastNum: 0, streak: 0, bestStreak: 0, lastKill: -9, rerolls: 2, skips: 2,
+    fog: (() => { const f = canvas(128), x = f.getContext('2d'); x.fillStyle = 'rgba(20,26,40,.86)'; x.fillRect(0, 0, 128, 128); return f; })(), seen: new Uint8Array(SEEN_N * SEEN_N), fogT: 0,
+    coins: 0, opened: 0, nextHorde: 75, regionName: '', held: {}, dmgDone: 0, lastNum: 0, streak: 0, bestStreak: 0, lastKill: -9, rerolls: 2, skips: 2,
   };
   S.armor += S.ab.armor || 0;
   S.ab.init?.();
   if (shieldMesh) shieldMesh.visible = shellMesh.visible = false;
   yaw = Math.PI; pitch = .36; shake = 0;
   clearTimeout(bannerTimer); $('#banner').classList.remove('show');
-  for (let i = 0; i < 24; i++) spawnCrate();
-  for (let i = 0; i < 30; i++) spawnStone();
-  // Interactables (E): boss altars call a boss with extra loot, shrines give a boost item. Each works once.
-  S.altars = [...BOSS_ORDER.slice().sort(() => Math.random() - .5).slice(0, 3).map(b => ({ kind: 'boss', boss: b })), ...Array.from({ length: 4 }, () => ({ kind: 'shrine' }))].map(a => {
-    const [x, z] = spawnPoint(18, WORLD_R * 1.5);
-    return { ...a, x, z, used: false, mesh: sprite(DECOR_MATS[a.kind === 'boss' ? 'altar' : 'shrine'], 2.6, 2.6, .04) };
-  });
+  for (let i = 0; i < 60; i++) spawnCrate();
+  for (let i = 0; i < 90; i++) spawnStone();
+  // Interactables (E): boss altars call that boss; chests give an item, for wild coins unless they are the rare free kind. Each works once.
+  S.altars = BOSS_ORDER.map(b => { const [x, z] = spawnPoint(30, WORLD_R * 1.7); return { kind: 'boss', boss: b, x, z, used: false, mesh: sprite(DECOR_MATS.altar, 2.6, 2.6, .04) }; });
   S.altars.forEach(a => a.mesh.position.set(a.x, 0, a.z));
+  for (let i = 0; i < 22; i++) { const [x, z] = spawnPoint(10, WORLD_R * 1.7); addChest(x, z, 'chest'); }
+  for (let i = 0; i < 3; i++) { const [x, z] = spawnPoint(25, WORLD_R * 1.7); addChest(x, z, 'free'); }
   $('#ultname').textContent = ULTS[type].name;
   $('#ptype').textContent = cap(type);
   $('#ptype').style.background = TYPE_COLOR[type];
@@ -1605,6 +1733,7 @@ function anim(name, x, y, z, size, fps = 14, opts = {}) {
   if (S.anims.length > 160) return;
   const v = typeof name === 'string' ? VFX[name] : name, s = sprite(v.mats[0], size * v.w / v.h, size, opts.cy ?? .1);
   s.position.set(x, y, z);
+  if (opts.vx || opts.vz) { s.userData.flat = true; s.position.y = y + S.py; } // moving flames fly straight, not along the ground
   S.anims.push({ mesh: s, v, t: 0, fps, loop: opts.loop || 0, follow: opts.follow, vx: opts.vx || 0, vz: opts.vz || 0 });
 }
 function ring(r, color, dur = .5) {
@@ -1648,16 +1777,18 @@ function spawnPoint(minD, maxD) {
   return [Math.cos(t) * R, Math.sin(t) * R];
 }
 // Monsters start weak and grow with time and with your level.
-const hpScale = () => .7 + S.t / 110 + (S.level - 1) * .04;
-const dmgScale = () => .55 + Math.min(.7, S.t / 360);
+// Late-game moves and items multiply your damage, so monster HP has to grow faster than linearly to keep up.
+const hpScale = () => .7 + S.t / 150 + (S.t / 160) ** 2 + (S.level - 1) * .06;
+const dmgScale = () => .5 + Math.min(2.4, S.t / 260);
 function spawn(kind, at) {
   const def = WILD[kind], [x, z] = at || spawnPoint(24, 32);
-  const hpMul = def.boss ? (.4 + S.level * .06) * (1 + S.bossN * .3) : hpScale();
-  const en = { kind, def, el: def.el, x, z, kx: 0, kz: 0, hp: def.hp * hpMul, maxHp: def.hp * hpMul, spd: def.spd * rand(.9, 1.1), dmg: def.dmg * (def.boss ? Math.max(.75, dmgScale()) : dmgScale()), xp: def.xp,
-    r: def.r, size: def.size, boss: def.boss, born: S.t, flash: 0, dying: 0, orbT: {}, ph: rand(0, 4), mesh: sprite(WILD_MATS[kind][0].n, def.size, def.size, .07), shadow: shadow(def.r * 1.2) };
+  const hpMul = def.boss ? (.6 + S.level * .1) * (1 + S.bossN * .35) : hpScale();
+  const en = { kind, def, el: def.el, x, z, kx: 0, kz: 0, hp: def.hp * hpMul, maxHp: def.hp * hpMul, spd: def.spd * rand(.9, 1.1) * (1 + clamp((S.t - 120) / 1200, 0, .35)), dmg: def.dmg * (def.boss ? Math.max(.75, dmgScale()) : dmgScale()), xp: Math.round(def.xp * (1 + S.t / 400)),
+    r: def.r, size: def.size * (def.boss ? .85 : 1), boss: def.boss, born: S.t, flash: 0, dying: 0, orbT: {}, ph: rand(0, 4), mesh: sprite(WILD_MATS[kind][0].n, def.size, def.size, .07), shadow: shadow(def.r * 1.2) };
   S.enemies.push(en);
   return en;
 }
+function makeElite(en) { en.elite = true; en.hp = en.maxHp *= 5; en.dmg *= 1.5; en.size *= 1.35; en.r *= 1.2; en.xp *= 5; }
 function spawnBoss(kind, at) {
   const en = spawn(kind, at || spawnPoint(18, 24));
   S.boss = en;
@@ -1673,22 +1804,16 @@ const nearAltar = () => S.altars.find(a => !a.used && Math.hypot(a.x - S.x, a.z 
 function interact() {
   const a = state === 'play' && nearAltar();
   if (!a) return;
-  if (a.kind === 'boss') {
-    if (S.enemies.filter(en => en.boss && en.dying <= 0).length >= 2) { banner('Two bosses are already here', 'Beat one first'); return; }
-    a.used = true; a.mesh.material = DECOR_MATS.altarUsed;
-    spawnBoss(a.boss, [a.x + 5, a.z]).altarLoot = true;
-  } else {
-    a.used = true; a.mesh.material = DECOR_MATS.shrineUsed;
-    dropItem(a.x, a.z + 1.5, 'held:' + pickHeld());
-    if (Math.random() < .5) dropItem(a.x + 1.5, a.z, 'scroll');
-    for (let i = 0; i < 8; i++) anim('sparkle', a.x + rand(-1, 1), rand(.5, 2.5), a.z + rand(-1, 1), .9, 9);
-    banner('Shrine blessing!', 'It left a boost item for you'); sfx('unlock');
-  }
+  if (a.kind !== 'boss') { openChest(a); return; }
+  if (S.enemies.filter(en => en.boss && !en.rare && en.dying <= 0).length >= 2) { banner('Two bosses are already here', 'Beat one first'); return; }
+  a.used = true; a.mesh.material = DECOR_MATS.altarUsed;
+  spawnBoss(a.boss, [a.x + 5, a.z]).altarLoot = true;
 }
 function spawnTick(dt) {
+  if (S.rareK && S.t >= S.rareT) { spawnRare(S.rareK); S.rareK = null; }
   S.spawnT -= dt;
   S.crateT -= dt;
-  if (S.crateT <= 0) { S.crateT = 18; if (S.enemies.filter(en => en.obj && !en.solid).length < 24) spawnCrate(); }
+  if (S.crateT <= 0) { S.crateT = 18; if (S.enemies.filter(en => en.obj && !en.solid).length < 60) spawnCrate(); }
   if (S.spawnT > 0 || S.enemies.length > 300) return;
   S.spawnT = Math.max(.08, 1.35 - S.t * .003);
   const t = S.t, pool = ['kindlit', 'sprigcub', 'puplash'];
@@ -1697,14 +1822,25 @@ function spawnTick(dt) {
   if (t > 220) pool.push('blazemane', 'gloomhog');
   if (t > 340) pool.push('pebblion', 'blazemane', 'gloomhog');
   const n = 1 + Math.floor(t / 150) + (t > 60 && Math.random() < .3 ? 1 : 0);
-  for (let i = 0; i < n; i++) spawn(pool[Math.floor(Math.random() * pool.length)]);
+  // The region you are in favours its own kind of monster.
+  const el = biomeAt(S.x, S.z).el;
+  if (el) pool.push(...pool.filter(k => WILD[k].el === el), ...pool.filter(k => WILD[k].el === el));
+  for (let i = 0; i < n; i++) { const en = spawn(pool[Math.floor(Math.random() * pool.length)]); if (t > 90 && Math.random() < Math.min(.1, t / 5000)) makeElite(en); }
+  // Every so often a horde closes in from all sides.
+  if (t >= S.nextHorde && S.enemies.length < 260) {
+    S.nextHorde += 75;
+    const m = 14 + Math.floor(t / 25), off = rand(0, TAU);
+    for (let i = 0; i < m; i++) { const a = off + i / m * TAU, R = rand(20, 25), x = S.x + Math.cos(a) * R, z = S.z + Math.sin(a) * R; if (Math.hypot(x, z) < WORLD_R - 2) spawn(pool[Math.floor(Math.random() * pool.length)], [x, z]); }
+    banner('A horde is closing in!', 'Keep moving');
+    sfx('warn');
+  }
   if (t >= S.nextBoss) { S.nextBoss += 120; spawnBoss(BOSS_ORDER[S.bossN % BOSS_ORDER.length]); }
-  if (S.rares.length && t >= S.rareT) { S.rareT = t + 40; spawnRare(S.rares.shift()); }
+
 }
 
 // ---------- crates & items ----------
 function spawnCrate() {
-  const [x, z] = spawnPoint(12, WORLD_R * 1.6);
+  const [x, z] = spawnPoint(15, WORLD_R * 1.6);
   const en = { kind: 'crate', obj: true, el: 'none', x, z, kx: 0, kz: 0, hp: 12, maxHp: 12, spd: 0, dmg: 0, xp: 0, r: .7, size: 1.5, flash: 0, dying: 0, orbT: {},
     mesh: sprite(SM.crate, 1.5, 1.5, .05), shadow: shadow(.8) };
   en.mesh.position.set(x, 0, z); en.shadow.position.set(x, .03, z);
@@ -1712,7 +1848,7 @@ function spawnCrate() {
 }
 // Stones block the way like trees, but any move can break them (rock type, so water, grass and ground hit them hard).
 function spawnStone() {
-  const [x, z] = spawnPoint(8, WORLD_R * 1.6), s = rand(1.7, 2.6);
+  const [x, z] = spawnPoint(15, WORLD_R * 1.6), s = rand(1.7, 2.6);
   const en = { kind: 'stone', obj: true, solid: true, el: 'rock', x, z, kx: 0, kz: 0, hp: 45, maxHp: 45, spd: 0, dmg: 0, xp: 0, r: s * .4, size: s, flash: 0, dying: 0, orbT: {},
     mesh: sprite(DECOR_MATS.rock, s, s * .75, .05), shadow: shadow(s * .42) };
   en.mesh.position.set(x, 0, z); en.shadow.position.set(x, .03, z);
@@ -1720,40 +1856,63 @@ function spawnStone() {
 }
 const ITEMS = {
   berry: { name: 'Heal Berry', w: 40, use: () => { S.hp = Math.min(S.maxHp, S.hp + 30); sfx('heal'); } },
-  magnet: { name: 'Magnet', w: 18, use: () => { S.gems.forEach(g => { if (g.kind === 'xp') g.pull = true; }); sfx('item'); } },
+  magnet: { name: 'Magnet', w: 18, use: () => { S.gems.forEach(g => { if (g.kind === 'xp' || g.kind === 'coin') g.pull = true; }); sfx('item'); } },
   bomb: { name: 'Bomb', w: 14, use: () => { shock(S.x, S.z, 16, 120 * S.dmg, 'ground', 14, '#ffcf3a'); for (let i = 0; i < 10; i++) anim('spark', S.x + rand(-6, 6), rand(.5, 2), S.z + rand(-6, 6), 2.4, 14, { cy: .5 }); addShake(.5); sfx('ult_ground'); } },
   shield: { name: 'Shield', w: 12, use: () => { S.shield = 6; sfx('item'); } },
   candy: { name: 'Star Candy', w: 7, use: () => { gainXp(S.need - S.xp); sfx('item'); } },
 };
-// Held items: dropped boosts that stay for the run and stack (max per item). Shown in the pause Items panel.
+// Held items: boosts from chests that stay for the run and stack (up to max). Shown in the pause Items panel.
 const HELD = {
-  band: { name: 'Power Band', rar: 'Common', w: 10, max: 5, desc: '+8% damage.', apply: () => S.dmg *= 1.08 },
-  feather: { name: 'Swift Feather', rar: 'Common', w: 9, max: 4, desc: '+6% move speed.', apply: () => S.spd *= 1.06 },
-  claw: { name: 'Quick Claw', rar: 'Uncommon', w: 7, max: 4, desc: 'Moves recharge 6% faster.', apply: () => S.cd *= .94 },
-  charm: { name: 'Status Charm', rar: 'Uncommon', w: 7, max: 4, desc: 'Your status effects (burn, poison, sleep-like daze, freeze and the rest) happen 15% more often.', apply: () => S.stBonus = (S.stBonus || 1) * 1.15 },
-  fang: { name: 'Venom Fang', rar: 'Uncommon', w: 6, max: 4, desc: 'Burn, poison, scald and seed damage +25%.', apply: () => S.dotMul = (S.dotMul || 1) * 1.25 },
-  leaf: { name: 'Leftover Leaf', rar: 'Common', w: 8, max: 4, desc: '+0.6 HP every second.', apply: () => S.regen += .6 },
-  plate: { name: 'Guard Plate', rar: 'Uncommon', w: 6, max: 3, desc: '+1 armor.', apply: () => S.armor += 1 },
-  coin: { name: 'Lucky Coin', rar: 'Rare', w: 4, max: 3, desc: '+15% experience.', apply: () => S.xpMul = (S.xpMul || 1) * 1.15 },
-  shiny: { name: 'Shiny Stone', rar: 'Epic', w: 2, max: 2, desc: '+15% damage and +15% area.', apply: () => { S.dmg *= 1.15; S.area *= 1.15; } },
+  band: { name: 'Power Band', rar: 'Common', max: 5, desc: '+8% damage.', apply: () => S.dmg *= 1.08 },
+  feather: { name: 'Swift Feather', rar: 'Common', max: 4, desc: '+6% move speed.', apply: () => S.spd *= 1.06 },
+  leaf: { name: 'Leftover Leaf', rar: 'Common', max: 4, desc: '+0.6 HP every second.', apply: () => S.regen += .6 },
+  lode: { name: 'Lodestone', rar: 'Common', max: 3, desc: '+30% pickup range.', apply: () => S.magnet *= 1.3 },
+  claw: { name: 'Quick Claw', rar: 'Uncommon', max: 4, desc: 'Moves recharge 6% faster.', apply: () => S.cd *= .94 },
+  charm: { name: 'Status Charm', rar: 'Uncommon', max: 4, desc: 'Your status effects (burn, poison, daze, freeze and the rest) happen 15% more often.', apply: () => S.stBonus = (S.stBonus || 1) * 1.15 },
+  fang: { name: 'Venom Fang', rar: 'Uncommon', max: 4, desc: 'Burn, poison, scald and seed damage +25%.', apply: () => S.dotMul = (S.dotMul || 1) * 1.25 },
+  plate: { name: 'Guard Plate', rar: 'Uncommon', max: 3, desc: '+1 armor.', apply: () => S.armor += 1 },
+  coin: { name: 'Lucky Coin', rar: 'Rare', max: 3, desc: '+15% experience.', apply: () => S.xpMul = (S.xpMul || 1) * 1.15 },
+  heart: { name: 'Vital Heart', rar: 'Rare', max: 3, desc: '+30 max HP and heal 30.', apply: () => { S.maxHp += 30; S.hp = Math.min(S.maxHp, S.hp + 30); } },
+  lens: { name: 'Focus Lens', rar: 'Rare', max: 2, desc: '+12% damage and moves recharge 8% faster.', apply: () => { S.dmg *= 1.12; S.cd *= .92; } },
+  shiny: { name: 'Shiny Stone', rar: 'Epic', max: 2, desc: '+15% damage and +15% area.', apply: () => { S.dmg *= 1.15; S.area *= 1.15; } },
+  crown: { name: 'Wild Crown', rar: 'Epic', max: 1, desc: '+20% damage, +1 armor and +20 max HP.', apply: () => { S.dmg *= 1.2; S.armor += 1; S.maxHp += 20; S.hp += 20; } },
+  core: { name: 'Ancient Core', rar: 'Legendary', max: 1, desc: '+30% damage and moves recharge 15% faster.', apply: () => { S.dmg *= 1.3; S.cd *= .85; } },
 };
-const RAR_COLOR = { Common: '#9a96a0', Uncommon: '#4ccf5c', Rare: '#4a9be8', Epic: '#b070e0' };
-// kind: an ITEMS consumable, 'held:<id>', 'scroll', or empty for a random roll. Crates and stones roll from all three.
+const RAR_COLOR = { Common: '#9a96a0', Uncommon: '#3fb850', Rare: '#4a9be8', Epic: '#b070e0', Legendary: '#f2a20a' };
+// Chance out of 100 per rarity. luck boosts Rare and up (boss chests).
+const RAR_W = { Common: 58, Uncommon: 29, Rare: 10, Epic: 2.5, Legendary: .5 };
 function dropItem(x, z, kind) {
-  if (!kind) {
-    const r0 = Math.random();
-    if (r0 < .16) kind = 'scroll';
-    else if (r0 < .42) kind = 'held:' + pickHeld();
-    else { let roll = rand(0, Object.values(ITEMS).reduce((s, i) => s + i.w, 0)); kind = Object.keys(ITEMS).find(k => (roll -= ITEMS[k].w) <= 0); }
-  }
-  const mat = kind === 'scroll' ? SM.it_scroll : kind.startsWith('held:') ? SM['it_' + kind.slice(5)] : kind === 'berry' ? SM.berry : SM['it_' + kind];
-  addPickup(x, z, 0, kind, mat, 1);
+  if (!kind) { const pool = ['berry', 'berry', 'berry', 'magnet', 'bomb', 'shield']; kind = pool[Math.floor(Math.random() * pool.length)]; }
+  addPickup(x, z, 0, kind, kind === 'berry' ? SM.berry : SM['it_' + kind], 1);
 }
-function pickHeld() {
+function pickHeld(luck = 1) {
   const open = Object.keys(HELD).filter(k => (S.held[k] || 0) < HELD[k].max);
   if (!open.length) return 'band';
-  let roll = rand(0, open.reduce((a, k) => a + HELD[k].w, 0));
-  return open.find(k => (roll -= HELD[k].w) <= 0) || open[0];
+  const rars = [...new Set(open.map(k => HELD[k].rar))], w = r => RAR_W[r] * (r === 'Common' || r === 'Uncommon' ? 1 : luck);
+  let roll = rand(0, rars.reduce((a, r) => a + w(r), 0));
+  const rar = rars.find(r => (roll -= w(r)) <= 0) || rars[0], list = open.filter(k => HELD[k].rar === rar);
+  return list[Math.floor(Math.random() * list.length)];
+}
+// Chests: paid ones cost wild coins and get pricier each time; free ones (blue) are few. Monsters never drop items directly.
+const chestPrice = () => 15 + 10 * S.opened;
+function openChest(a) {
+  if (a.kind === 'chest') {
+    const price = chestPrice();
+    if (S.coins < price) { banner('Not enough wild coins', `This chest costs ${price}. Monsters sometimes drop coins instead of experience.`); sfx('weak'); return; }
+    S.coins -= price; S.opened++;
+  }
+  a.used = true; a.mesh.material = DECOR_MATS[a.kind === 'chest' ? 'chestOpen' : 'freechestOpen'];
+  if (Math.random() < .2) { usePickup({ kind: 'scroll', x: a.x, z: a.z }); return; }
+  const k = pickHeld(a.luck || 1), H = HELD[k], big = H.rar === 'Epic' || H.rar === 'Legendary';
+  usePickup({ kind: 'held:' + k, x: a.x, z: a.z });
+  banner(`<span style="color:${RAR_COLOR[H.rar]}">${H.rar}</span> ${H.name}`, H.desc);
+  for (let i = 0; i < (big ? 18 : 7); i++) anim('sparkle', a.x + rand(-1.2, 1.2), rand(.4, 3), a.z + rand(-1.2, 1.2), .9, 9);
+  if (big) { sfx('win'); addShake(.25); }
+}
+function addChest(x, z, kind, luck) {
+  const mesh = sprite(DECOR_MATS[kind === 'chest' ? 'chest' : 'freechest'], 2, 1.7, .05);
+  mesh.position.set(x, 0, z);
+  S.altars.push({ kind, x, z, luck, used: false, mesh });
 }
 // Picking up: held items apply and stack; a move scroll teaches a new move of your type, or levels one up.
 function usePickup(g) {
@@ -1801,14 +1960,14 @@ function hitEnemy(en, dmg, el, kx = 0, kz = 0, fx = true, st = 0) {
 }
 function killEnemy(en) {
   en.dying = .3;
-  if (en.solid) { anim('dust', en.x, .1, en.z, en.size * 1.2, 14); sfx('rock'); bump('stone'); if (Math.random() < .35) dropItem(en.x, en.z); else dropGem(en.x, en.z, 3); return; }
-  if (en.obj) { anim('dust', en.x, .1, en.z, 1.8, 14); sfx('crate'); dropItem(en.x, en.z); return; }
+  if (en.solid) { anim('dust', en.x, .1, en.z, en.size * 1.2, 14); sfx('rock'); bump('stone'); if (Math.random() < .5) dropCoin(en.x, en.z, 2); else dropGem(en.x, en.z, 3); return; }
+  // Crates: mostly a coin or a berry, sometimes a magnet, bomb or shield.
+  if (en.obj) { anim('dust', en.x, .1, en.z, 1.8, 14); sfx('crate'); if (Math.random() < .55) dropCoin(en.x, en.z, 2); else dropItem(en.x, en.z); return; }
   S.ab.kill?.(en);
   if (en.ice) { scene.remove(en.ice); en.ice = null; }
   if (en.atk?.tele) { scene.remove(en.atk.tele); en.atk.tele = null; }
-  if (en.boss) { dropItem(en.x + 1, en.z, 'candy'); dropItem(en.x - 1, en.z, 'berry'); dropItem(en.x, en.z + 1, 'held:' + pickHeld()); dropItem(en.x, en.z - 1, 'scroll'); if (en.altarLoot) for (let i = 0; i < 2; i++) dropItem(en.x + rand(-2, 2), en.z + rand(-2, 2), 'held:' + pickHeld()); }
-  else if (Math.random() < .015) dropItem(en.x, en.z);
-  else if (Math.random() < .004) dropItem(en.x, en.z, 'scroll');
+  // Bosses leave a Star Candy, a berry, coins and a free chest (better if you called them at an altar).
+  if (en.boss) { dropItem(en.x + 1, en.z, 'candy'); dropItem(en.x - 1, en.z, 'berry'); dropCoin(en.x, en.z - 1, 15); addChest(en.x, en.z + 1.5, 'free', en.altarLoot ? 4 : 2); }
   S.kills++;
   S.streak = S.t - S.lastKill < 2.5 ? S.streak + 1 : 1; S.lastKill = S.t; S.bestStreak = Math.max(S.bestStreak, S.streak);
   S.ult = Math.min(S.ultNeed, S.ult + (en.boss ? 40 : 1));
@@ -1817,14 +1976,16 @@ function killEnemy(en) {
   if (en.boss) { setFlag('bossBeaten'); if (S.t - en.born < 60) PROG.fast[en.kind] = (PROG.fast[en.kind] || 0) + 1; }
   checkUnlocks();
   anim('dust', en.x, .1, en.z, en.boss ? 5 : 1.8, 14);
-  dropGem(en.x, en.z, en.xp);
-  if ((en.kind === 'pebblion' || en.kind === 'gloomhog') && Math.random() < .1) dropBerry(en.x + rand(-1, 1), en.z + rand(-1, 1));
+  // A monster drops experience or a wild coin, never both (elites and bosses drop both).
+  if (en.elite || en.boss) { dropGem(en.x, en.z, en.xp); if (en.elite) dropCoin(en.x + .6, en.z, 3); }
+  else if (Math.random() < .14) dropCoin(en.x, en.z, en.xp >= 5 ? 2 : 1);
+  else dropGem(en.x, en.z, en.xp);
   if (en.boss) {
     const other = S.enemies.find(o => o.boss && o !== en && o.dying <= 0);
     S.boss = other || null;
     $('#bossbar').hidden = !other;
     if (other) $('#bossname').innerHTML = `${other.def.name} <span class="type" style="background:${TYPE_COLOR[other.el]}">${other.el}</span>`;
-    banner(`${en.def.name} fainted!`, 'It dropped a Star Candy and a Heal Berry');
+    banner(`${en.def.name} fainted!`, 'It left a Star Candy, coins and a free chest');
   }
 }
 // ---------- recruiting: challenge, then it appears in the wild, then capture it ----------
@@ -1839,48 +2000,168 @@ function checkUnlocks() {
     if (isUnlocked(k) || ready(k) || chCount(k) < DEX[k].ch[1]) continue;
     PROG.ready.push(k);
     saveProg();
-    setTimeout(() => { banner(`Challenge complete: ${WILD[k].name}!`, 'It will appear in the wild in your next run'); sfx('unlock'); }, 600);
+    setTimeout(() => { banner(`Challenge complete: ${WILD[k].name}!`, 'It may appear in the wild in a later run'); sfx('unlock'); }, 600);
   }
 }
-// Rares from finished challenges arrive one by one from 0:25. Legendary ones come with the boss bar.
+// At most one rare per run: a random finished challenge, and it only turns up as often as its rarity allows.
+const RARE_CHANCE = { Common: .85, Uncommon: .65, Rare: .45, Legendary: .3 };
+function rollRare() {
+  const list = PROG.ready.filter(k => !isUnlocked(k));
+  if (!list.length) return null;
+  const k = list[Math.floor(Math.random() * list.length)];
+  return Math.random() < RARE_CHANCE[DEX[k].rarity] ? k : null;
+}
 function spawnRare(k) {
-  const en = spawn(k, spawnPoint(16, 22));
-  en.rare = true;
-  if (en.boss) { en.hp = en.maxHp *= 1.6; S.boss = en; $('#bossname').innerHTML = `Legendary ${WILD[k].name}`; $('#bossbar').hidden = false; }
-  else { en.hp = en.maxHp *= 8; en.dmg *= 1.5; en.size *= 1.3; en.r *= 1.2; }
-  en.ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: '#f6c445', transparent: true, opacity: .9, depthWrite: false }));
-  en.ring.scale.setScalar(en.r * 1.8); scene.add(en.ring);
-  banner(`A rare ${WILD[k].name} appeared!`, 'Weaken it, then stand in its golden ring to capture it');
+  const en = spawn(k, spawnPoint(45, 70));
+  en.rare = true; en.atkT = 1.5; en.flee = 0; en.wait = 0; en.ux = 0; en.uz = 1;
+  if (en.boss) en.hp = en.maxHp *= 1.6;
+  else { en.hp = en.maxHp *= 10; en.size *= 1.2; en.r *= 1.2; }
+  $('#rarept img').src = ICONS[k];
+  $('#capui b').textContent = `${DEX[k].rarity} ${WILD[k].name}`;
+  banner(`A rare ${WILD[k].name} is roaming the meadow!`, 'Follow the arrow, weaken it, then stay in its ring');
   sfx('boss');
 }
-// A rare never faints: below 25% HP it gives up and waits to be captured.
+// Roams on its own. It only fights when you get close, then runs off. Once weak it just wanders slowly, waiting to be caught.
+function rareMove(en, dx, dz, d, dt, sp) {
+  let speed = en.spd * sp;
+  if (en.flee > 0) { en.flee -= dt; en.ux = -dx / d; en.uz = -dz / d; speed *= en.weak ? 1 : 1.7; }
+  else {
+    if (!en.weak && d < 11 && (en.atkT -= dt) <= 0) {
+      const a = Math.atan2(dx, dz), n = en.boss ? 7 : 3;
+      for (let i = 0; i < n; i++) eshoot(en, a + (i - (n - 1) / 2) * .28, 11);
+      sfx('warn'); en.atkT = rand(1.5, 3); en.flee = rand(2.5, 4);
+    }
+    if ((en.wait -= dt) <= 0) { const a = rand(0, TAU); en.wait = rand(2, 5); en.ux = Math.sin(a); en.uz = Math.cos(a); }
+    speed = en.weak ? Math.min(speed, en.cap > 0 ? .5 : 1.1) : speed * .6;
+  }
+  en.x += en.ux * speed * dt; en.z += en.uz * speed * dt;
+}
+// A rare never faints: below 25% HP it gives up and a capture ring appears around it.
 function holdRare(en) {
   if (!en.rare || en.hp > en.maxHp * .25) return;
   en.hp = Math.max(en.hp, 1);
   if (en.weak) return;
-  en.weak = true; en.cap = 0; en.burn = en.poison = en.seed = null;
-  if (en.atk?.tele) { scene.remove(en.atk.tele); en.atk.tele = null; }
-  en.ring.scale.setScalar(2.6); en.ring.material.color.set('#ffffff');
-  banner(`${WILD[en.kind].name} is weakened!`, 'Stand in the ring to capture it');
+  en.weak = true; en.cap = 0; en.out = 0; en.flee = 0; en.burn = en.poison = en.seed = null;
+  en.ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: '#f6c445', transparent: true, opacity: .95, depthWrite: false }));
+  en.ring.scale.setScalar(CAP_R); scene.add(en.ring);
+  banner(`${WILD[en.kind].name} is weakened!`, `Stay in its ring for ${CAP_NEED} seconds to capture it`);
 }
+const CAP_R = 3.6, CAP_NEED = 12, CAP_GRACE = 5;
+// Stay in the ring to fill the timer. Out of the ring for 5 s and it resets and the pet runs off.
 function tickCapture(en, d, dt) {
-  en.ring.position.set(en.x, .12, en.z);
   if (!en.weak) return;
-  en.cap = clamp(en.cap + (d < 2.6 ? dt : -dt * .5), 0, 2.5);
-  en.ring.material.color.setHSL(.13, 1, .5 + .4 * (1 - en.cap / 2.5));
-  en.ring.scale.setScalar(2.6 * (1 - .6 * en.cap / 2.5));
-  if (en.cap < 2.5) return;
-  // Captured.
-  en.gone = true; scene.remove(en.mesh, en.shadow, en.ring); if (en.ice) scene.remove(en.ice);
-  if (S.boss === en) { S.boss = null; $('#bossbar').hidden = true; }
+  en.ring.position.set(en.x, .12, en.z);
+  if (d < CAP_R) { en.cap += dt; en.out = 0; }
+  else if (en.cap > 0 && (en.out += dt) >= CAP_GRACE) {
+    en.cap = 0; en.out = 0; en.flee = 3;
+    banner(`${WILD[en.kind].name} broke free!`, 'Catch up and stay in the ring');
+    sfx('weak');
+  }
+  if (en.cap >= CAP_NEED) beginCapture(en);
+}
+// Screen-space helpers above the rare and above the player.
+const uiV = new THREE.Vector3();
+function updateRareUI() {
+  const en = S.enemies.find(o => o.rare && !o.gone), pt = $('#rarept'), ui = $('#capui');
+  if (!en) { pt.hidden = ui.hidden = true; return; }
+  const dx = en.x - S.x, dz = en.z - S.z, d = Math.hypot(dx, dz);
+  // Pointer: the pet's icon above your head, with an arrow toward it.
+  uiV.set(S.x, groundH(S.x, S.z) + partnerSize() + .8, S.z).project(camera);
+  pt.hidden = d < 9;
+  if (!pt.hidden) {
+    const ang = Math.atan2(dx * right.x + dz * right.z, dx * fwd.x + dz * fwd.z);
+    pt.style.left = (uiV.x * .5 + .5) * innerWidth + 'px'; pt.style.top = (-uiV.y * .5 + .5) * innerHeight + 'px';
+    pt.firstElementChild.style.transform = `rotate(${ang}rad)`;
+    pt.lastElementChild.textContent = Math.round(d) + ' m';
+  }
+  // Over the pet: name and HP; once weak, the capture timer.
+  uiV.set(en.x, groundH(en.x, en.z) + en.size + .3, en.z).project(camera);
+  ui.hidden = d > 40 || uiV.z > 1;
+  if (ui.hidden) return;
+  ui.style.left = (uiV.x * .5 + .5) * innerWidth + 'px'; ui.style.top = (-uiV.y * .5 + .5) * innerHeight + 'px';
+  const fill = ui.querySelector('i'), txt = ui.querySelector('small');
+  ui.classList.toggle('weak', !!en.weak);
+  if (en.weak) {
+    fill.style.width = en.cap / CAP_NEED * 100 + '%';
+    txt.textContent = en.cap <= 0 ? 'Step into the ring' : en.out > 0 ? `Back in the ring! ${Math.ceil(CAP_GRACE - en.out)} s` : `Capturing… ${Math.ceil(CAP_NEED - en.cap)} s`;
+  } else { fill.style.width = en.hp / en.maxHp * 100 + '%'; txt.textContent = 'Weaken it'; }
+}
+// ---------- capture animation: throw, absorb, three shakes, click, stars ----------
+let CAP = null;
+const capCam = new THREE.Vector3(), capLook = new THREE.Vector3();
+function beginCapture(en) {
+  // Save straight away so nothing is lost if the page closes during the animation.
   PROG.ready = PROG.ready.filter(k => k !== en.kind);
-  PROG.unlocked.push(en.kind);
+  if (!PROG.unlocked.includes(en.kind)) PROG.unlocked.push(en.kind);
   S.newUnlocks.push(WILD[en.kind].name);
   saveProg();
-  for (let i = 0; i < 14; i++) anim('sparkle', en.x + rand(-1.5, 1.5), rand(.3, 3), en.z + rand(-1.5, 1.5), 1, 9);
-  const legend = TRAITS[LEGEND_TRAIT[en.kind]];
-  banner(`Gotcha! ${WILD[en.kind].name} joined you!`, legend ? `New power-up unlocked for every partner: ${legend.name}` : 'Pick it as your partner from the Wild Dex');
-  sfx('win');
+  scene.remove(en.ring); en.ring = null;
+  en.rare = false; en.gone = true; // out of play now; the sprite stays only for the animation
+  scene.remove(en.shadow); if (en.ice) { scene.remove(en.ice); en.ice = null; }
+  // The crowd steps out of the shot while it plays.
+  for (const o of S.enemies) if (!o.obj && o !== en) o.mesh.visible = o.shadow.visible = false;
+  const orb = sprite(SM.orb, .9, .9, .5);
+  orb.position.set(S.x, 1.3, S.z);
+  CAP = { en, orb, t: 0, stage: 0, size: en.size, gx: en.x, gz: en.z };
+  capCam.copy(camera.position);
+  capLook.set(en.x, groundH(en.x, en.z) + 1, en.z);
+  state = 'capture';
+  $('#hud').classList.add('cine');
+  $('#rarept').hidden = $('#capui').hidden = $('#prompt').hidden = true;
+  sfx('orbthrow');
+}
+function tickCaptureAnim(dt) {
+  const C = CAP, t = (C.t += dt), en = C.en, o = C.orb, GY = .45;
+  tickAnims(dt);
+  const once = (st, fn) => { if (C.stage < st) { C.stage = st; fn(); } };
+  if (t < .7) { // the throw: an arc from you to the pet
+    const k = t / .7;
+    o.position.set(S.x + (C.gx - S.x) * k, 1.3 + (en.size * .6 - 1.3) * k + Math.sin(k * Math.PI) * 3, S.z + (C.gz - S.z) * k);
+    SM.orb.rotation = t * 18;
+  } else if (t < 1.4) { // it opens and pulls the pet in, in a flash of light
+    once(1, () => { o.material = SM.orbopen; SM.orb.rotation = SM.orbopen.rotation = 0; sfx('orbabsorb'); $('#capflash').classList.add('on'); setTimeout(() => $('#capflash').classList.remove('on'), 180); for (let i = 0; i < 12; i++) anim('sparkle', C.gx + rand(-1.5, 1.5), rand(.2, C.size), C.gz + rand(-1.5, 1.5), .9, 10); });
+    const k = (t - .7) / .7, sz = C.size * (1 - k) ** 2;
+    en.mesh.material = WILD_MATS[en.kind][0].fn;
+    en.mesh.scale.set(Math.max(.01, sz), Math.max(.01, sz), 1);
+    en.mesh.position.set(C.gx, en.size * .6 * k, C.gz);
+    o.scale.setScalar(.9 + Math.sin(k * Math.PI) * .5);
+  } else if (t < 1.9) { // it snaps shut and drops, with one bounce
+    once(2, () => { scene.remove(en.mesh); o.material = SM.orb; o.scale.setScalar(.9); sfx('orbtick'); });
+    const k = (t - 1.4) / .5, Y0 = en.size * .6;
+    o.position.y = k < .7 ? Y0 + (GY - Y0) * (k / .7) ** 2 : GY + Math.sin((k - .7) / .3 * Math.PI) * .35;
+  } else if (t < 4.1) { // three shakes
+    const n = Math.floor((t - 1.9) / .7), f = ((t - 1.9) % .7) / .7;
+    once(3 + n, () => sfx('orbtick'));
+    o.position.y = GY;
+    SM.orb.rotation = f < .6 ? Math.sin(f / .6 * TAU) * .55 : 0;
+    o.position.x = C.gx + (f < .6 ? Math.sin(f / .6 * TAU) * .12 : 0);
+  } else { // click: caught
+    once(10, () => {
+      SM.orb.rotation = 0; o.position.x = C.gx;
+      sfx('orbclick');
+      for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; anim('spark', C.gx + Math.cos(a) * 1.2, 1 + Math.abs(Math.sin(a)), C.gz + Math.sin(a) * 1.2, 1.3, 12, { cy: .5 }); }
+      for (let i = 0; i < 18; i++) anim('sparkle', C.gx + rand(-2, 2), rand(.3, 3), C.gz + rand(-2, 2), 1, 8);
+      const k = en.kind, leg = TRAITS[LEGEND_TRAIT[k]], card = $('#capcard');
+      card.innerHTML = `<img class="px" alt="" src="${ICONS[k]}"><div><span class="kick">Gotcha!</span><b>${WILD[k].name} was captured</b><small>${leg ? `New power-up for every partner: ${leg.name}` : `${DEX[k].rarity} partner. Pick it from the Wild Dex.`}</small></div>`;
+      card.hidden = false;
+    });
+    if (t > 6) {
+      scene.remove(o); CAP = null;
+      for (const m of S.enemies) if (!m.obj) m.mesh.visible = m.shadow.visible = true;
+      $('#capcard').hidden = true; $('#hud').classList.remove('cine');
+      S.shield = Math.max(S.shield, 2); // a moment to get your bearings
+      state = 'play'; last = performance.now();
+    }
+  }
+}
+function captureCamera(dt) {
+  // Swing in close, side-on to the pet and you, for the moment.
+  const gh = groundH(CAP.gx, CAP.gz), k = 1 - Math.exp(-3 * dt);
+  const dx = S.x - CAP.gx, dz = S.z - CAP.gz, d = Math.hypot(dx, dz) || 1;
+  capCam.lerp(uiV.set(CAP.gx + dz / d * 6 + dx / d * 1.5, gh + 2.6, CAP.gz - dx / d * 6 + dz / d * 1.5), k);
+  capLook.lerp(uiV.set(CAP.gx, gh + 1, CAP.gz), k);
+  camera.position.copy(capCam);
+  camera.lookAt(capLook);
 }
 // Healing Bloom (Mossaur): a flower patch that heals you while you stand by it.
 function plantBloom() {
@@ -1907,13 +2188,17 @@ function dropGem(x, z, v) {
   if (S.gems.length > 400) { S.gems[Math.floor(Math.random() * S.gems.length)].v += v; return; }
   addPickup(x, z, v, 'xp', SM[v >= 20 ? 'xp2' : v >= 5 ? 'xp1' : 'xp0'], v >= 20 ? 1 : .7);
 }
-function dropBerry(x, z) { dropItem(x, z, 'berry'); }
+function dropCoin(x, z, v) { addPickup(x, z, v, 'coin', SM.wcoin, .75); }
 function shock(cx, cz, r, dmg, el, knock, fxRing, st = 0) {
   if (fxRing) ring(r, fxRing, .55);
   for (const en of S.enemies) {
     const dx = en.x - cx, dz = en.z - cz, d = Math.hypot(dx, dz) || 1;
     if (d < r + en.r) hitEnemy(en, dmg, el, dx / d * knock, dz / d * knock, true, st);
   }
+}
+function jump() {
+  if (state !== 'play' || S.py > groundH(S.x, S.z) + .05) return;
+  S.pv = 10; sfx('jump');
 }
 function dash() {
   if (state !== 'play' || S.dashCd > 0) return;
@@ -1983,7 +2268,7 @@ function tickStatus(en, dt) {
     else if (en.poison && Math.random() < dt * 1.6) anim('poisonbub', en.x + rand(-.4, .4), en.size * .5, en.z + rand(-.4, .4), .7, 8, { cy: .5 });
     if (en.daze > 0 && Math.random() < dt * 2.5) anim('dazed', en.x, en.size * .9, en.z, en.size * .35, 10, { cy: .5 });
   }
-  return en.freeze > 0 || en.daze > 0 || en.weak ? 0 : en.chill ? .55 : en.soak > 0 ? .75 : 1;
+  return en.freeze > 0 || en.daze > 0 ? 0 : en.chill ? .55 : en.soak > 0 ? .75 : 1;
 }
 // Ability leftovers: Ember Trail patches, and faint bursts queued so chain reactions spread over a few frames.
 function tickExtras(dt) {
@@ -2007,10 +2292,31 @@ function tickExtras(dt) {
 const dist = en => Math.hypot(en.x - S.x, en.z - S.z);
 function nearest(n, range) { return S.enemies.filter(en => en.dying <= 0 && !en.obj && dist(en) < range).sort((a, b) => dist(a) - dist(b)).slice(0, n); }
 // opts: home (target to steer toward), arc (lob height), explode (blast radius on hit or expiry).
+// Shots fly in 3D, in world height (not lifted onto the terrain): launched from the partner, aimed at the target's height,
+// pulled down by gravity (g by element, opts.g overrides) and stopped by hills.
+const SHOT_G = { fire: 3, water: 7, grass: 0, ground: 10 };
+function aimTarget(ang, range) {
+  let best = null, bd = range;
+  for (const en of S.enemies) {
+    if (en.obj || en.dying > 0) continue;
+    const d = dist(en);
+    if (d < bd && Math.abs(Math.atan2(Math.sin(angTo(en) - ang), Math.cos(angTo(en) - ang))) < .35) { bd = d; best = en; }
+  }
+  return best;
+}
 function shoot(mats, ang, speed, dmg, el, life, pierce, size = .8, y = 1, opts = {}) {
-  const m = sprite(mats[0], size, size, .5);
-  m.position.set(S.x, y, S.z);
-  S.shots.push({ mesh: m, mats, x: S.x, z: S.z, y, vx: Math.sin(ang) * speed, vz: Math.cos(ang) * speed, sp: speed, dmg, el, life, life0: life, pierce, hit: new Set(), ...opts });
+  const m = sprite(mats[0], size, size, .5), y0 = S.py + y, g = opts.g ?? SHOT_G[el], tg = opts.home || aimTarget(ang, speed * life);
+  const T = tg ? Math.min(life, Math.max(.05, dist(tg) / speed)) : life, ty = tg ? groundH(tg.x, tg.z) + tg.size * .45 : y0;
+  // Aimed shots lob over any ledge in the way: the arc height needed to clear the terrain sets the gravity used.
+  let arc = g * T * T / 8;
+  if (tg) for (let f = .15; f < .9; f += .15) {
+    const hx = S.x + (tg.x - S.x) * f, hz = S.z + (tg.z - S.z) * f, line = y0 + (ty - y0) * f;
+    arc = Math.max(arc, (groundH(hx, hz) + .5 - line) / (4 * f * (1 - f)));
+  }
+  const G = opts.home ? 0 : 8 * arc / (T * T);
+  m.userData.flat = true;
+  m.position.set(S.x, y0, S.z);
+  S.shots.push({ mesh: m, mats, x: S.x, z: S.z, yy: y0, vy: (ty - y0) / T + .5 * G * T, g: G, vx: Math.sin(ang) * speed, vz: Math.cos(ang) * speed, sp: speed, dmg, el, life, life0: life, pierce, hit: new Set(), ...opts });
 }
 function blast(s) {
   if (s.el === 'fire') { flameRing(s.x, s.z, s.explode * .8, 10, 2.2); anim('spark', s.x, 1, s.z, s.explode * 1.2, 14, { cy: .5 }); sfx('flame'); }
@@ -2020,9 +2326,12 @@ function blast(s) {
 // Boss projectiles that hurt the player.
 const ESHOT_ART = { fire: 'ember0', water: 'bubble', grass: 'leaf', rock: 'rock' };
 function eshoot(en, ang, speed = 9) {
-  const m = sprite(SM[ESHOT_ART[en.el]], 1.2, 1.2, .5);
-  m.position.set(en.x, 1.2, en.z);
-  S.eshots.push({ mesh: m, x: en.x, z: en.z, vx: Math.sin(ang) * speed, vz: Math.cos(ang) * speed, life: 3.5, dmg: en.dmg * .45 });
+  const m = sprite(SM[ESHOT_ART[en.el]], 1.2, 1.2, .5), y0 = groundH(en.x, en.z) + 1.2, toYou = Math.atan2(S.x - en.x, S.z - en.z);
+  m.userData.flat = true;
+  m.position.set(en.x, y0, en.z);
+  // Shots aimed your way climb or drop to your height; the rest of a volley flies level.
+  const aimed = Math.abs(Math.atan2(Math.sin(toYou - ang), Math.cos(toYou - ang))) < .5, T = Math.hypot(S.x - en.x, S.z - en.z) / speed;
+  S.eshots.push({ mesh: m, x: en.x, z: en.z, yy: y0, vy: aimed ? (groundH(S.x, S.z) + 1 - y0) / Math.max(.2, T) : 0, vx: Math.sin(ang) * speed, vz: Math.cos(ang) * speed, life: 3.5, dmg: en.dmg * .45 });
 }
 function flameRing(cx, cz, r, n, size) { for (let i = 0; i < n; i++) { const a = i / n * TAU; anim(PV('flame'), cx + Math.cos(a) * r, 0, cz + Math.sin(a) * r, size, 14); } }
 
@@ -2032,11 +2341,11 @@ const angTo = en => Math.atan2(en.x - S.x, en.z - S.z);
 function tickOrbit(k, w, P, dt, D) {
   const [sm, el, size, snd, dir] = ORBITS[k], n = P.n, R = P.r * S.area, dmg = P.dmg * D;
   const list = S.orbs[k] ||= [];
-  while (list.length < n) list.push(sprite(PS(sm), size, size, .5));
+  while (list.length < n) { const o = sprite(PS(sm), size, size, .5); o.userData.flat = true; list.push(o); }
   w.a += (2.8 + .3 * w.l) * dt * dir;
   list.forEach((m, i) => {
     const a = w.a + i / n * TAU, x = S.x + Math.cos(a) * R, z = S.z + Math.sin(a) * R;
-    m.position.set(x, .9 + Math.sin(S.t * 5 + i) * .15, z);
+    m.position.set(x, S.py + .9 + Math.sin(S.t * 5 + i) * .15, z);
     for (const en of S.enemies) {
       if (en.dying <= 0 && S.t - (en.orbT[k] || 0) > P.every && Math.hypot(en.x - x, en.z - z) < en.r + .5) { en.orbT[k] = S.t; sfx(snd); hitEnemy(en, dmg, el, Math.cos(a) * 3, Math.sin(a) * 3, true, P.st); }
     }
@@ -2056,12 +2365,14 @@ function makeVine(ang, len, side, dmg, st) {
   scene.add(mesh);
   const leaves = [['vineA', 1], ['vineBd', -1], ['vineB', 1], ['vineAd', -1], ['vineA', 1]].map(([k, s]) => Object.assign(sprite(PS(k), .5, .5, .5), { side: s }));
   const tip = sprite(PS('vinetip'), .9, .9, .5);
-  return { ang, len, side, t: 0, dur: .38, dmg, st, hit: new Set(), mesh, leaves, tip, parts: [mesh, ...leaves, tip] };
+  for (const o of [...leaves, tip]) o.userData.flat = true;
+  // The vine reaches from the partner to the ground height at its far end, in a straight lash rather than over every bump.
+  return { gy1: groundH(S.x + Math.sin(ang) * len, S.z + Math.cos(ang) * len), ang, len, side, t: 0, dur: .38, dmg, st, hit: new Set(), mesh, leaves, tip, parts: [mesh, ...leaves, tip] };
 }
 function vinePoint(w, L, ext, p, f, out) {
   const dx = Math.sin(w.ang), dz = Math.cos(w.ang), px = -dz * w.side, pz = dx * w.side;
   const curve = Math.sin(f * Math.PI) * (1 - p) * 1.4 + Math.sin(f * 7 - w.t * 18) * .12 * f * ext;
-  return out.set(S.x + dx * L * f + px * curve, .9 + Math.sin(f * Math.PI) * .5 * ext, S.z + dz * L * f + pz * curve);
+  return out.set(S.x + dx * L * f + px * curve, .9 + Math.sin(f * Math.PI) * .5 * ext + S.py + (w.gy1 - S.py) * f * ext, S.z + dz * L * f + pz * curve);
 }
 // Spine point at f into vP; vW = the sideways direction facing the camera, pointing up on screen.
 function vineFrame(w, L, ext, p, f) {
@@ -2078,7 +2389,7 @@ function layVine(w, L, ext, p) {
   for (let j = 0; j <= VINE_SEG; j++) {
     const f = j / VINE_SEG, hw = (.3 - .17 * f) * (.4 + .6 * ext);
     vineFrame(w, L, ext, p, f);
-    const gy = vP.y + groundH(vP.x, vP.z);
+    const gy = vP.y;
     pos.setXYZ(j * 2, vP.x + vW.x * hw, gy + vW.y * hw, vP.z + vW.z * hw);
     pos.setXYZ(j * 2 + 1, vP.x - vW.x * hw, gy - vW.y * hw, vP.z - vW.z * hw);
     uv.setXY(j * 2, L * f / .9, 1); uv.setXY(j * 2 + 1, L * f / .9, 0);
@@ -2154,7 +2465,7 @@ function tickMoves(dt) {
       const ts = nearest(P.n, P.reach);
       if (!ts.length) { w.t = .2; continue; }
       w.t = cd;
-      ts.forEach(t => shoot([PS('rock')], angTo(t), 14, P.dmg * D, 'ground', Math.max(.35, dist(t) / 14), 0, .9, 1, { arc: 2.5, explode: 1.2, st: P.st }));
+      ts.forEach(t => shoot([PS('rock')], angTo(t), 14, P.dmg * D, 'ground', Math.max(.35, dist(t) / 14), 0, .9, 1, { g: 22, explode: 1.2, st: P.st }));
       sfx('rock');
     } else if (k === 'rockslide') {
       const ts = nearest(P.n, P.reach);
@@ -2482,7 +2793,7 @@ function renderPauseInfo() {
     <div><span class="kick">Paused · Meadow · Lv ${S.level}${S.level >= MAX_LEVEL ? ' MAX' : ''}</span><h2>${a.names[S.stage]} ${badgeT(S.type)}${badgeS(partnerStatus(a))}</h2>
       <div class="pbars"><span>HP</span><div class="bar"><i style="width:${S.hp / S.maxHp * 100}%"></i></div><b>${Math.ceil(S.hp)}/${S.maxHp}</b>
       <span>EXP</span><div class="bar"><i style="width:${S.xp / S.need * 100}%;background:var(--xp)"></i></div><b>${Math.floor(S.xp)}/${S.need}</b></div></div>
-    <div class="ptiles">${[[fmt(S.t), 'Time'], [S.kills, 'KOs'], [big(S.dmgDone), 'Damage'], [big(S.dmgDone / Math.max(1, S.t)), 'Dmg/s'], [`×${S.bestStreak}`, 'Best streak']].map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('')}</div>`;
+    <div class="ptiles">${[[fmt(S.t), 'Time'], [S.kills, 'KOs'], [big(S.dmgDone), 'Damage'], [big(S.dmgDone / Math.max(1, S.t)), 'Dmg/s'], [`×${S.bestStreak}`, 'Best streak'], [S.coins, 'Coins']].map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('')}</div>`;
   $('#pmovecount').textContent = `${Object.keys(S.moves).length} learned`;
   $('#pmoves').innerHTML = `<div class="abil"><span class="dexno">Ability</span><b>${S.ab.name}</b><p>${S.ab.desc}</p></div>`
     + Object.entries(S.moves).map(([k, w]) => `<div class="mv" style="--c:${TYPE_COLOR[MOVES[k].el]}"><h5>${MOVES[k].name}<span class="tagl">Lv ${w.l}</span></h5><p>${MOVES[k].blurb}</p>${levelNums(k, w.l - 1).replace(/[\d.]+[^<]*→ /g, '')}</div>`).join('');
@@ -2490,7 +2801,7 @@ function renderPauseInfo() {
   $('#pitemcount').textContent = `${held.reduce((n, [, c]) => n + c, 0)} in total`;
   $('#pitems').innerHTML = held.map(([k, c]) => `<button data-it="${k}" class="${k === pauseItem ? 'on' : ''}" style="--c:${RAR_COLOR[HELD[k].rar]}" aria-label="${HELD[k].name}"><img class="px" alt="" src="${SRC.sm['it_' + k].toDataURL()}">${c > 1 ? `<em>×${c}</em>` : ''}</button>`).join('');
   const it = HELD[pauseItem];
-  $('#pitem').innerHTML = !held.length ? '<p class="note">No items yet. Break crates and stones, and beat bosses: they drop boost items and move scrolls.</p>'
+  $('#pitem').innerHTML = !held.length ? '<p class="note">No items yet. Open chests on the map with E: they cost wild coins, which monsters sometimes drop. Bosses leave a free chest.</p>'
     : it ? `<div class="abil"><b>${it.name}</b><span class="st" style="background:${RAR_COLOR[it.rar]};color:#fff">${it.rar}</span> <span class="small" style="color:var(--soft)">×${S.held[pauseItem]} of ${it.max}</span><p>${it.desc}</p></div>` : '<p class="note">Pick an item to see what it does.</p>';
   $('#pitems').querySelectorAll('button').forEach(b => b.onclick = () => { pauseItem = b.dataset.it; renderPauseInfo(); $(`[data-it="${pauseItem}"]`).focus(); });
   // Stats against the partner's base (evolutions count as base).
@@ -2512,44 +2823,101 @@ function renderPauseInfo() {
     ${row('Experience', S.xpMul || 1, 1, pct)}
     ${row('Rerolls / skips', S.rerolls + S.skips, 99, () => `${S.rerolls} / ${S.skips}`, false)}</div>`;
 }
-// Big map: the whole meadow with what you need to find. Terrain is drawn once and kept.
-let MAP_BG;
-function mapBackground() {
-  const N = 140, c = canvas(N), x = c.getContext('2d'), span = (WORLD_R + 4) * 2;
-  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
-    const wx = (i / N - .5) * span, wz = (j / N - .5) * span, h = groundH(wx, wz);
-    const cliff = Math.abs(groundH(wx + .6, wz) - groundH(wx - .6, wz)) + Math.abs(groundH(wx, wz + .6) - groundH(wx, wz - .6)) > .5;
-    x.fillStyle = Math.hypot(wx, wz) > WORLD_R ? '#2a4a2e' : cliff ? '#b8955e' : `hsl(${100 - h * 3}, 55%, ${36 + h * 4}%)`;
-    x.fillRect(i, j, 1, 1);
-  }
-  x.fillStyle = '#5fc0f0'; for (const q of PONDS) { x.beginPath(); x.arc((q.x / span + .5) * N, (q.z / span + .5) * N, q.r / span * N * 1.2, 0, TAU); x.fill(); }
-  x.fillStyle = '#1f5a2a'; for (const t of TREES) if (!PONDS.some(q => q.x === t.x)) x.fillRect((t.x / span + .5) * N - 1, (t.z / span + .5) * N - 1, 2, 2);
-  return c;
+// World map. North is up. Terrain is the MAP_BG image; unexplored ground stays under fog until you have been near it.
+const MV = { zoom: 1, cx: 0, cz: 0, drag: null };
+const SEEN_N = 64, seenIx = (x, z) => { const f = v => clamp(Math.floor((v / MAP_SPAN + .5) * SEEN_N), 0, SEEN_N - 1); return f(z) * SEEN_N + f(x); };
+function revealFog() {
+  const X = (S.x / MAP_SPAN + .5) * 128, Z = (S.z / MAP_SPAN + .5) * 128, R = 42 / MAP_SPAN * 128, c = S.fog.getContext('2d');
+  c.globalCompositeOperation = 'destination-out';
+  const g = c.createRadialGradient(X, Z, R * .55, X, Z, R); g.addColorStop(0, '#000'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  c.fillStyle = g; c.beginPath(); c.arc(X, Z, R, 0, TAU); c.fill();
+  c.globalCompositeOperation = 'source-over';
+  const cell = MAP_SPAN / SEEN_N;
+  for (let a = -34; a <= 34; a += cell) for (let b = -34; b <= 34; b += cell) if (a * a + b * b < 34 * 34) S.seen[seenIx(S.x + a, S.z + b)] = 1;
 }
-const MAP_KEY = [['#e8483a', 'Boss altar (E)'], ['#f6c445', 'Shrine (E), boost item'], ['#ffffff', 'You'], ['#f6c445', 'Rare to capture'], ['#ff3b2f', 'Boss'], ['#ffe36e', 'Item on the ground'], ['#b58a5a', 'Crate'], ['#9a96a0', 'Stone'], ['#5fc0f0', 'Pond'], ['#b8955e', 'Cliff']];
+const mapIcon = {};
+function iconURL(k, cv) { return mapIcon[k] ||= cv.toDataURL(); }
 function drawBigMap() {
-  MAP_BG ||= mapBackground();
-  const c = $('#mapcv').getContext('2d'), W = 560, span = (WORLD_R + 4) * 2;
-  // Rotate so the camera's forward points up, like the radar.
-  const P = (x, z) => { const dx = x - S.x, dz = z - S.z; return [W / 2 + (dx * right.x + dz * right.z) / span * W, W / 2 - (dx * fwd.x + dz * fwd.z) / span * W]; };
+  const cv = $('#mapcv'), box = cv.parentElement, dpr = Math.min(devicePixelRatio, 2), W = box.clientWidth, H = box.clientHeight;
+  if (!W || !H) return;
+  cv.width = W * dpr; cv.height = H * dpr;
+  const c = cv.getContext('2d'), k = Math.min(W, H) / (WORLD_R * 2.12) * MV.zoom;
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const PX = x => W / 2 + (x - MV.cx) * k, PZ = z => H / 2 + (z - MV.cz) * k;
+  c.fillStyle = '#161d2b'; c.fillRect(0, 0, W, H);
+  c.imageSmoothingEnabled = MV.zoom < 2;
+  const L = PX(-MAP_SPAN / 2), T = PZ(-MAP_SPAN / 2), SZ = MAP_SPAN * k;
+  c.drawImage(MAP_BG, L, T, SZ, SZ);
+  // Fog over what you have not explored.
+  c.imageSmoothingEnabled = true;
+  c.drawImage(S.fog, L, T, SZ, SZ);
+  c.strokeStyle = '#f6c445'; c.lineWidth = 3; c.setLineDash([10, 7]); c.beginPath(); c.arc(PX(0), PZ(0), WORLD_R * k, 0, TAU); c.stroke(); c.setLineDash([]);
+  // Region names, once you have seen them.
+  c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `700 ${clamp(k * 7, 11, 18)}px "Pixelify Sans", monospace`; c.lineWidth = 3;
+  for (const b of BIOMES) if (S.seen[seenIx(b.x, b.z)]) { c.strokeStyle = 'rgba(20,26,40,.8)'; c.fillStyle = '#fffbef'; c.strokeText(b.name, PX(b.x), PZ(b.z)); c.fillText(b.name, PX(b.x), PZ(b.z)); }
+  const icon = (x, z, img, ring, r) => {
+    const a = PX(x), b = PZ(z);
+    c.fillStyle = '#fffbef'; c.strokeStyle = ring; c.lineWidth = 3; c.beginPath(); c.arc(a, b, r, 0, TAU); c.fill(); c.stroke();
+    if (img) c.drawImage(img, a - r * .8, b - r * .8, r * 1.6, r * 1.6);
+  };
   c.imageSmoothingEnabled = false;
-  c.fillStyle = '#2a4a2e'; c.fillRect(0, 0, W, W);
-  c.save(); c.translate(...P(0, 0)); c.transform(right.x, -fwd.x, right.z, -fwd.z, 0, 0); c.drawImage(MAP_BG, -W / 2, -W / 2, W, W); c.restore();
-  const dot = (x, z, col, r) => { const [a, b] = P(x, z); c.fillStyle = col; c.strokeStyle = '#1d2433'; c.lineWidth = 2; c.beginPath(); c.arc(a, b, r, 0, TAU); c.fill(); c.stroke(); };
-  for (const en of S.enemies) if (en.obj && en.dying <= 0) dot(en.x, en.z, en.solid ? '#9a96a0' : '#b58a5a', 3);
-  for (const g of S.gems) if (g.kind !== 'xp') dot(g.x, g.z, '#ffe36e', 4);
-  for (const a of S.altars) if (!a.used) dot(a.x, a.z, a.kind === 'boss' ? '#e8483a' : '#f6c445', 6);
-  for (const en of S.enemies) if ((en.boss || en.rare) && en.dying <= 0) dot(en.x, en.z, en.rare ? '#f6c445' : '#ff3b2f', 8);
-  c.fillStyle = '#ffffff'; c.strokeStyle = '#1d2433'; c.lineWidth = 2; c.beginPath(); c.moveTo(W / 2, W / 2 - 11); c.lineTo(W / 2 + 8, W / 2 + 8); c.lineTo(W / 2, W / 2 + 3); c.lineTo(W / 2 - 8, W / 2 + 8); c.closePath(); c.fill(); c.stroke();
-  const rares = S.enemies.filter(en => en.rare && en.dying <= 0);
-  $('#maplegend').innerHTML = '<h3>Legend</h3>' + MAP_KEY.map(([col, t]) => `<p><i style="background:${col}"></i>${t}</p>`).join('')
-    + `<p class="note">${rares.length ? `${rares.map(en => WILD[en.kind].name).join(', ')} is waiting to be captured.` : S.rares.length ? `${S.rares.length} rare monster${S.rares.length > 1 ? 's' : ''} still to appear this run.` : 'No rare monsters this run. Finish a Wild Dex challenge to bring one.'}</p>`;
+  const seen = o => S.seen[seenIx(o.x, o.z)];
+  const R0 = clamp(8 + MV.zoom * 2, 10, 18), cnt = { chest: 0, free: 0, boss: 0, item: 0 };
+  if (MV.zoom >= 2) for (const en of S.enemies) if (en.obj && en.dying <= 0 && seen(en)) { c.fillStyle = en.solid ? '#9a96a0' : '#b58a5a'; c.fillRect(PX(en.x) - 2, PZ(en.z) - 2, 4, 4); }
+  for (const g of S.gems) if (g.kind !== 'xp' && g.kind !== 'coin') { cnt.item++; icon(g.x, g.z, SRC.sm[g.kind === 'berry' ? 'berry' : 'it_' + g.kind], '#ffe36e', R0 * .7); }
+  for (const a of S.altars) {
+    if (a.used) continue;
+    // Boss altars are always marked; chests show once found.
+    if (a.kind !== 'boss' && !seen(a)) continue;
+    cnt[a.kind]++;
+    if (a.kind === 'boss') icon(a.x, a.z, DECOR_CV.altar, '#e8483a', R0);
+    else icon(a.x, a.z, DECOR_CV[a.kind === 'free' ? 'freechest' : 'chest'], a.kind === 'free' ? '#3f7fd8' : '#c8961e', R0 * .85);
+  }
+  const hunted = S.enemies.filter(en => (en.boss || en.rare) && en.dying <= 0);
+  for (const en of hunted) icon(en.x, en.z, WILD_ART[en.kind][0], en.rare ? '#f6c445' : '#e8483a', R0 * 1.25);
+  // You: a gold arrow turned the way the camera faces.
+  c.save(); c.translate(PX(S.x), PZ(S.z)); c.rotate(Math.atan2(fwd.x, -fwd.z));
+  c.fillStyle = '#f6c445'; c.strokeStyle = '#1d2433'; c.lineWidth = 3; c.beginPath(); c.moveTo(0, -14); c.lineTo(11, 11); c.lineTo(0, 5); c.lineTo(-11, 11); c.closePath(); c.fill(); c.stroke(); c.restore();
+  // Compass letter.
+  c.font = '700 16px "Pixelify Sans", monospace'; c.fillStyle = '#fffbef'; c.strokeStyle = '#1d2433'; c.lineWidth = 3; c.strokeText('N', 22, 22); c.fillText('N', 22, 22);
+  // Side list.
+  let total = 0, known = 0;
+  for (let j = 0; j < SEEN_N; j++) for (let i = 0; i < SEEN_N; i++) { const x = ((i + .5) / SEEN_N - .5) * MAP_SPAN, z = ((j + .5) / SEEN_N - .5) * MAP_SPAN; if (Math.hypot(x, z) < WORLD_R) { total++; if (S.seen[j * SEEN_N + i]) known++; } }
+  $('#mapregion').textContent = biomeAt(S.x, S.z).name;
+  $('#mapexp').textContent = `${Math.round(known / total * 100)}% explored`;
+  const row = (src, label, n, col) => `<div class="maprow" style="--c:${col}"><img class="px" alt="" src="${src}"><span>${label}</span>${n != null ? `<b>×${n}</b>` : ''}</div>`;
+  const rare = S.enemies.find(en => en.rare);
+  $('#maplegend').innerHTML = '<h3>On the map</h3>'
+    + (rare ? row(ICONS[rare.kind], `Rare: ${WILD[rare.kind].name}`, null, '#f6c445') : '')
+    + hunted.filter(en => !en.rare).map(en => row(ICONS[en.kind], `Boss: ${WILD[en.kind].name}`, null, '#e8483a')).join('')
+    + row(iconURL('altar', DECOR_CV.altar), 'Boss altar', cnt.boss, '#e8483a')
+    + row(iconURL('chest', DECOR_CV.chest), `Chest found · next costs ${chestPrice()}`, cnt.chest, '#c8961e')
+    + row(iconURL('free', DECOR_CV.freechest), 'Free chest found', cnt.free, '#3f7fd8')
+    + (cnt.item ? row(iconURL('berry', SRC.sm.berry), 'Item on the ground', cnt.item, '#ffe36e') : '')
+    + `<h3>Your run</h3>` + row(iconURL('wc', SRC.sm.wcoin), 'Wild coins', S.coins, '#c8961e')
+    + `<p class="note">${rare ? `${WILD[rare.kind].name} is out there. Follow the arrow above your partner.` : S.rareK ? 'Something rare may still turn up this run.' : 'Explore to find more chests. Drag to move the map, wheel or + to zoom.'}</p>`;
 }
+function mapZoom(f) { MV.zoom = clamp(MV.zoom * f, 1, 8); if (MV.zoom === 1) MV.cx = MV.cz = 0; drawBigMap(); }
+$('#mapin').onclick = () => mapZoom(1.5);
+$('#mapout').onclick = () => mapZoom(1 / 1.5);
+$('#mapfit').onclick = () => { MV.zoom = 1; MV.cx = MV.cz = 0; drawBigMap(); };
+$('#mapcv').addEventListener('wheel', e => { e.preventDefault(); mapZoom(e.deltaY < 0 ? 1.25 : .8); }, { passive: false });
+$('#mapcv').addEventListener('pointerdown', e => { MV.drag = [e.clientX, e.clientY, MV.cx, MV.cz]; e.target.setPointerCapture(e.pointerId); });
+$('#mapcv').addEventListener('pointermove', e => {
+  if (!MV.drag) return;
+  const box = e.target.parentElement, k = Math.min(box.clientWidth, box.clientHeight) / (WORLD_R * 2.12) * MV.zoom;
+  MV.cx = clamp(MV.drag[2] - (e.clientX - MV.drag[0]) / k, -WORLD_R, WORLD_R); MV.cz = clamp(MV.drag[3] - (e.clientY - MV.drag[1]) / k, -WORLD_R, WORLD_R);
+  drawBigMap();
+});
+$('#mapcv').addEventListener('pointerup', () => { MV.drag = null; });
+addEventListener('resize', () => { if (screen === 'bigmap') drawBigMap(); });
 function toggleMap() {
   if (screen === 'bigmap') { setPause(false); return; }
   if (state === 'play') { setPause(true); }
   if (state !== 'pause') return;
-  showScreen('bigmap'); drawBigMap(); $('#mapback').focus();
+  // Opens showing the whole world.
+  MV.zoom = 1; MV.cx = MV.cz = 0;
+  showScreen('bigmap'); revealFog(); drawBigMap(); $('#mapback').focus();
 }
 function endRun(win, maxed = false) {
   state = 'over';
@@ -2584,7 +2952,7 @@ function renderPicks() {
   $('#recruitcount').textContent = `${ids.filter(isUnlocked).length} of ${ids.length} unlocked`;
   $('#recruits').innerHTML = ids.map(k => {
     const p = PARTNERS[k], open = isUnlocked(k), have = Math.min(p.need, chCount(k));
-    const how = open ? `${ABILITIES[p.ability].name} · ${MOVES[p.move].name}` : ready(k) ? 'Appears in your next run: capture it' : `${DEX[k].ch[2]} · ${have}/${p.need}`;
+    const how = open ? `${ABILITIES[p.ability].name} · ${MOVES[p.move].name}` : ready(k) ? 'Challenge done: may appear next run' : `${DEX[k].ch[2]} · ${have}/${p.need}`;
     return `<button class="rc plate ${k === chosen ? 'on' : ''} ${open ? '' : 'locked'}" data-t="${k}" ${open ? '' : 'aria-disabled="true"'}>
       <img class="px" alt="" src="${ICONS[k]}"><b>${open ? WILD[k].name : '???'} ${badge(p.type)}</b><span>${how}</span></button>`;
   }).join('');
@@ -2682,8 +3050,8 @@ function renderDexCard() {
   // The three recruiting steps, with the current one highlighted.
   const how = !p.need ? '' : `<div class="steps">
       <div class="${have >= p.need ? 'ok' : 'now'}"><b>1 · Complete the challenge</b><span>${DEX[k].ch[2]}. Progress is kept between runs.</span><div class="bar"><i style="width:${have / p.need * 100}%"></i></div><small>${have} / ${p.need}</small></div>
-      <div class="${done ? 'now' : ''}"><b>2 · It appears in the wild</b><span>It shows up early in your next run inside a golden ring${p.rarity === 'Legendary' ? ', far tougher than usual' : ''}.</span></div>
-      <div><b>3 · Weaken and capture it</b><span>Bring it below a quarter of its HP, then stand in its ring until it is caught.</span></div>
+      <div class="${done ? 'now' : ''}"><b>2 · It appears in the wild</b><span>Each run, one finished challenge gets a chance to appear: ${Math.round(RARE_CHANCE[p.rarity] * 100)}% for this ${p.rarity.toLowerCase()} monster. It roams the map and an arrow points to it. It fights back only if you get close, then runs.</span></div>
+      <div><b>3 · Weaken and capture it</b><span>Bring it below a quarter of its HP, then stay in its ring for ${CAP_NEED} seconds. Leave for ${CAP_GRACE} seconds and the timer resets as it runs off.</span></div>
     </div>${LEGEND_TRAIT[k] ? `<p class="note"><b>Legendary power-up:</b> capturing it adds ${TRAITS[LEGEND_TRAIT[k]].name} to every partner's level-up picks. ${TRAITS[LEGEND_TRAIT[k]].desc.replace('Legendary: ', '')}</p>` : ''}`;
   if (s === 'unseen') {
     el.innerHTML = `<div class="dextop"><div class="portrait">${dexImg(k, 0, 'big', 'shadow')}</div>
@@ -2770,7 +3138,7 @@ const SET_TABS = {
     ['toggle', 'showRadar', 'Minimap'], ['toggle', 'showStreak', 'Kill streak counter'], ['toggle', 'showSlots', 'Move slots', 'The move icons at the bottom left'],
     ['toggle', 'showHint', 'Control hints', 'The line of controls at the start of a run'] ] },
 };
-const KEY_NAMES = { dash: 'Dash', ult: 'Ultimate', interact: 'Interact (altars, shrines)', map: 'Meadow map', pause: 'Pause', mute: 'Mute', reroll: 'Reroll (level-up)', skip: 'Skip (level-up)' };
+const KEY_NAMES = { jump: 'Jump', dash: 'Dash', ult: 'Ultimate', interact: 'Interact (chests, altars)', map: 'Meadow map', pause: 'Pause', mute: 'Mute', reroll: 'Reroll (level-up)', skip: 'Skip (level-up)' };
 const keyLabel = c => ({ Space: 'Space', Tab: 'Tab', ShiftLeft: 'Shift', ShiftRight: 'Right Shift', ControlLeft: 'Ctrl', AltLeft: 'Alt', Enter: 'Enter' }[c] || c.replace(/^Key|^Digit/, '').replace(/^Arrow/, '↑ '));
 let setTab = 'sound', waitKey = null;
 const saveSet = () => writeJSON('pocketwilds-settings', SET);
@@ -2778,6 +3146,8 @@ function applySettings() {
   applyVolumes();
   renderer.setPixelRatio({ high: Math.min(devicePixelRatio, 2), medium: 1, low: .6 }[SET.quality]); resize();
   camera.fov = SET.fov; camera.updateProjectionMatrix();
+  CULL_D = { high: 105, medium: 90, low: 70 }[SET.quality];
+  scene.fog.near = CULL_D * .4; scene.fog.far = CULL_D * .95;
   $('#radar').hidden = !SET.showRadar; $('#slots').hidden = !SET.showSlots; $('#fps').hidden = !SET.showFps;
 }
 function renderSettings() {
@@ -2834,10 +3204,11 @@ addEventListener('keydown', e => {
   if (state === 'levelup' && /^Digit[123]$/.test(e.code)) $('#choices').children[+e.code.slice(5) - 1]?.click();
   if (state === 'levelup' && is('reroll')) $('#rerollbtn').click();
   if (state === 'levelup' && is('skip')) $('#skipbtn').click();
-  if (is('map') && (state === 'play' || screen === 'bigmap')) { e.preventDefault(); toggleMap(); }
+  if (is('map') && (state === 'play' || screen === 'pause' || screen === 'bigmap')) { e.preventDefault(); toggleMap(); }
   if (is('ult') && state === 'play') { e.preventDefault(); useUlt(); }
   if (is('interact') && state === 'play' && !e.repeat) interact();
   if (is('dash') && !e.repeat) dash();
+  if (is('jump') && state === 'play') { e.preventDefault(); if (!e.repeat) jump(); }
   if (is('mute') && !e.repeat) toggleMute();
   if (e.code === 'Enter' && screen === 'title' && document.activeElement === document.body) toSelect();
   if (e.code === 'Escape' || is('pause')) {
@@ -2903,6 +3274,7 @@ $('#ultbtn').onclick = useUlt;
 $('#pausebtn').onclick = () => setPause(true);
 $('#bossbtn').onclick = interact;
 $('#dashbtn').addEventListener('pointerdown', e => { e.preventDefault(); dash(); });
+$('#jumpbtn').addEventListener('pointerdown', e => { e.preventDefault(); jump(); });
 $('#fsbtn').onclick = () => document.fullscreenElement ? document.exitFullscreen() : goFullscreen();
 // Phones: fill the screen and prefer landscape. iPhone Safari has no page fullscreen, so failures are ignored.
 function goFullscreen() {
@@ -2954,7 +3326,13 @@ function update(dt) {
     if (Math.random() < .6) anim(S.ab.dig ? PV('dust') : 'dust', S.x, .1, S.z, S.ab.dig ? 1.6 : 1, 16);
     if (S.dashT <= 0) S.ab.dashEnd?.();
   } else { S.x += vx * S.spd * dt; S.z += vz * S.spd * dt; }
-  for (const t of TREES) { const tx = S.x - t.x, tz = S.z - t.z, td = Math.hypot(tx, tz), m = t.r + .45; if (td < m && td > 0) { S.x = t.x + tx / td * m; S.z = t.z + tz / td * m; } }
+  pushOut(S, .45);
+  // Height: gravity when above the ground (jumps and walking off ledges); a quick climb when stepping up.
+  const gnd = groundH(S.x, S.z);
+  if (S.py > gnd + .02 || S.pv > 0) {
+    S.pv -= 26 * dt; S.py += S.pv * dt;
+    if (S.py <= gnd && S.pv <= 0) { if (S.pv < -7) { anim('dust', S.x, .1, S.z, 1.4, 16); sfx('land'); } S.py = gnd; S.pv = 0; }
+  } else S.py = Math.min(gnd, S.py + 10 * dt);
   const pd = Math.hypot(S.x, S.z);
   if (pd > WORLD_R) { S.x *= WORLD_R / pd; S.z *= WORLD_R / pd; }
   if (S.moving) {
@@ -2980,6 +3358,7 @@ function update(dt) {
   tickMoves(dt);
   tickUlts(dt);
   tickExtras(dt);
+  if ((S.fogT -= dt) <= 0) { S.fogT = .5; revealFog(); }
 
   for (const en of S.enemies) {
     if (en.dying > 0) {
@@ -2991,13 +3370,14 @@ function update(dt) {
     }
     const dx = S.x - en.x, dz = S.z - en.z, d = Math.hypot(dx, dz) || 1;
     if (en.obj) {
+      en.mesh.visible = en.shadow.visible = d < CULL_D;
       const sx = en.solid ? en.size : 1.5, sy = en.solid ? en.size * .75 : 1.5;
       if (en.flash > 0) { en.flash -= dt; en.mesh.scale.set(sx * 1.13, sy * .87, 1); } else en.mesh.scale.set(sx, sy, 1);
       // Crates break when you walk into them; stones push you back out.
       if (d < en.r + .6) { if (en.solid) { const k = (en.r + .6 - d) / d; S.x += dx * k; S.z += dz * k; } else killEnemy(en); }
       continue;
     }
-    if (d > 50 && !en.boss) { [en.x, en.z] = spawnPoint(24, 30); continue; }
+    if (d > 50 && !en.boss && !en.rare) { [en.x, en.z] = spawnPoint(24, 30); continue; }
     if (en.seed) {
       en.seed.t -= dt; en.seed.tick -= dt;
       if (en.seed.tick <= 0) { en.seed.tick = .5; hitEnemy(en, en.seed.dmg, 'grass', 0, 0, false); S.hp = Math.min(S.maxHp, S.hp + en.seed.dmg * .2 * (S.ab.seedHeal || 1)); if (Math.random() < .4) anim('sparkle', S.x + rand(-.6, .6), rand(.8, 2), S.z + rand(-.6, .6), .6, 10); }
@@ -3008,7 +3388,8 @@ function update(dt) {
     if (en.dying > 0) continue;
     if (en.rare) { tickCapture(en, d, dt); if (en.gone) continue; }
     // Frozen or dazed monsters stand still; bosses stop their attack patterns too.
-    const hold = !sp || (en.boss && bossBrain(en, dt, dx, dz, d));
+    const hold = !sp || en.rare || (en.boss && bossBrain(en, dt, dx, dz, d));
+    if (en.rare && sp) rareMove(en, dx, dz, d, dt, sp);
     if (!hold) {
       const ux = en.conf > 0 ? Math.sin(en.cdir) : dx / d, uz = en.conf > 0 ? Math.cos(en.cdir) : dz / d;
       en.x += ux * en.spd * sp * dt; en.z += uz * en.spd * sp * dt;
@@ -3023,17 +3404,18 @@ function update(dt) {
     // Sheet art faces right: use the normal frame when heading screen-right.
     // Frames stop while held in place; a status tints the sprite (hit flash wins).
     if (sp) en.fr = Math.floor(S.t * 7 + en.ph) % 4;
-    const goingRight = (dx * right.x + dz * right.z) > 0, M = WILD_MATS[en.kind][en.fr || 0];
-    const tint = en.freeze > 0 ? 'freeze' : en.melt > 0 ? 'melt' : en.burn ? 'burn' : en.poison ? 'poison' : en.chill ? 'chill' : en.soak > 0 ? 'soak' : en.conf > 0 ? 'mist' : en.daze > 0 ? 'daze' : en.seed ? 'seed' : null;
+    const goingRight = ((en.rare ? en.ux : dx) * right.x + (en.rare ? en.uz : dz) * right.z) > 0, M = WILD_MATS[en.kind][en.fr || 0];
+    const tint = en.freeze > 0 ? 'freeze' : en.melt > 0 ? 'melt' : en.burn ? 'burn' : en.poison ? 'poison' : en.chill ? 'chill' : en.soak > 0 ? 'soak' : en.conf > 0 ? 'mist' : en.daze > 0 ? 'daze' : en.seed ? 'seed' : en.elite ? 'elite' : null;
     if (en.flash > 0) { en.flash -= dt; en.mesh.material = goingRight ? M.fn : M.fm; en.mesh.scale.set(en.size * 1.12, en.size * .88, 1); }
     else { en.mesh.material = tint ? M.tint[tint][goingRight ? 0 : 1] : goingRight ? M.n : M.m; en.mesh.scale.set(en.size, en.size, 1); }
     // The ice sits a little toward the camera so it draws in front of the monster.
     if (en.ice) { vA.subVectors(camera.position, en.mesh.position).setY(0).normalize(); en.ice.position.set(en.x + vA.x * .35, 0, en.z + vA.z * .35); }
-    if (!en.boss) for (const t of TREES) { const tx = en.x - t.x, tz = en.z - t.z, td = Math.hypot(tx, tz), m = t.r + en.r * .6; if (td < m && td > 0) { en.x = t.x + tx / td * m; en.z = t.z + tz / td * m; } }
-    if (d < en.r + .6 && !(en.freeze > 0) && !en.weak) { hurt(en.dmg); S.ab.touch?.(en); }
+    if (!en.boss) pushOut(en, en.r * .6);
+    // High enough in a jump and you clear monsters on the ground.
+    if (d < en.r + .6 && !(en.freeze > 0) && !en.rare && S.py - groundH(en.x, en.z) < 1.1) { hurt(en.dmg); S.ab.touch?.(en); }
   }
   // ponytail: O(n²) separation over ≤320 monsters; switch to a spatial grid if the cap rises.
-  const live = S.enemies.filter(en => en.dying <= 0);
+  const live = S.enemies.filter(en => en.dying <= 0 && (!en.obj || Math.abs(en.x - S.x) + Math.abs(en.z - S.z) < 60));
   for (let i = 0; i < live.length; i++) {
     const a = live[i];
     for (let j = i + 1; j < live.length; j++) {
@@ -3058,11 +3440,14 @@ function update(dt) {
       s.vx = Math.sin(na) * s.sp; s.vz = Math.cos(na) * s.sp;
     }
     s.x += s.vx * dt; s.z += s.vz * dt; s.life -= dt;
-    const y = s.arc ? 1 + Math.sin((1 - s.life / s.life0) * Math.PI) * s.arc : s.y;
-    s.mesh.position.set(s.x, y, s.z);
+    s.vy -= s.g * dt; s.yy += s.vy * dt;
+    if (s.home && s.home.dying <= 0) { s.vy = 0; s.yy += (groundH(s.home.x, s.home.z) + s.home.size * .45 - s.yy) * Math.min(1, 5 * dt); } // homing leaves steer in height too
+    const floor = groundH(s.x, s.z);
+    if (s.yy < floor + .1) { s.yy = floor + .1; s.life = 0; if (!s.explode && S.anims.length < 120) anim(PV(HIT_FX[s.el]), s.x, .1, s.z, 1, 16); } // hit the ground or a hillside
+    s.mesh.position.set(s.x, s.yy, s.z);
     if (s.mats.length > 1) s.mesh.material = s.mats[Math.floor(S.t * 12) % s.mats.length];
     for (const en of S.enemies) {
-      if (en.dying > 0 || s.hit.has(en) || Math.hypot(en.x - s.x, en.z - s.z) > en.r + .4) continue;
+      if (en.dying > 0 || s.hit.has(en) || Math.hypot(en.x - s.x, en.z - s.z) > en.r + .4 || Math.abs(s.yy - groundH(en.x, en.z) - en.size * .5) > en.size * .5 + 1) continue;
       s.hit.add(en);
       hitEnemy(en, s.dmg, s.el, s.vx / s.sp * 4, s.vz / s.sp * 4, s.el !== 'water' || Math.random() < .35, s.st || 0);
       if (--s.pierce < 0) { s.life = 0; break; }
@@ -3072,8 +3457,10 @@ function update(dt) {
   S.shots = S.shots.filter(s => !s.gone);
   for (const s of S.eshots) {
     s.x += s.vx * dt; s.z += s.vz * dt; s.life -= dt;
-    s.mesh.position.set(s.x, 1.2, s.z);
-    if (Math.hypot(S.x - s.x, S.z - s.z) < .8) { hurt(s.dmg); s.life = 0; }
+    s.yy += s.vy * dt;
+    if (s.yy < groundH(s.x, s.z) + .1) s.life = 0;
+    s.mesh.position.set(s.x, s.yy, s.z);
+    if (Math.hypot(S.x - s.x, S.z - s.z) < .8 && Math.abs(s.yy - S.py - 1) < 1.5) { hurt(s.dmg); s.life = 0; }
     if (s.life <= 0) { scene.remove(s.mesh); s.gone = true; }
   }
   S.eshots = S.eshots.filter(s => !s.gone);
@@ -3081,11 +3468,12 @@ function update(dt) {
 
   for (const g of S.gems) {
     const dx = S.x - g.x, dz = S.z - g.z, d = Math.hypot(dx, dz);
-    if (d < (g.kind === 'xp' ? S.magnet : 1.6)) g.pull = true;
+    if (d < (g.kind === 'xp' || g.kind === 'coin' ? S.magnet : 1.6)) g.pull = true;
     if (g.pull) { const v = Math.min(d, 20 * dt); g.x += dx / (d || 1) * v; g.z += dz / (d || 1) * v; }
     g.mesh.position.set(g.x, .2 + Math.abs(Math.sin(S.t * 4 + g.x)) * .25, g.z);
     if (d < .9) {
-      if (g.kind !== 'xp') usePickup(g);
+      if (g.kind === 'coin') { S.coins += g.v; sfx('pickup'); }
+      else if (g.kind !== 'xp') usePickup(g);
       else { gainXp(g.v); sfx('pickup'); }
       scene.remove(g.mesh); g.gone = true;
     }
@@ -3162,8 +3550,9 @@ function partnerMat(faceBack, faceRight, t, moving) {
   const M = EVO_MATS[a.kind][S.stage][moving ? Math.floor(t * 8) % 4 : 0];
   return faceRight ? M.n : M.m;
 }
-// Evolved recruit frames are 36 px instead of 28 px around the same 24 px creature, so they scale up to match.
-const partnerSize = () => (S.a.art === 'starter' ? 3 : WILD[S.a.kind].size * (WILD[S.a.kind].boss ? .45 : 1.25) * (S.stage ? 36 / 28 : 1)) * (1 + S.stage * .1);
+// Partners stay close to the size of wild monsters; evolving only grows them a little. Starter art already grows inside its canvas.
+// Evolved recruit frames are 36 px instead of 28 px around the same 24 px creature, hence the 36 / 28.
+const partnerSize = () => S.a.art === 'starter' ? 2.6 * [1, .92, .86][S.stage] : (WILD[S.a.kind].boss ? 2.8 : 2.2) * (S.stage ? 36 / 28 : 1) * (1 + S.stage * .06);
 function drawPlayer(t) {
   const tr = state === 'title' ? null : trainer(), bob = S.moving ? Math.abs(Math.sin(t * 12)) : 0;
   if (tr) {
@@ -3171,7 +3560,7 @@ function drawPlayer(t) {
     player.material = S.view === 'side' && S.faceRight ? set.m : set.n;
     player.center.y = 2 / (tr.cell + 4);
     player.scale.set(2.5, 2.5, 1);
-    player.position.set(S.x, bob * .1, S.z);
+    player.position.set(S.x, S.py + bob * .1, S.z);
     // Partner trails the trainer at a fixed distance.
     const dx = S.x - S.bx, dz = S.z - S.bz, d = Math.hypot(dx, dz), follow = d > 1.9;
     if (follow) { S.bx += dx / d * (d - 1.9); S.bz += dz / d * (d - 1.9); S.bBack = dx * fwd.x + dz * fwd.z > 0; S.bRight = dx * right.x + dz * right.z > 0; }
@@ -3185,19 +3574,18 @@ function drawPlayer(t) {
     player.center.y = .06;
     const size = partnerSize();
     player.scale.set(size * (1 + bob * .04), size * (1 - bob * .05), 1);
-    player.position.set(S.x, bob * .3, S.z);
+    player.position.set(S.x, S.py + bob * .3, S.z);
   }
   buddy.visible = buddyShadow.visible = !!tr;
   player.visible = !(S.dashT > 0 && S.ab.dig) && (state !== 'play' || S.inv <= 0 || Math.floor(t * 20) % 2 === 0);
   playerShadow.position.set(S.x, .03, S.z);
-  playerShadow.scale.set(.9 + S.stage * .15, 1, .7 + S.stage * .1);
+  playerShadow.scale.set(.75 + S.stage * .06, 1, .6 + S.stage * .05);
 }
 // Radar: camera-forward is up; range 40 m.
 let radarCtx;
 // Minimap: the meadow terrain turned with the camera, compass letters on the rim, and icons for what matters.
 function drawRadar() {
-  const c = radarCtx, W = 180, C0 = 90, R = 82, s = R / 40, span = (WORLD_R + 4) * 2;
-  MAP_BG ||= mapBackground();
+  const c = radarCtx, W = 180, C0 = 90, R = 82, s = R / 40, span = MAP_SPAN;
   c.clearRect(0, 0, W, W);
   c.save();
   c.beginPath(); c.arc(C0, C0, R, 0, TAU); c.fillStyle = '#1d2433'; c.fill(); c.clip();
@@ -3211,7 +3599,7 @@ function drawRadar() {
     else { c.fillStyle = '#ff5a4a'; c.fillRect(x - 1.5, y - 1.5, 3, 3); }
   }
   // Items on the ground show their own icon.
-  for (const g of S.gems) if (g.kind !== 'xp') {
+  for (const g of S.gems) if (g.kind !== 'xp' && g.kind !== 'coin') {
     const [x, y] = P(g.x, g.z), k = g.kind === 'scroll' ? 'it_scroll' : g.kind.startsWith('held:') ? 'it_' + g.kind.slice(5) : g.kind === 'berry' ? 'berry' : 'it_' + g.kind, img = SRC.sm[k];
     c.fillStyle = '#ffe36e'; c.beginPath(); c.arc(x, y, 7, 0, TAU); c.fill(); if (img) c.drawImage(img, x - 6, y - 6, 12, 12);
   }
@@ -3224,7 +3612,7 @@ function drawRadar() {
   }
   // Altars and shrines that are still usable.
   c.save(); c.beginPath(); c.arc(C0, C0, R, 0, TAU); c.clip();
-  for (const a of S.altars) if (!a.used) { const [x, y] = P(a.x, a.z); c.fillStyle = a.kind === 'boss' ? '#e8483a' : '#f6c445'; c.strokeStyle = '#fff'; c.lineWidth = 2; c.beginPath(); c.moveTo(x, y - 6); c.lineTo(x + 6, y); c.lineTo(x, y + 6); c.lineTo(x - 6, y); c.closePath(); c.fill(); c.stroke(); }
+  for (const a of S.altars) if (!a.used) { const [x, y] = P(a.x, a.z); c.fillStyle = a.kind === 'boss' ? '#e8483a' : a.kind === 'free' ? '#6aa8f0' : '#f6c445'; c.strokeStyle = '#fff'; c.lineWidth = 2; c.beginPath(); c.moveTo(x, y - 6); c.lineTo(x + 6, y); c.lineTo(x, y + 6); c.lineTo(x - 6, y); c.closePath(); c.fill(); c.stroke(); }
   c.restore();
   // Bosses and rares: their portrait in a ring, pinned to the rim when out of range.
   for (const en of S.enemies) {
@@ -3255,6 +3643,9 @@ function updateHud() {
   if (abl.dataset.t !== (am?.text || '')) { abl.dataset.t = am?.text || ''; abl.title = abl.ariaLabel = `${S.ab.name}${am ? ': ' + am.text : ''}`; }
   $('#clock').textContent = fmt(S.t);
   $('#kills').textContent = `${S.kills} defeated · ${fmt(Math.max(0, RUN_LENGTH - S.t))} to go`;
+  $('#coins').textContent = S.coins;
+  const reg = biomeAt(S.x, S.z).name;
+  if (reg !== S.regionName) { if (S.regionName) banner(reg, 'You crossed into a new region'); S.regionName = reg; $('#zone').textContent = reg; }
   const u = S.ult / S.ultNeed, ub = $('#ultbtn');
   ub.style.setProperty('--p', u * 100 + '%');
   ub.disabled = u < 1;
@@ -3268,7 +3659,7 @@ function updateHud() {
   for (const el of $('#slots').children) { const w = S.moves[el.dataset.k], P = MOVES[el.dataset.k].stat(w.l), cd = (P.cd || 0) * S.cd; el.firstChild.style.height = cd ? clamp(w.t / cd, 0, 1) * 100 + '%' : '0'; }
   const na = nearAltar();
   $('#prompt').hidden = !na;
-  if (na) $('#prompt').innerHTML = `<kbd>${keyLabel(SET.keys.interact)}</kbd>${na.kind === 'boss' ? `Call ${WILD[na.boss].name} (extra loot)` : 'Open the shrine'}`;
+  if (na) $('#prompt').innerHTML = `<kbd>${keyLabel(SET.keys.interact)}</kbd>${na.kind === 'boss' ? `Call ${WILD[na.boss].name}` : na.kind === 'free' ? 'Open the free chest' : `Open chest · ${chestPrice()} coins${S.coins < chestPrice() ? ' (not enough)' : ''}`}`;
   if (S.boss) $('#bossfill').style.width = Math.max(0, S.boss.hp / S.boss.maxHp * 100) + '%';
 }
 
@@ -3302,7 +3693,7 @@ function tickHerd(dt, show) {
 // =====================================================================
 const camPos = new THREE.Vector3(), target = new THREE.Vector3();
 let last = performance.now();
-let lastDraw = 0, fpsN = 0, fpsT = 0;
+let lastDraw = 0, fpsN = 0, fpsT = 0, cullN = 0;
 function frame(now) {
   // Queue the next frame first: if anything below throws, the game keeps running and Restart still works.
   requestAnimationFrame(frame);
@@ -3313,19 +3704,24 @@ function frame(now) {
   // A frame's timestamp can be a touch older than a performance.now() taken in a click handler: never step backwards.
   const dt = clamp((now - last) / 1000, 0, .05);
   last = now;
-  if (state === 'play') { update(dt); if (state !== 'title') updateHud(); }
+  if (state === 'play') { update(dt); if (state === 'play') updateRareUI(); if (state !== 'title') updateHud(); }
+  else if (state === 'capture') tickCaptureAnim(dt);
   tickHerd(dt, state === 'title');
   if (state === 'title') {
     menuT += dt;
     S.faceBack = false; S.faceRight = Math.sin(menuT * .7) > 0; S.moving = screen === 'select';
     drawPlayer(menuT);
-    const narrow = innerWidth < innerHeight, a = Math.PI + Math.sin(menuT * .12) * .9, d = screen === 'select' ? (narrow ? 8 : 6.5) : 13;
-    camera.position.set(Math.sin(a) * d, screen === 'select' ? 1.9 : 3.6, Math.cos(a) * d);
-    camera.lookAt(0, screen === 'select' ? (narrow ? -.6 : .1) : -.8, 0);
+    const narrow = innerWidth < innerHeight, sel = screen === 'select', gh0 = S.py;
+    // Title: a low shot of the partner in the right part of the frame, the menu on the left, with a slow sway.
+    const a = Math.PI + Math.sin(menuT * .12) * (sel ? .9 : .28), d = sel ? (narrow ? 8 : 6.5) : 9;
+    camera.position.set(Math.sin(a) * d, gh0 + (sel ? 1.9 : 2), Math.cos(a) * d);
+    const off = sel || narrow ? 0 : 3.2;
+    camera.lookAt(-Math.cos(a) * off, gh0 + (sel ? (narrow ? -.6 : .1) : 1.1), Math.sin(a) * off);
   } else if (S) {
     drawPlayer(S.t);
     const d = SET.camDist * (1 + S.stage * .08);
-    const gh = groundH(S.x, S.z);
+    S.camY += (groundH(S.x, S.z) - S.camY) * Math.min(1, dt * 7); // eases over ledges and ignores jumps
+    const gh = S.camY;
     target.set(S.x, 1.4 + gh, S.z);
     camPos.set(S.x - Math.sin(yaw) * d * Math.cos(pitch), 1.4 + gh + d * Math.sin(pitch), S.z - Math.cos(yaw) * d * Math.cos(pitch));
     camPos.y = Math.max(.8 + groundH(camPos.x, camPos.z), camPos.y);
@@ -3333,12 +3729,20 @@ function frame(now) {
     if (shake > 0 && state === 'play') { camera.position.x += rand(-1, 1) * shake * .5; camera.position.y += rand(-1, 1) * shake * .5; }
     shake = Math.max(0, shake - dt);
     camera.lookAt(target);
+    if (CAP) captureCamera(dt);
   }
   // Lift everything onto the hills for this draw only, then put the flat game positions back.
+  SKY.position.x = camera.position.x; SKY.position.z = camera.position.z;
+  if ((cullN = (cullN + 1) % 20) === 0) cullDecor();
   const kids = scene.children;
-  for (const o of kids) if (!o.userData.flat) { o.userData.y0 = o.position.y; o.position.y += groundH(o.position.x, o.position.z); }
+  for (const o of kids) {
+    const u = o.userData;
+    if (u.flat || !o.visible) continue;
+    if (u.gx !== o.position.x || u.gz !== o.position.z) { u.gx = o.position.x; u.gz = o.position.z; u.gh = groundH(u.gx, u.gz); }
+    u.y0 = o.position.y; o.position.y += u.gh; u.lift = true;
+  }
   renderer.render(scene, camera);
-  for (const o of kids) if (!o.userData.flat) o.position.y = o.userData.y0;
+  for (const o of kids) if (o.userData.lift) { o.position.y = o.userData.y0; o.userData.lift = false; }
 }
 
 async function boot() {
@@ -3373,6 +3777,7 @@ async function boot() {
   LOCK_ICON = draw(10, 12, x => { x.strokeStyle = '#5d6680'; x.lineWidth = 2; x.beginPath(); x.arc(5, 5, 2.6, Math.PI, 0); x.stroke(); r(x, 1, 5, 8, 6, '#f6c445'); r(x, 4, 7, 2, 2, '#1d2433'); }).toDataURL();
   buildWorld();
   player = sprite(STARTER_MATS.fire[0].front.n, 3, 3, .06);
+  player.userData.flat = true; // drawn at S.py, which has its own gravity
   playerShadow = shadow(.9);
   buddy = sprite(STARTER_MATS.fire[0].front.n, 2.4, 2.4, .06);
   buddyShadow = shadow(.7);
@@ -3385,10 +3790,11 @@ async function boot() {
   scene.add(shellMesh);
   $('#dexsearch').oninput = e => { dexQuery = e.target.value; renderDexList(); };
   radarCtx = $('#radar').getContext('2d');
+  $('#coinimg').src = SRC.sm.wcoin.toDataURL();
   makeHerd();
   initSettings();
   try { const saved = localStorage.getItem('pocketwilds-partner'); if (saved && PARTNERS[saved] && isUnlocked(saved)) chosen = saved; } catch {}
-  if (matchMedia('(pointer: coarse)').matches) $('#hint').textContent = 'Left thumb moves (the camera follows) · right thumb looks around · Dash button · circle = ultimate · E at altars and shrines';
+  if (matchMedia('(pointer: coarse)').matches) $('#hint').textContent = 'Left thumb moves (the camera follows) · right thumb looks around · Jump and Dash buttons · circle = ultimate · E at chests and altars';
   $('#loading').remove();
   toTitle();
   requestAnimationFrame(frame);
