@@ -13,6 +13,8 @@ Read this first in a new chat instead of the whole codebase. Last updated 4 Nove
 ## Repo and deploy
 - `E:\shrayash-portfolio`, GitHub `shrayash1/portfolio` (branch `main`). Static site, no build step. Cloudflare Pages through git or `shrayash-portfolio-site.zip`.
 - Git isn't on PATH: use `"$LOCALAPPDATA/GitHubDesktop/app-3.6.6/resources/app/git/cmd/git.exe"`, and push with `GCM_INTERACTIVE=auto` (the user signs in to GitHub in the popup).
+- If push fails with "Could not find file ...\Temp\system-commandline-sentinel-files" (Claude's shell can't write to Windows Temp), set `TEMP`/`TMP` to a writable folder such as `E:\shrayash-portfolio\.claude\tmp` (git-ignored) for that push.
+- Branch `new_Design-site` (2026-11-25): the React redesign in `web/`. `main` still has the old live site.
 - Zip: rebuild from its own file list (27 files: html pages, assets/*, pocket-wilds/index.html, pocket-wilds/mons24.png). `.gitignore` excludes backups, `3D-model-Three.js/`, `.claude/`, `*.zip`, `manuel.js`.
 - Local preview: `python -m http.server 8080 --bind 127.0.0.1` in the repo root, then open http://localhost:8080/.
 
