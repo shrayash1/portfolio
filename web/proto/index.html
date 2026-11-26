@@ -1,0 +1,729 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Home Prototype</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Teko:wght@600;700&family=Noto+Serif+Devanagari:wght@500;700&family=Space+Grotesk:wght@500;700&family=Press+Start+2P&display=swap">
+<style>
+/* Layout: derolez.dev structure. Narrow text column + a stage with a drum of 3D cartridges, a console to insert them,
+   and a floating handheld for the two games. Dark single-theme design on purpose, so colours are set directly. */
+:root {
+  --bg: #1b0f2e; --panel: #241338; --ink: #fff3e6; --muted: #e2c9b8; --line: #3d2557;
+  --blue: #2448f0; --mint: #5eead4; --gold: #d6ad55; --coral: #ff7a59;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --pixel: "Press Start 2P", ui-monospace, monospace;
+  --title: "Teko", "Arial Narrow", "Impact", sans-serif;
+  --dev: "Noto Serif Devanagari", "Nirmala UI", "Mangal", serif;
+  --sunset: linear-gradient(180deg, #ffe08a 0%, #ffb347 38%, #ff6b5a 70%, #e8407e 100%);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; }
+a { color: var(--ink); }
+
+.app { display: grid; grid-template-columns: minmax(18rem, 32%) minmax(0, 1fr); height: 100%; }
+.stage { grid-column: 2; grid-row: 1; position: relative; overflow: hidden; min-height: 0; background: #1b0f2e; }
+.left { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--line); background: var(--bg); }
+
+/* ---------- left column ---------- */
+.bar { height: 56px; flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line);
+  padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: 20px; }
+.crumb { display: flex; align-items: center; gap: 8px; min-width: 0; white-space: nowrap; font-size: .92rem; }
+.crumb button { background: none; border: 0; padding: 0; color: var(--muted); cursor: pointer; }
+.crumb button:hover { color: var(--ink); }
+.crumb span { color: #8a6a80; }
+.crumb h1 { font: 600 .92rem/1 var(--sans); margin: 0; }
+.ticket { display: inline-flex; align-items: stretch; background: linear-gradient(135deg, #ffb347, #ff6b5a 55%, #e8407e); color: #1b0f2e; border: 0; border-radius: 6px; font-size: .78rem; font-weight: 600; transform: rotate(-3deg); cursor: pointer; flex: none; transition: transform .2s; }
+.ticket:hover { transform: rotate(0deg) scale(1.04); }
+.ticket .t1 { padding: 6px 10px; }
+.ticket .t2 { position: relative; padding: 6px 8px; border-left: 1px dashed rgba(27,15,46,.35); }
+.ticket .t2::before, .ticket .t2::after { content: ""; position: absolute; left: -5px; width: 9px; height: 9px; border-radius: 50%; background: var(--bg); }
+.ticket .t2::before { top: -5px; } .ticket .t2::after { bottom: -5px; }
+.panel { overflow-y: auto; min-height: 0; padding: 22px 32px 32px max(20px, env(safe-area-inset-left, 0px)); }
+.panel section { display: flex; flex-direction: column; gap: 14px; max-width: 30rem; color: var(--muted); animation: fadein .35s ease; }
+.panel section[hidden] { display: none; }
+.panel b, .panel strong { color: var(--ink); font-weight: 600; }
+.panel p { margin: 0; text-wrap: pretty; }
+.panel a, .linkish { color: var(--ink); text-decoration: underline; text-decoration-color: rgba(255,200,140,.45); text-underline-offset: 4px; background: none; border: 0; padding: 0; cursor: pointer; }
+.panel a:hover, .linkish:hover { text-decoration-color: var(--ink); }
+.go { align-self: flex-start; margin-top: 4px; border: 1px solid rgba(255,190,120,.45); background: rgba(255,255,255,.06); border-radius: 999px; padding: 8px 14px; color: var(--ink); cursor: pointer; font-weight: 600; font-size: .88rem; }
+.go:hover { border-color: #ffc857; }
+.stats { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .85rem; }
+.jobs { display: grid; gap: 12px; }
+.jobs div { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; }
+.jobs small { color: #c9a890; font-variant-numeric: tabular-nums; }
+.hint { font-size: .8rem; color: #c9a890; }
+@keyframes fadein { from { opacity: 0; transform: translateY(4px); } }
+
+/* ---------- stage: a golden-hour Nepal skyline (same scene as the portfolio) ---------- */
+.sky { position: absolute; inset: 0; background: linear-gradient(180deg, #2e1850 0%, #8a2c6e 34%, #f0645a 60%, #ffb35c 78%, #ffe0a0 100%); }
+.glow { position: absolute; left: 50%; bottom: 6%; width: 130%; height: 70%; transform: translateX(-50%); background: radial-gradient(ellipse at 50% 72%, rgba(255,170,90,.5), transparent 60%); }
+.sun { position: absolute; left: 50%; bottom: 28%; width: min(40%, 460px); aspect-ratio: 1; border-radius: 50%; transform: translate3d(calc(-50% + var(--mx, 0) * -6px), 0, 0);
+  background: linear-gradient(180deg, #fff0b0 0%, #ffc15c 42%, #ff6b6b 78%, #e8407e 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 54%, transparent 54% 57%, #000 57% 64%, transparent 64% 68%, #000 68% 74%, transparent 74% 79%, #000 79% 85%, transparent 85% 90%, #000 90%);
+  mask-image: linear-gradient(180deg, #000 54%, transparent 54% 57%, #000 57% 64%, transparent 64% 68%, #000 68% 74%, transparent 74% 79%, #000 79% 85%, transparent 85% 90%, #000 90%); }
+.mtn { position: absolute; left: -5%; width: 110%; bottom: 16%; height: 40%; transform: translate3d(calc(var(--mx, 0) * -16px), 0, 0); }
+.city { position: absolute; left: -5%; width: 110%; bottom: 0; height: 24%; transform: translate3d(calc(var(--mx, 0) * -30px), 0, 0); }
+.haze { position: absolute; left: 0; right: 0; bottom: 0; height: 45%; background: linear-gradient(180deg, transparent, rgba(27,15,46,.45)); }
+/* prayer flags across the top of the stage */
+.flag { position: absolute; width: 22px; height: 28px; margin-left: -11px; background-color: var(--c); background-image: repeating-linear-gradient(180deg, transparent 0 6px, rgba(0,0,0,.13) 6px 7px);
+  border-radius: 1px; transform-origin: 50% 0; rotate: var(--rot, 0deg); animation: flutter 2.2s ease-in-out var(--d, 0s) infinite alternate; box-shadow: 0 4px 8px rgba(20,8,40,.25); }
+@keyframes flutter { from { scale: .9 1; rotate: calc(var(--rot, 0deg) - 7deg); } to { scale: 1.05 1; rotate: calc(var(--rot, 0deg) + 7deg); } }
+.garland { position: absolute; left: 0; right: 0; top: 40px; height: 90px; z-index: 2; pointer-events: none; }
+.garland svg { position: absolute; left: 0; top: 0; width: 100%; height: 80px; overflow: visible; }
+/* Nepali-style English title: capitals hanging from a headline bar, like Devanagari */
+.np { position: relative; display: inline-block; font-family: var(--title); font-weight: 700; text-transform: uppercase; line-height: .8; letter-spacing: .01em; padding-top: .16em; }
+.np::before { content: ""; position: absolute; left: -.05em; right: -.05em; top: .16em; height: .09em; border-radius: 2px; background: currentColor; }
+.np.grad { background: var(--sunset); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.np.grad::before { background: linear-gradient(90deg, #ffe08a, #ffb347 40%, #ff6b5a 75%, #e8407e); }
+.dvs { font-family: var(--dev); letter-spacing: 0; text-transform: none; }
+.ptitle { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 14px; margin-bottom: 18px; }
+.ptitle .np { font-size: clamp(54px, 5.6vw, 84px); }
+.ptitle .dvs { font-size: 1.2rem; color: #ffd9b8; }
+
+
+/* ---------- cartridge drum ---------- */
+.drum { position: absolute; left: 0; width: 84%; top: 3%; height: 60%; perspective: 1700px; z-index: 3; outline: none; touch-action: pan-y; cursor: grab; }
+.drum:focus-visible { box-shadow: inset 0 0 0 3px #6aa2ff; border-radius: 12px; }
+.ring { position: absolute; inset: 0; transform-style: preserve-3d; }
+.cart { --w: 168px; --h: 200px; --d: 18px; --lift: 0px; --rx: 0deg; --ry: 0deg; --dim: 0;
+  position: absolute; left: 50%; top: 50%; width: var(--w); height: var(--h); margin: calc(var(--h) / -2) 0 0 calc(var(--w) / -2);
+  border: 0; padding: 0; background: none; cursor: pointer; transform-style: preserve-3d;
+  transform: var(--t) translateY(var(--lift)) rotateX(var(--rx)) rotateY(var(--ry));
+  transition: transform .65s cubic-bezier(.2, .8, .2, 1); }
+.cart:focus-visible { outline: none; }
+.cart .f { position: absolute; backface-visibility: hidden; }
+.cart .f::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: #04060a; opacity: var(--dim); transition: opacity .45s; pointer-events: none; }
+.cart .front { inset: 0; transform: translateZ(calc(var(--d) / 2)); border-radius: 10px 10px 6px 6px;
+  background: linear-gradient(155deg, #555b68 0%, #3a3f4a 38%, #2c3039 100%);
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,.22), inset -1px -2px 0 rgba(0,0,0,.45), inset 0 0 0 1px rgba(0,0,0,.25); }
+.cart .back { inset: 0; transform: rotateY(180deg) translateZ(calc(var(--d) / 2)); border-radius: 10px 10px 6px 6px; background: linear-gradient(155deg, #3f4450, #262a32); }
+.cart .back i { position: absolute; left: 50%; top: 46%; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: #1a1d23; box-shadow: inset 0 1px 2px #000, 0 1px 0 rgba(255,255,255,.1); }
+.cart .side { top: 2px; bottom: 2px; width: var(--d); left: calc(50% - var(--d) / 2); background: linear-gradient(90deg, #22252c, #30343d 50%, #22252c); }
+.cart .side.l { transform: rotateY(-90deg) translateZ(calc(var(--w) / 2)); }
+.cart .side.r { transform: rotateY(90deg) translateZ(calc(var(--w) / 2)); }
+.cart .cap { left: 4px; right: 4px; height: var(--d); top: calc(50% - var(--d) / 2); }
+.cart .cap.t { transform: rotateX(90deg) translateZ(calc(var(--h) / 2)); background: linear-gradient(#3a3e48, #2a2d35); }
+.cart .cap.b { transform: rotateX(-90deg) translateZ(calc(var(--h) / 2)); background: repeating-linear-gradient(90deg, #d6ad55 0 5px, #16181d 5px 8px); }
+.grip { position: absolute; left: 14px; right: 14px; top: 9px; height: 15px; border-radius: 3px; background: repeating-linear-gradient(180deg, rgba(0,0,0,.4) 0 2px, rgba(255,255,255,.07) 2px 4px); }
+.label { position: absolute; left: 12px; right: 12px; top: 30px; bottom: 44px; border-radius: 5px; overflow: hidden; background: #12151c; box-shadow: 0 0 0 2px rgba(0,0,0,.35), 0 1px 0 3px rgba(255,255,255,.04); }
+.label .art { position: absolute; inset: 0 0 22px 0; overflow: hidden; }
+.label .art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.label .strip { position: absolute; left: 0; right: 0; bottom: 0; height: 22px; padding: 0 8px; display: flex; align-items: center; justify-content: space-between; background: #f2efe6; color: #15171d; font: 700 10.5px/1 var(--display); letter-spacing: .07em; }
+.label .strip em { font: 400 7px/1 var(--pixel); font-style: normal; color: #8a3d2a; }
+.label::after { content: ""; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,.4) 48%, transparent 62%); transform: translateX(-130%); }
+.cart.front-card:hover .label::after { transition: transform .8s ease; transform: translateX(130%); }
+.emboss { position: absolute; left: 0; right: 0; bottom: 24px; text-align: center; font: 700 7.5px/1 var(--sans); letter-spacing: .24em; color: rgba(0,0,0,.55); text-shadow: 0 1px 0 rgba(255,255,255,.12); }
+.pins { position: absolute; left: 22px; right: 22px; bottom: 6px; height: 12px; border-radius: 2px; background: repeating-linear-gradient(90deg, #d6ad55 0 4px, #15171c 4px 7px); box-shadow: inset 0 2px 3px rgba(0,0,0,.65); }
+.cart.front-card:hover { --lift: -14px; }
+/* While scrolling or dragging, cartridges follow the input closely; on release they settle with the normal easing. */
+.ring.live .cart { transition: transform .12s linear; }
+.drumhint { position: absolute; left: 42%; top: 61%; transform: translateX(-50%); z-index: 4; font-size: .72rem; color: #7f889b; white-space: nowrap; pointer-events: none; }
+.cart.inserting { transition: transform .62s cubic-bezier(.55, 0, .85, .35); }
+/* ---------- console screen: About and Career boot here instead of opening a page ---------- */
+.tv { position: absolute; left: 5%; right: 5%; top: 4%; bottom: 30%; z-index: 8; display: flex; flex-direction: column; border-radius: 18px; background: #08100b; border: 10px solid #1d2028;
+  box-shadow: 0 30px 60px rgba(0,0,0,.6), inset 0 0 80px rgba(77,255,136,.07); color: #d9f7e3; overflow: hidden; animation: tvon .4s ease-out; }
+.tv[hidden] { display: none; }
+.tv::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(180deg, rgba(0,0,0,.22) 0 1px, transparent 1px 3px); }
+@keyframes tvon { 0% { transform: scale(1, .01); filter: brightness(3); } 60% { transform: scale(1, 1.02); } }
+.tvbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #1b3324; font: 400 10px/1 var(--pixel); color: #4dff88; letter-spacing: .12em; }
+.eject { position: relative; z-index: 1; font: 400 9px/1 var(--pixel); color: #08100b; background: #4dff88; border: 0; border-radius: 4px; padding: 7px 9px; cursor: pointer; }
+.eject:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.tvin { overflow-y: auto; padding: 16px 18px 20px; display: flex; flex-direction: column; gap: 14px; font-size: .88rem; line-height: 1.5; }
+.px { font: 400 10px/1.5 var(--pixel); color: #4dff88; letter-spacing: .08em; margin: 0; }
+.prof { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 16px; align-items: start; }
+.pf-avatar { aspect-ratio: 1; border-radius: 10px; overflow: hidden; border: 2px solid #4dff88; }
+.pf-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; display: block; }
+.kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; margin: 8px 0 0; }
+.kv dt { color: #6fae85; } .kv dd { margin: 0; color: #eafff0; } .kv .ok { color: #4dff88; }
+.trophies { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.trophies div { border: 1px solid #1f4a30; border-radius: 8px; padding: 8px 10px; background: #0b1810; }
+.trophies b { display: block; color: #fff; } .trophies span { color: #8fbf9f; font-size: .78rem; }
+.inv { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; }
+.inv li { border: 1px solid #1f4a30; background: #0b1810; border-radius: 6px; padding: 6px 8px; font-size: .78rem; text-align: center; }
+.quests { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.quests li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; }
+.quests .st { font: 400 10px/1.6 var(--pixel); color: #4dff88; }
+.quests .now .st { animation: blink 1s steps(2) infinite; }
+.quests .next .st { color: #ffd166; }
+.quests b { color: #fff; font-weight: 600; }
+.quests small { display: block; color: #6fae85; font-variant-numeric: tabular-nums; }
+.quests p { margin: 2px 0 0; color: #bfe3cb; }
+
+/* label art */
+.art.collage { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 4px; background: linear-gradient(160deg, #1d6f66, #10221f); }
+.art.collage img { border-radius: 4px; }
+.art.collage img:first-child { grid-row: span 2; }
+.art.career { display: grid; grid-template-columns: repeat(3, 1fr); align-content: center; gap: 7px; padding: 12px; background: linear-gradient(160deg, #2d4fd6, #111a3e); }
+.art.career i { aspect-ratio: 1; border-radius: 8px; display: grid; place-items: center; font: 700 9px/1 var(--display); font-style: normal; color: #fff; }
+.art.career i.add { border: 1.5px dashed rgba(255,255,255,.6); color: rgba(255,255,255,.8); font-size: 14px; }
+
+/* ---------- console (cartridge slot) ---------- */
+.dock { position: absolute; left: 42%; bottom: 12%; width: 300px; margin-left: -150px; z-index: 5; filter: drop-shadow(0 18px 28px rgba(0,0,0,.55)); }
+.dock .top { position: relative; height: 30px; border-radius: 16px 16px 4px 4px; background: linear-gradient(#4a505c, #2d313a); box-shadow: inset 0 1px 0 rgba(255,255,255,.2); }
+.dock .slot { position: absolute; left: 50%; top: 9px; width: 196px; margin-left: -98px; height: 10px; border-radius: 5px; background: #040507; box-shadow: inset 0 3px 4px #000, 0 1px 0 rgba(255,255,255,.12); }
+.dock .body { height: 58px; border-radius: 0 0 20px 20px; background: linear-gradient(#272b33, #15181e); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+.dock .led { width: 9px; height: 9px; border-radius: 50%; background: #4d1717; transition: background .2s, box-shadow .2s; }
+.dock.on .led { background: #4dff88; box-shadow: 0 0 12px #4dff88; }
+.dock .brand { font: 400 8px/1 var(--pixel); letter-spacing: .15em; color: #8a92a6; }
+.dock .vents { width: 46px; height: 18px; background: repeating-linear-gradient(90deg, #0b0c10 0 3px, transparent 3px 6px); border-radius: 3px; }
+
+/* ---------- floating handheld + game cards ---------- */
+.hh-wrap { position: absolute; right: 5%; bottom: 13%; width: 290px; height: 170px; z-index: 6;
+  transform: translate3d(calc(var(--mx, 0) * 14px), calc(var(--my, 0) * 10px), 0); }
+.hh-float { position: absolute; inset: 0; animation: bob 4.2s ease-in-out infinite; }
+@keyframes bob { 50% { translate: 0 -10px; rotate: -1.5deg; } }
+.hh { position: absolute; left: 0; right: 0; bottom: 0; height: 150px; z-index: 2; border-radius: 30px; background: linear-gradient(160deg, #ffd08a 0%, #ff8a5c 55%, #e8506e 100%);
+  box-shadow: inset 2px 2px 0 rgba(255,255,255,.35), inset -3px -4px 0 rgba(0,0,0,.2), 0 24px 40px rgba(0,0,0,.5); }
+.hh .slot2 { position: absolute; left: 50%; top: -5px; width: 92px; margin-left: -46px; height: 10px; border-radius: 4px; background: #5a1f3a; box-shadow: inset 0 3px 3px rgba(0,0,0,.6); }
+.hh .screenframe { position: absolute; left: 70px; right: 70px; top: 16px; bottom: 16px; border-radius: 12px; background: #1b1e26; padding: 9px; box-shadow: inset 0 2px 4px rgba(0,0,0,.7); }
+.scr { position: relative; width: 100%; height: 100%; border-radius: 6px; overflow: hidden; background: #0c0f0d; display: grid; place-items: center; text-align: center; transition: background .4s; }
+.scr .msg { font: 400 7px/1.6 var(--pixel); color: #37443b; letter-spacing: .1em; }
+.scr.on .msg { color: #fff; font-size: 8px; }
+.scr.on.island { background: linear-gradient(#5ab8f0 0 55%, #1d6f9a 55%); }
+.scr.on.wilds { background: linear-gradient(#77d46a 0 60%, #3c8a3e 60%); }
+.scr .blink { display: block; margin-top: 6px; font-size: 6px; animation: blink 1s steps(2) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.dpad { position: absolute; left: 22px; top: 50%; width: 36px; height: 36px; margin-top: -18px; }
+.dpad::before, .dpad::after { content: ""; position: absolute; background: #3a1530; border-radius: 3px; box-shadow: inset 0 -2px 0 rgba(0,0,0,.4); }
+.dpad::before { left: 12px; top: 0; width: 12px; height: 36px; } .dpad::after { top: 12px; left: 0; width: 36px; height: 12px; }
+.btns { position: absolute; right: 18px; top: 50%; width: 42px; height: 42px; margin-top: -21px; }
+.btns i { position: absolute; width: 17px; height: 17px; border-radius: 50%; background: var(--coral); box-shadow: inset 0 -2px 0 rgba(0,0,0,.3); }
+.btns i:first-child { right: 0; top: 4px; } .btns i:last-child { left: 0; bottom: 4px; }
+.hh .pwr { position: absolute; left: 24px; top: 18px; width: 6px; height: 6px; border-radius: 50%; background: #0f4f46; transition: background .2s, box-shadow .2s; }
+.hh.on .pwr { background: #ff5a5a; box-shadow: 0 0 8px #ff5a5a; }
+
+.gcard { --rot: 0deg; position: absolute; top: -60px; z-index: 1; width: 78px; height: 96px; border: 0; padding: 0; cursor: pointer; background: none;
+  transform: rotate(var(--rot)); transition: transform .5s cubic-bezier(.2, .8, .2, 1), filter .3s; animation: bob2 3.4s ease-in-out infinite; }
+.gcard.island { left: 22px; --rot: -12deg; }
+.gcard.wilds { right: 22px; --rot: 10deg; animation-delay: -1.7s; }
+@keyframes bob2 { 50% { translate: 0 -8px; } }
+.gcard:hover, .gcard:focus-visible { filter: drop-shadow(0 0 14px rgba(94,234,212,.6)); outline: none; }
+.gcard:hover { transform: rotate(var(--rot)) translateY(-8px) scale(1.06); }
+.gcard.flying { animation: none; transition: transform .45s cubic-bezier(.3, .7, .3, 1); }
+.gcard .shell { position: absolute; inset: 0; border-radius: 8px 8px 6px 6px; background: linear-gradient(160deg, #4a4f5c, #2a2d35); clip-path: polygon(0 0, 76% 0, 100% 14%, 100% 100%, 0 100%); box-shadow: inset 1px 1px 0 rgba(255,255,255,.2); }
+.gcard .glabel { position: absolute; left: 7px; right: 7px; top: 14px; bottom: 18px; border-radius: 4px; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; font: 400 6px/1.3 var(--pixel); color: #fff; text-shadow: 0 1px 0 #000; }
+.gcard.island .glabel { background: linear-gradient(#5ab8f0 0 50%, #1d6f9a 50%); }
+.gcard.wilds .glabel { background: linear-gradient(160deg, #6fcf5f, #2f7a3a); }
+.gcard .glabel svg { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); }
+.gcard .gpins { position: absolute; left: 10px; right: 10px; bottom: 5px; height: 8px; background: repeating-linear-gradient(90deg, #d6ad55 0 3px, #16181d 3px 5px); border-radius: 2px; }
+
+/* ---------- flash + loading ---------- */
+.flash { position: absolute; inset: 0; z-index: 9; background: #fff; opacity: 0; pointer-events: none; }
+.flash.go { animation: flash .5s ease-out; }
+@keyframes flash { 20% { opacity: .8; } 100% { opacity: 0; } }
+.loading { position: absolute; inset: 0; z-index: 10; display: grid; place-items: center; align-content: center; gap: 16px; background: #070910; font: 400 11px/1 var(--pixel); letter-spacing: .15em; color: #4dff88; }
+.loading[hidden] { display: none; }
+.loading .bar2 { width: 200px; height: 8px; border: 2px solid #4dff88; padding: 1px; }
+.loading .bar2 i { display: block; height: 100%; width: 0; background: #4dff88; transition: width .9s steps(10); }
+.loading.run .bar2 i { width: 100%; }
+.demo-note { position: absolute; left: 16px; top: 14px; z-index: 8; font-size: .72rem; color: #7f889b; background: rgba(7,9,16,.7); border: 1px solid #1f2430; border-radius: 999px; padding: 4px 10px; }
+
+/* ---------- phone and tablet: rail on top, text below ---------- */
+@media (min-width: 1280px) {
+  .cart { --w: 200px; --h: 238px; --d: 20px; }
+  .label { top: 34px; bottom: 48px; } .label .strip { height: 26px; font-size: 12px; } .label .art { bottom: 26px; } .emboss { bottom: 27px; }
+}
+@media (max-width: 1023px) {
+  .app { display: flex; flex-direction: column; height: auto; }
+  .stage { height: 700px; flex: none; }
+  .left { border-right: 0; }
+  .bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); }
+  .panel { overflow: visible; padding: 20px max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px)); }
+  .drum { width: 100%; height: 44%; top: 2%; }
+  .dock { left: 50%; bottom: auto; top: 47%; }
+  .drumhint { left: 50%; top: 43.5%; }
+  .tv { top: 2%; bottom: auto; height: 44%; left: 3%; right: 3%; }
+  .prof { grid-template-columns: 80px minmax(0, 1fr); }
+  .trophies { grid-template-columns: 1fr; }
+  .hh-wrap { right: auto; left: 50%; margin-left: -145px; bottom: 30px; }
+}
+@media (max-width: 480px) {
+  .cart { --w: 128px; --h: 152px; --d: 14px; }
+  .label { top: 25px; bottom: 36px; } .label .strip { height: 18px; font-size: 9px; } .label .art { bottom: 18px; } .emboss { bottom: 20px; }
+  .dock { width: 240px; margin-left: -120px; } .dock .slot { width: 150px; margin-left: -75px; }
+  .stage { height: 640px; }
+}
+/* Motion off (device setting or the switch) */
+html.still .star, html.still .hh-float, html.still .gcard, html.still .scr .blink, html.still .tv, html.still .quests .now .st { animation: none !important; }
+html.still .cart, html.still .gcard, html.still .loading .bar2 i { transition: none !important; }
+.mtoggle { position: absolute; right: 16px; top: 12px; z-index: 8; display: flex; gap: 7px; align-items: center; border: 1px solid #2c3343; background: rgba(7,9,16,.75); color: #e8ebf0; border-radius: 999px; padding: 5px 11px; font-size: .72rem; font-weight: 600; cursor: pointer; }
+.mtoggle i { width: 8px; height: 8px; border-radius: 50%; background: #4dff88; box-shadow: 0 0 8px #4dff88; }
+html.still .mtoggle i { background: #ff6b6b; box-shadow: none; }
+</style>
+
+<div class="app">
+  <!-- The stage comes first so phones show the rail on top, like derolez.dev. -->
+  <div class="stage" id="stage">
+    <div class="sky"></div>
+    <div class="glow"></div>
+    <div class="sun"></div>
+    <svg class="mtn" viewBox="0 0 1440 300" preserveAspectRatio="none" aria-hidden="true">
+      <path fill="#6b3f8f" opacity=".78" d="M0,210 L90,150 L160,185 L250,95 L330,160 L420,120 L510,175 L600,70 L700,150 L780,110 L880,170 L960,60 L1060,150 L1150,105 L1240,165 L1330,90 L1440,160 L1440,300 L0,300Z"/>
+      <path fill="#ffe0ec" opacity=".75" d="M250,95 L276,116 L262,113 L250,124 L238,113 L224,116Z M600,70 L630,94 L614,90 L600,102 L586,90 L570,94Z M960,60 L992,86 L974,82 L960,94 L946,82 L928,86Z M1330,90 L1358,112 L1342,108 L1330,120 L1318,108 L1302,112Z"/>
+      <path fill="#47286c" d="M0,250 L120,190 L210,230 L320,160 L410,215 L520,150 L640,225 L760,175 L860,230 L980,165 L1100,225 L1210,180 L1320,235 L1440,200 L1440,300 L0,300Z"/>
+    </svg>
+    <svg class="city" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
+      <g fill="#1c0d2c">
+        <rect x="0" y="186" width="1440" height="34"/>
+        <rect x="0" y="160" width="70" height="60"/><rect x="70" y="148" width="46" height="72"/><rect x="118" y="166" width="60" height="54"/>
+        <rect x="300" y="158" width="80" height="62"/><rect x="380" y="170" width="50" height="50"/><rect x="470" y="160" width="56" height="60"/><rect x="560" y="150" width="60" height="70"/>
+        <rect x="820" y="162" width="70" height="58"/><rect x="890" y="150" width="40" height="70"/><rect x="980" y="168" width="90" height="52"/>
+        <rect x="1250" y="155" width="70" height="65"/><rect x="1320" y="165" width="60" height="55"/><rect x="1380" y="150" width="60" height="70"/>
+        <path d="M180,186 V160 H280 V186Z M168,160 L292,160 L262,140 L198,140Z M200,140 V128 H260 V140Z M188,128 L272,128 L248,110 L212,110Z M216,110 V100 H244 V110Z M204,100 L256,100 L238,86 L222,86Z M228,86 L232,86 L230,68Z"/>
+        <path d="M640,188 Q720,92 800,188Z M708,120 H732 V102 H708Z M711,102 L729,102 L723,64 L717,64Z"/><circle cx="720" cy="58" r="5"/>
+        <path d="M1100,186 V160 H1220 V186Z M1086,160 L1234,160 L1200,136 L1120,136Z M1124,136 V124 H1196 V136Z M1108,124 L1212,124 L1186,104 L1134,104Z M1140,104 V92 H1180 V104Z M1126,92 L1194,92 L1172,76 L1148,76Z M1158,76 L1162,76 L1160,56Z"/>
+      </g>
+      <path d="M709,112 q5,-4 9,0 M722,112 q5,-4 9,0" stroke="#ffc857" stroke-width="1.6" fill="none"/>
+    </svg>
+    <div class="haze"></div>
+    <div class="garland" id="stageGarland" aria-hidden="true"></div>
+
+    <div class="demo-note">Prototype · the last step resets instead of opening the page</div>
+    <button type="button" class="mtoggle" id="motion"><i></i><span id="motionText">Motion on</span></button>
+
+    <div class="drum" id="drum" tabindex="0" role="group" aria-label="Cartridges. Arrow keys turn, Enter inserts the front cartridge.">
+      <div class="ring" id="ring">
+        <!-- 1. About: stand-in illustrated portrait (to be replaced by the final art) -->
+        <button class="cart" type="button" data-id="about" aria-label="About">
+          <span class="f front">
+            <span class="grip"></span>
+            <span class="label">
+              <span class="art">
+                <img src="img/me-portrait.webp" alt="" style="object-position:50% 22%">
+              </span>
+              <span class="strip">ABOUT <em>SP</em></span>
+            </span>
+            <span class="emboss">▼ SP-1 ▼</span>
+            <span class="pins"></span>
+          </span>
+          <span class="f back"><i></i></span><span class="f side l"></span><span class="f side r"></span><span class="f cap t"></span><span class="f cap b"></span>
+        </button>
+
+        <!-- 2. Portfolio -->
+        <button class="cart" type="button" data-id="portfolio" aria-label="Portfolio: insert to open">
+          <span class="f front">
+            <span class="grip"></span>
+            <span class="label">
+              <span class="art collage"><img src="img/sws.jpg" alt=""><img src="img/kidsage.jpg" alt=""><img src="img/frog.jpg" alt=""></span>
+              <span class="strip">PORTFOLIO <em>STORY</em></span>
+            </span>
+            <span class="emboss">▼ SP-1 ▼</span>
+            <span class="pins"></span>
+          </span>
+          <span class="f back"><i></i></span><span class="f side l"></span><span class="f side r"></span><span class="f cap t"></span><span class="f cap b"></span>
+        </button>
+
+        <!-- 3. Art -->
+        <button class="cart" type="button" data-id="art" aria-label="Art gallery: insert to open">
+          <span class="f front">
+            <span class="grip"></span>
+            <span class="label">
+              <span class="art"><img src="img/art-04.jpg" alt=""></span>
+              <span class="strip">ART <em>GALLERY</em></span>
+            </span>
+            <span class="emboss">▼ SP-1 ▼</span>
+            <span class="pins"></span>
+          </span>
+          <span class="f back"><i></i></span><span class="f side l"></span><span class="f side r"></span><span class="f cap t"></span><span class="f cap b"></span>
+        </button>
+
+        <!-- 4. Career -->
+        <button class="cart" type="button" data-id="career" aria-label="Career">
+          <span class="f front">
+            <span class="grip"></span>
+            <span class="label">
+              <span class="art career">
+                <i style="background:#8b5cf6">DM</i><i style="background:#f59e0b">DS</i><i style="background:#10b981">ND</i>
+                <i style="background:#ef4444">WU</i><i class="add">+</i>
+              </span>
+              <span class="strip">CAREER <em>2022–</em></span>
+            </span>
+            <span class="emboss">▼ SP-1 ▼</span>
+            <span class="pins"></span>
+          </span>
+          <span class="f back"><i></i></span><span class="f side l"></span><span class="f side r"></span><span class="f cap t"></span><span class="f cap b"></span>
+        </button>
+      </div>
+    </div>
+    <div class="drumhint" id="drumhint">Scroll or drag to turn · click the front cartridge to insert</div>
+
+    <!-- Console: page cartridges go in here -->
+    <div class="dock" id="dock" aria-hidden="true">
+      <div class="top"><div class="slot" id="slot"></div></div>
+      <div class="body"><span class="led"></span><span class="brand">SP-1</span><span class="vents"></span></div>
+    </div>
+
+    <!-- Floating handheld: the two games, each with its own game card -->
+    <div class="hh-wrap" id="hhwrap">
+      <div class="hh-float">
+        <button class="gcard island" type="button" data-game="island" aria-label="Island game card: insert to play">
+          <span class="shell"></span>
+          <span class="glabel"><svg width="40" height="22" viewBox="0 0 40 22" aria-hidden="true"><ellipse cx="20" cy="18" rx="18" ry="5" fill="#d9c38e"/><ellipse cx="20" cy="15" rx="13" ry="4" fill="#4f9a4a"/><path d="M12 14 L15 5 L18 14Z M24 14 L27 3 L30 14Z" fill="#2f7a44"/><circle cx="33" cy="4" r="3" fill="#fff6d8"/></svg>ISLAND</span>
+          <span class="gpins"></span>
+        </button>
+        <button class="gcard wilds" type="button" data-game="wilds" aria-label="Pocket Wilds game card: insert to play">
+          <span class="shell"></span>
+          <span class="glabel"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><ellipse cx="13" cy="17" rx="7" ry="6" fill="#fff"/><circle cx="6" cy="10" r="3" fill="#fff"/><circle cx="11" cy="6" r="3" fill="#fff"/><circle cx="16" cy="6" r="3" fill="#fff"/><circle cx="21" cy="10" r="3" fill="#fff"/></svg>POCKET<br>WILDS</span>
+          <span class="gpins"></span>
+        </button>
+        <div class="hh" id="hh">
+          <span class="slot2" id="hhslot"></span>
+          <span class="pwr"></span>
+          <span class="dpad"></span>
+          <div class="screenframe"><div class="scr" id="scr"><span class="msg">INSERT<br>GAME CARD</span></div></div>
+          <span class="btns"><i></i><i></i></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Console screen: About and Career boot here -->
+    <div class="tv" id="tv" role="dialog" aria-labelledby="tvtitle" hidden>
+      <div class="tvbar"><span id="tvtitle">PLAYER PROFILE</span><button type="button" class="eject" id="eject">⏏ EJECT</button></div>
+      <div class="tvin" id="tvin"></div>
+    </div>
+    <template id="t-about">
+      <div class="prof">
+        <div class="pf-avatar" data-avatar></div>
+        <div>
+          <p class="px">SHRAYASH PRADHAN</p>
+          <dl class="kv">
+            <dt>Class</dt><dd>Unity Game Developer</dd>
+            <dt>Level</dt><dd>4+ years of Unity &amp; C#</dd>
+            <dt>Base</dt><dd>Maryland, USA</dd>
+            <dt>Quest</dt><dd>Master's in Software Design &amp; Management</dd>
+            <dt>Status</dt><dd class="ok">Open to game development and software engineering roles</dd>
+          </dl>
+        </div>
+      </div>
+      <div class="trophies">
+        <div><b>15+</b><span>games shipped &amp; built</span></div>
+        <div><b>3 studios</b><span>team lead at 2</span></div>
+        <div><b>iOS · Android · Web</b><span>shipped to</span></div>
+      </div>
+      <p class="px">INVENTORY</p>
+      <ul class="inv">
+        <li>Unity</li><li>C#</li><li>Unreal</li><li>Prototyping</li><li>Game design</li><li>Level design</li>
+        <li>Figma</li><li>Vector art</li><li>Team lead</li><li>GitHub</li><li>Trello</li><li>Multiplayer</li>
+      </ul>
+    </template>
+    <template id="t-career">
+      <ol class="quests">
+        <li class="now"><span class="st">▶</span><div><b>Master's student · Washington University of Science &amp; Technology</b><small>2024–now · in progress</small><p>Master's in Software Design &amp; Management.</p></div></li>
+        <li><span class="st">✔</span><div><b>Game Developer · DarkMatter Production</b><small>2024</small><p>Led development of KidSage Colorbook and KidSage, a learning game where a friendly yeti helps a village through shape and math quests, plus a horse race betting game. Built quest, inventory and shop systems, animation, sound and UI/UX. Trained interns as team lead.</p></div></li>
+        <li><span class="st">✔</span><div><b>Game Developer &amp; Team Lead · Danson Solutions</b><small>2023</small><p>Shipped Arithmetica, Wack-a-Rat, Spell-Splatter, Frog Jump, Vidhya's Adventure, Rhythm Game and Multi-Brawl. Prototyped, tested and mentored interns.</p></div></li>
+        <li><span class="st">✔</span><div><b>Game Developer · Neo Digital Pvt. Ltd.</b><small>2022–2023</small><p>Designed, built, QA'd and deployed Super World Saga, 2 Player Football, Nimble Noggins and Ludo Super.</p></div></li>
+        <li><span class="st">✔</span><div><b>B.E. Software Engineering · Nepal College of Information Technology</b><small>2017–2022</small><p>First Class Honors.</p></div></li>
+        <li class="next"><span class="st">?</span><div><b>Next quest: your studio</b><p>Email me at pradhan.shrayash677@gmail.com</p></div></li>
+      </ol>
+    </template>
+
+    <div class="flash" id="flash"></div>
+    <div class="loading" id="loading" hidden><span id="loadtext">LOADING…</span><span class="bar2"><i></i></span></div>
+  </div>
+
+  <div class="left">
+    <div class="bar">
+      <nav class="crumb" aria-label="Breadcrumb">
+        <button type="button" id="home">Shrayash Pradhan</button><span aria-hidden="true">/</span><h1 id="crumb">About</h1>
+      </nav>
+      <button class="ticket" type="button" id="ticket" aria-label="Open to roles. Show my career."><span class="t1">Open to roles.</span><span class="t2" aria-hidden="true">↗</span></button>
+    </div>
+    <div class="panel" id="panel">
+      <div class="ptitle" aria-hidden="true"><span class="np grad" id="ptitle">About</span><span class="dvs" id="pdv">परिचय</span></div>
+      <section data-panel="about">
+        <p>I'm a <b>Unity game developer with 4+ years of C#</b>, shipping mobile and web games for kids from prototype to the App Store and Google Play.</p>
+        <p>At DarkMatter Production, Danson Solutions and Neo Digital I led small teams, trained interns, and built everything from core mechanics and quest systems to UI/UX and animation. I'm now doing a Master's in Software Design &amp; Management in Maryland, USA, and I'm open to game development and software engineering roles.</p>
+        <div class="stats"><span><b>15+</b> games shipped &amp; built</span><span><b>iOS + Android</b></span><span><b>Team lead</b> at 2 studios</span></div>
+        <p>Find me on <a href="https://github.com/shrayash1" target="_blank" rel="noopener">GitHub</a>, <a href="https://linkedin.com/in/shrayash-pradhan-17b905326" target="_blank" rel="noopener">LinkedIn</a> and <a href="https://www.instagram.com/shr_vector_arts/" target="_blank" rel="noopener">Instagram</a>, or email me at <button type="button" class="linkish" id="copymail">pradhan.shrayash677@gmail.com</button><span id="copied" class="hint" aria-live="polite"></span>.</p>
+        <button type="button" class="go" data-go="about">Insert for my player profile ▸</button>
+        <p class="hint">Turn the cartridges, or put a game card in the handheld.</p>
+      </section>
+      <section data-panel="portfolio" hidden>
+        <p><b>Portfolio.</b> The 3D site: my games, experience, techstack and contact. Quick to scan.</p>
+        <p>Insert the cartridge to open it.</p>
+        <button type="button" class="go" data-go="portfolio">Insert and open ▸</button>
+      </section>
+      <section data-panel="art" hidden>
+        <p><b>Art.</b> Vector portraits, paintings and hand-painted decor from my Instagram.</p>
+        <button type="button" class="go" data-go="art">Insert and open ▸</button>
+      </section>
+      <section data-panel="career" hidden>
+        <div class="jobs">
+          <div><b>Game Developer · DarkMatter Production</b><small>2024</small><span>KidSage, KidSage Colorbook and a horse race betting game.</span></div>
+          <div><b>Game Developer &amp; Team Lead · Danson Solutions</b><small>2023</small><span>Arithmetica, Wack-a-Rat, Spell-Splatter, Frog Jump and more.</span></div>
+          <div><b>Game Developer · Neo Digital</b><small>2022–2023</small><span>Super World Saga, 2 Player Football, Nimble Noggins, Ludo Super.</span></div>
+          <div><b>Master's student · WUST</b><small>2024–now</small><span>Software Design &amp; Management.</span></div>
+        </div>
+        <p>Your studio next? Email me at <b>pradhan.shrayash677@gmail.com</b>.</p>
+        <button type="button" class="go" data-go="career">Insert for the quest log ▸</button>
+      </section>
+      <section data-panel="island" hidden>
+        <p><b>Island.</b> Walk around my island as a little cartoon me, find 9 stars that tell my story, and stack blocks.</p>
+        <button type="button" class="go" data-game-go="island">Insert card and play ▸</button>
+      </section>
+      <section data-panel="wilds" hidden>
+        <p><b>Pocket Wilds.</b> A pixel monster survivor game: pick a fire, water or grass partner, learn moves, evolve and outlast the wild hordes.</p>
+        <button type="button" class="go" data-game-go="wilds">Insert card and play ▸</button>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const DEMO = true; // In this prototype the pages don't exist, so the last step resets instead of opening them.
+  const $ = s => document.querySelector(s);
+  // Motion follows the device setting unless the visitor flips the switch (saved in this browser).
+  let savedMotion = null;
+  try { savedMotion = localStorage.getItem("sp-motion"); } catch { /* storage blocked: use the device setting */ }
+  const osReduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reduce = savedMotion ? savedMotion === "off" : osReduce;
+  document.documentElement.classList.toggle("still", reduce);
+  $("#motionText").textContent = !reduce ? "Motion on" : (osReduce && !savedMotion ? "Animations off (device) · turn on" : "Motion off · turn on");
+  $("#motion").addEventListener("click", () => {
+    try { localStorage.setItem("sp-motion", reduce ? "on" : "off"); } catch { /* ignore */ }
+    location.reload();
+  });
+  const wait = ms => new Promise(r => setTimeout(r, reduce ? Math.min(ms, 60) : ms));
+
+  const CARTS = [
+    { id: "about", name: "About", screen: "PLAYER PROFILE" },
+    { id: "portfolio", name: "Portfolio", page: "portfolio.html" },
+    { id: "art", name: "Art", page: "portfolio.html#art" },
+    { id: "career", name: "Career", screen: "QUEST LOG" },
+  ];
+  const GAMES = { island: { name: "Island", page: "world.html" }, wilds: { name: "Pocket Wilds", page: "pocket-wilds/" } };
+
+  // ---------- prayer flags across the top of the stage ----------
+  const FLAGC = ["#1e5bb8", "#f5f1e6", "#d8262e", "#2f9e44", "#f4c20d"];
+  (function buildGarland(el, n, sag) {
+    el.innerHTML = `<svg viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0,2 Q50,${sag} 100,2" fill="none" stroke="rgba(255,236,214,.75)" stroke-width="1.2" vector-effect="non-scaling-stroke"/></svg>`;
+    for (let i = 0; i < n; i++) {
+      const t = (i + .5) / n, y = (1 - t) * (1 - t) * 2 + 2 * (1 - t) * t * sag + t * t * 2;
+      const f = document.createElement("span");
+      f.className = "flag";
+      f.style.cssText = `left:${(t * 100).toFixed(2)}%;top:${(y * 2).toFixed(1)}px;--c:${FLAGC[i % 5]};--rot:${((1 - 2 * t) * 9).toFixed(1)}deg;--d:${(-(i % 6) * .35).toFixed(2)}s`;
+      el.appendChild(f);
+    }
+  })($("#stageGarland"), innerWidth < 700 ? 9 : 16, 20);
+
+  // ---------- text panel ----------
+  const panels = [...document.querySelectorAll("[data-panel]")];
+  const NAMES = { about: "About", portfolio: "Portfolio", art: "Art", career: "Career", island: "Island", wilds: "Pocket Wilds" };
+  const DV = { about: "परिचय", portfolio: "काम", art: "कला", career: "अनुभव", island: "टापु", wilds: "खेल" };
+  function show(id) {
+    panels.forEach(p => { p.hidden = p.dataset.panel !== id; });
+    $("#crumb").textContent = NAMES[id];
+    $("#crumb").dataset.id = id;
+    $("#ptitle").textContent = NAMES[id];
+    $("#pdv").textContent = DV[id];
+  }
+
+  // ---------- drum ----------
+  const ring = $("#ring"), carts = [...ring.children], N = carts.length, STEP = 36;
+  // pos is the drum's angle in cartridge steps. It can sit between two cartridges while scrolling or dragging.
+  let pos = 0, cur = 0, busy = false;
+  const radius = () => carts[0].offsetWidth * 1.75;
+  function layout() {
+    const R = radius();
+    cur = ((Math.round(pos) % N) + N) % N;
+    carts.forEach((el, i) => {
+      let d = (((i - pos) % N) + N) % N;
+      if (d > N / 2) d -= N;
+      const a = Math.abs(d);
+      el.style.setProperty("--t", `translateZ(${-R}px) rotateY(${d * STEP}deg) translateZ(${R}px)`);
+      el.style.setProperty("--dim", Math.min(.75, a * .5).toFixed(3));
+      el.style.visibility = a > 1.6 ? "hidden" : "visible";
+      el.classList.toggle("front-card", a < .5);
+      el.tabIndex = -1;
+    });
+    if ($("#crumb").dataset.id !== CARTS[cur].id) show(CARTS[cur].id);
+  }
+  // Turn the shortest way round to cartridge i.
+  function turnTo(i) {
+    if (busy) return;
+    let d = (((i - pos) % N) + N) % N;
+    if (d > N / 2) d -= N;
+    pos = Math.round(pos + d);
+    ring.classList.remove("live"); resetTilt(); layout();
+  }
+
+  // Tilt the front cartridge toward the pointer.
+  function resetTilt() { carts.forEach(c => { c.style.setProperty("--rx", "0deg"); c.style.setProperty("--ry", "0deg"); }); }
+  carts.forEach((el, i) => {
+    el.addEventListener("pointermove", e => {
+      if (i !== cur || busy || reduce || e.pointerType !== "mouse") return;
+      const r = el.getBoundingClientRect();
+      el.style.setProperty("--rx", `${-((e.clientY - r.top) / r.height - .5) * 14}deg`);
+      el.style.setProperty("--ry", `${((e.clientX - r.left) / r.width - .5) * 18}deg`);
+    });
+    el.addEventListener("pointerleave", resetTilt);
+    el.addEventListener("click", () => { if (dragged) return; i === cur ? insertCart() : turnTo(i); });
+  });
+
+  async function loadPage(name, page) {
+    const L = $("#loading");
+    $("#loadtext").textContent = `LOADING ${name.toUpperCase()}…`;
+    L.hidden = false; L.classList.remove("run"); void L.offsetWidth; L.classList.add("run");
+    // Long enough to read even with reduced motion.
+    await new Promise(r => setTimeout(r, reduce ? 700 : 1100));
+    if (!DEMO) { location.href = page; return true; }
+    await wait(500);
+    L.hidden = true; L.classList.remove("run");
+    return false;
+  }
+  function flash() { if (reduce) return; const f = $("#flash"); f.classList.remove("go"); void f.offsetWidth; f.classList.add("go"); }
+
+  async function insertCart() {
+    if (busy) return;
+    const c = CARTS[cur], el = carts[cur];
+    busy = true; resetTilt();
+    // Push the cartridge in only as far as the console body can hide it, so its top stays visible above the slot.
+    const cr = el.getBoundingClientRect(), sr = $("#slot").getBoundingClientRect(), dk = $("#dock").getBoundingClientRect();
+    const slotY = sr.top + sr.height / 2;
+    const dy = slotY - cr.bottom + Math.min(cr.height * .45, dk.bottom - slotY - 8);
+    el.classList.add("inserting");
+    el.style.setProperty("--lift", `${dy}px`);
+    await wait(650);
+    $("#dock").classList.add("on"); flash();
+    await wait(450);
+    if (c.screen) { openScreen(c); return; } // About and Career play on the home page itself
+    const left = await loadPage(c.name, c.page);
+    if (left) return;
+    ejectCart();
+  }
+  function ejectCart() {
+    const el = carts[cur];
+    el.classList.remove("inserting"); el.style.removeProperty("--lift"); $("#dock").classList.remove("on");
+    busy = false;
+  }
+  function openScreen(c) {
+    $("#tvtitle").textContent = c.screen;
+    const body = $(`#t-${c.id}`).content.cloneNode(true);
+    const av = body.querySelector("[data-avatar]");
+    if (av) av.appendChild(carts[0].querySelector(".art img").cloneNode(true)); // the same portrait as the About label
+    $("#tvin").replaceChildren(body);
+    $("#tv").hidden = false;
+    $("#eject").focus();
+  }
+  function closeScreen() {
+    if ($("#tv").hidden) return;
+    $("#tv").hidden = true;
+    ejectCart();
+    $("#drum").focus();
+  }
+
+  // Drag, swipe or scroll to turn the drum. It follows the input live, then settles on the nearest cartridge.
+  const drum = $("#drum");
+  let x0 = null, pos0 = 0, dragged = false, settleT = 0;
+  const stepPx = () => carts[0].offsetWidth * 1.1;
+  function settle(delay) {
+    clearTimeout(settleT);
+    settleT = setTimeout(() => { ring.classList.remove("live"); pos = Math.round(pos); layout(); }, delay);
+  }
+  drum.addEventListener("pointerdown", e => { if (busy) return; x0 = e.clientX; pos0 = pos; dragged = false; });
+  addEventListener("pointermove", e => {
+    if (x0 === null) return;
+    const dx = e.clientX - x0;
+    if (!dragged && Math.abs(dx) < 8) return;
+    dragged = true; ring.classList.add("live"); resetTilt();
+    pos = pos0 - dx / stepPx(); layout();
+  });
+  addEventListener("pointerup", () => {
+    if (x0 === null) return;
+    x0 = null;
+    if (dragged) { settle(0); setTimeout(() => { dragged = false; }, 0); }
+  });
+  // Mouse wheel and trackpad. On the one-screen desktop layout, scrolling up or down turns the drum.
+  // On phones and tablets the page itself scrolls, so only a sideways scroll turns it.
+  const oneScreen = matchMedia("(min-width: 1024px)");
+  $("#stage").addEventListener("wheel", e => {
+    if (busy) return;
+    const delta = oneScreen.matches ? (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) : e.deltaX;
+    if (!delta) return;
+    e.preventDefault();
+    const px = e.deltaMode === 1 ? delta * 32 : delta; // some mice report lines, not pixels
+    ring.classList.add("live"); resetTilt();
+    pos += Math.max(-.5, Math.min(.5, px / 300));
+    layout(); settle(160);
+  }, { passive: false });
+  if (!matchMedia("(hover: hover)").matches) $("#drumhint").textContent = "Swipe to turn · tap the front cartridge to insert";
+  drum.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight") { e.preventDefault(); turnTo(cur + 1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); turnTo(cur - 1); }
+    else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); insertCart(); }
+  });
+
+  // ---------- handheld ----------
+  const cards = [...document.querySelectorAll(".gcard")];
+  async function insertGame(btn) {
+    if (busy) return;
+    busy = true;
+    const g = GAMES[btn.dataset.game];
+    show(btn.dataset.game);
+    const s = $("#hhslot").getBoundingClientRect(), b = btn.getBoundingClientRect();
+    const dx = (s.left + s.width / 2) - (b.left + b.width / 2);
+    const above = (s.top - b.height / 2 - 4) - (b.top + b.height / 2);
+    btn.classList.add("flying");
+    btn.style.transform = `translate(${dx}px, ${above}px) rotate(0deg)`;
+    await wait(480);
+    btn.style.transform = `translate(${dx}px, ${above + b.height * .66}px) rotate(0deg)`;
+    await wait(420);
+    $("#hh").classList.add("on");
+    const scr = $("#scr");
+    scr.className = `scr on ${btn.dataset.game}`;
+    scr.innerHTML = `<span class="msg">${g.name.toUpperCase()}<span class="blink">PRESS START</span></span>`;
+    await wait(1200);
+    flash();
+    const left = await loadPage(g.name, g.page);
+    if (left) return;
+    btn.classList.remove("flying"); btn.style.transform = "";
+    $("#hh").classList.remove("on"); scr.className = "scr"; scr.innerHTML = `<span class="msg">INSERT<br>GAME CARD</span>`;
+    show(CARTS[cur].id);
+    busy = false;
+  }
+  cards.forEach(c => {
+    c.addEventListener("click", () => insertGame(c));
+    c.addEventListener("pointerenter", () => { if (!busy) show(c.dataset.game); });
+    c.addEventListener("focus", () => { if (!busy) show(c.dataset.game); });
+    c.addEventListener("pointerleave", () => { if (!busy) show(CARTS[cur].id); });
+  });
+
+  // ---------- panel buttons, ticket, copy email ----------
+  document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", async () => {
+    const i = CARTS.findIndex(c => c.id === b.dataset.go);
+    if (i !== cur) { turnTo(i); await wait(650); }
+    insertCart();
+  }));
+  document.querySelectorAll("[data-game-go]").forEach(b => b.addEventListener("click", () => insertGame(document.querySelector(`.gcard[data-game="${b.dataset.gameGo}"]`))));
+  $("#ticket").addEventListener("click", () => turnTo(CARTS.findIndex(c => c.id === "career")));
+  $("#eject").addEventListener("click", closeScreen);
+  addEventListener("keydown", e => { if (e.key === "Escape") closeScreen(); });
+  $("#home").addEventListener("click", () => turnTo(0));
+  $("#copymail").addEventListener("click", () => {
+    const done = () => { $("#copied").textContent = " (copied)"; setTimeout(() => { $("#copied").textContent = ""; }, 1600); };
+    navigator.clipboard?.writeText("pradhan.shrayash677@gmail.com").then(done, () => {
+      const r = document.createRange(); r.selectNodeContents($("#copymail")); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    });
+  });
+
+  // ---------- parallax: hills, moon, stars and the handheld follow the pointer ----------
+  const stage = $("#stage");
+  let tx = 0, ty = 0, mx = 0, my = 0;
+  if (!reduce && matchMedia("(hover: hover)").matches) {
+    stage.addEventListener("pointermove", e => { const r = stage.getBoundingClientRect(); tx = (e.clientX - r.left) / r.width - .5; ty = (e.clientY - r.top) / r.height - .5; });
+    const tick = () => {
+      const nx = mx + (tx - mx) * .06, ny = my + (ty - my) * .06;
+      if (Math.abs(nx - mx) > .0005 || Math.abs(ny - my) > .0005) { mx = nx; my = ny; stage.style.setProperty("--mx", mx.toFixed(4)); stage.style.setProperty("--my", my.toFixed(4)); }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  addEventListener("resize", layout);
+  layout();
+})();
+</script>

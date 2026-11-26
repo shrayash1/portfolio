@@ -1,0 +1,1078 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Portfolio Prototype</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Teko:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Serif+Devanagari:wght@500;700&family=Caveat:wght@600;700&family=Press+Start+2P&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+<style>
+/* Layout: a light, painted world in the spirit of tenztan.in. Warm paper, floating tropical leaves from Shrayash's floral-shirt art,
+   big Nepali chapter words, smooth scrolling and scroll-driven scenes. Game objects (console, handheld, cartridges) are props.
+   A social dock always sits on the left; the hero's console becomes a handheld in the lower-right corner as you scroll.
+   One light look on purpose, so every colour is set directly. */
+:root {
+  --paper: #f5efe3; --ink: #1e2233; --muted: #5b6070; --dim: #8a8f9c; --line: #e1d5bd;
+  --mustard: #e0a325; --coral: #e2553d; --palm: #3f8f5a; --mint: #1f9e88; --blue: #2448f0;
+  --serif: "Cormorant Garamond", "Georgia", serif;
+  --dev: "Noto Serif Devanagari", "Nirmala UI", "Mangal", serif;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --hand: "Caveat", "Comic Sans MS", cursive;
+  --pixel: "Press Start 2P", ui-monospace, monospace;
+  --title: "Teko", "Arial Narrow", "Impact", sans-serif;
+  --sunset: linear-gradient(180deg, #ffe08a 0%, #ffb347 38%, #ff6b5a 70%, #e8407e 100%);
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: #1b0f2e; color: var(--ink); font: 16px/1.65 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+a { color: inherit; }
+button { font: inherit; color: inherit; }
+img { max-width: 100%; display: block; }
+:focus-visible { outline: 3px solid var(--mustard); outline-offset: 3px; }
+/* Motion off (device setting or the switch): keep everything, drop the movement. */
+html.still *, html.still *::before, html.still *::after { animation: none !important; transition: none !important; }
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+
+/* ---------- the world behind everything: a golden-hour Nepal skyline (GTA-style sunset, Nepali skyline) ---------- */
+.scene { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; background: #1b0f2e; }
+.sky { position: absolute; inset: 0; }
+.sky.gold { background: linear-gradient(180deg, #2e1850 0%, #8a2c6e 34%, #f0645a 60%, #ffb35c 78%, #ffe0a0 100%); }
+.sky.dusk { background: linear-gradient(180deg, #170f38 0%, #4d1f6e 38%, #c23c78 68%, #ff7f5c 92%); opacity: 0; }
+.sky.night { background: linear-gradient(180deg, #05051a 0%, #12113a 45%, #2e1b58 75%, #5a2766 100%); opacity: 0; }
+.stars { position: absolute; inset: 0 0 40% 0; opacity: 0; }
+.stars i { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #fff; }
+.glow { position: absolute; left: 50%; bottom: 8vh; width: 130vw; height: 75vh; transform: translateX(-50%); background: radial-gradient(ellipse at 50% 72%, rgba(255,170,90,.55), transparent 60%); }
+/* retro sun with stripes cut through its lower half */
+.sun { position: absolute; left: 50%; bottom: 24vh; width: min(44vw, 540px); aspect-ratio: 1; margin-left: calc(min(44vw, 540px) / -2); border-radius: 50%; background: linear-gradient(180deg, #fff0b0 0%, #ffc15c 42%, #ff6b6b 78%, #e8407e 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 54%, transparent 54% 57%, #000 57% 64%, transparent 64% 68%, #000 68% 74%, transparent 74% 79%, #000 79% 85%, transparent 85% 90%, #000 90%);
+  mask-image: linear-gradient(180deg, #000 54%, transparent 54% 57%, #000 57% 64%, transparent 64% 68%, #000 68% 74%, transparent 74% 79%, #000 79% 85%, transparent 85% 90%, #000 90%); }
+.mtn { position: absolute; left: -4%; width: 108%; bottom: 13vh; height: 42vh; }
+.city { position: absolute; left: -4%; width: 108%; bottom: 0; height: 25vh; }
+.haze { position: absolute; left: 0; right: 0; bottom: 0; height: 46vh; background: linear-gradient(180deg, transparent, rgba(27,15,46,.5)); }
+.shade { position: absolute; inset: 0; background: rgba(22,10,38,.24); }
+@media (max-width: 900px) { .sun { width: 74vw; margin-left: -37vw; bottom: 26vh; } }
+
+/* prayer flags: strings above each chapter, and a gust of them after the hero */
+.flag { position: absolute; width: 24px; height: 30px; margin-left: -12px; background-color: var(--c); background-image: repeating-linear-gradient(180deg, transparent 0 6px, rgba(0,0,0,.13) 6px 7px);
+  border-radius: 1px; transform-origin: 50% 0; rotate: var(--rot, 0deg); animation: flutter 2.2s ease-in-out var(--d, 0s) infinite alternate; box-shadow: 0 4px 8px rgba(20,8,40,.25); }
+@keyframes flutter { from { scale: .9 1; rotate: calc(var(--rot, 0deg) - 7deg); } to { scale: 1.05 1; rotate: calc(var(--rot, 0deg) + 7deg); } }
+.garland { position: relative; height: 96px; width: min(100%, 1000px); margin: 0 auto; pointer-events: none; }
+.garland svg { position: absolute; left: 0; top: 0; width: 100%; height: 80px; overflow: visible; }
+.hero-garland { position: absolute; left: 0; right: 0; top: 58px; width: auto; margin: 0; z-index: 3; }
+.storm { position: fixed; inset: 0; z-index: 45; pointer-events: none; overflow: hidden; }
+
+/* Nepali-style English: bold condensed capitals hanging from a headline bar, like Devanagari's shirorekha */
+.np { position: relative; display: inline-block; font-family: var(--title); font-weight: 700; text-transform: uppercase; line-height: .8; letter-spacing: .01em; padding-top: .16em; }
+.np::before { content: ""; position: absolute; left: -.05em; right: -.05em; top: .16em; height: .09em; border-radius: 2px; background: currentColor; }
+.np.grad { background: var(--sunset); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.np.grad::before { background: linear-gradient(90deg, #ffe08a, #ffb347 40%, #ff6b5a 75%, #e8407e); }
+.dvs { font-family: var(--dev); letter-spacing: 0; text-transform: none; }
+
+
+/* ---------- top bar, chapter rail (right), motion switch ---------- */
+.top { position: fixed; top: 0; left: 0; right: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; gap: 14px; color: #fff;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px)) 12px max(20px, env(safe-area-inset-left, 0px)); transition: background .35s, color .35s, box-shadow .35s; }
+.top.on-paper { background: rgba(27,15,46,.78); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: #fff; box-shadow: 0 1px 0 rgba(255,255,255,.12); }
+.brand { font: 700 1.5rem/1 var(--serif); letter-spacing: .06em; text-decoration: none; }
+.nav { display: flex; gap: 2px; }
+.nav a { font-size: .82rem; text-decoration: none; padding: 6px 10px; border-radius: 999px; opacity: .78; }
+.nav a:hover, .nav a.on { opacity: 1; background: rgba(127,127,127,.16); }
+.tright { display: flex; align-items: center; gap: 10px; }
+.mtoggle { display: flex; gap: 7px; align-items: center; border: 1px solid currentColor; background: none; border-radius: 999px; padding: 6px 11px; font-size: .74rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.mtoggle i { width: 8px; height: 8px; border-radius: 50%; background: #2fd47a; box-shadow: 0 0 8px #2fd47a; }
+html.still .mtoggle i { background: #ff6b6b; box-shadow: none; }
+.eject { display: inline-flex; align-items: stretch; background: var(--blue); color: #fff; border-radius: 6px; font-size: .8rem; font-weight: 600; text-decoration: none; transform: rotate(-3deg); }
+.eject span:first-child { padding: 6px 10px; } .eject span:last-child { padding: 6px 9px; border-left: 1px dashed rgba(255,255,255,.4); }
+.rail { position: fixed; right: max(14px, env(safe-area-inset-right, 0px)); top: 50%; z-index: 40; transform: translateY(-50%); display: flex; flex-direction: column; align-items: center; gap: 12px; transition: opacity .4s; }
+.rail.hide { opacity: 0; }
+.rail .no { font: 400 8px/1 var(--pixel); color: #ffc857; }
+.rail .name { writing-mode: vertical-rl; font: 600 .72rem/1 var(--sans); letter-spacing: .3em; color: #f3d9c4; }
+.rail .bar { width: 1px; height: 90px; background: rgba(255,255,255,.25); position: relative; overflow: hidden; }
+.rail .bar i { position: absolute; left: 0; top: 0; width: 100%; height: 0; background: #ffc857; }
+@media (max-width: 1100px) { .nav { display: none; } }
+@media (max-width: 900px) { .rail { display: none; } .mtoggle span { display: none; } }
+
+/* ---------- social dock: always on the left (a row at the bottom on phones) ---------- */
+.dock { position: fixed; left: max(14px, env(safe-area-inset-left, 0px)); top: 50%; transform: translateY(-50%); z-index: 60; display: flex; flex-direction: column; gap: 6px; padding: 10px 7px; border-radius: 999px;
+  /* dusk glass with a sunset-gradient edge, to match the golden-hour theme */
+  border: 1.5px solid transparent; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  background: linear-gradient(180deg, rgba(52,26,86,.94), rgba(27,15,46,.94)) padding-box, linear-gradient(180deg, #ffe08a, #ffb347 40%, #ff6b5a 70%, #e8407e) border-box;
+  box-shadow: 0 14px 30px rgba(10,4,20,.45), 0 0 24px rgba(255,140,90,.18); }
+/* a small prayer-flag stripe on top of the dock */
+.dock::before { content: ""; position: absolute; left: 50%; top: -9px; width: 30px; height: 7px; transform: translateX(-50%); border-radius: 2px;
+  background: linear-gradient(90deg, #1e5bb8 0 20%, #f5f1e6 20% 40%, #d8262e 40% 60%, #2f9e44 60% 80%, #f4c20d 80%); box-shadow: 0 2px 6px rgba(10,4,20,.4); }
+.dock a { position: relative; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; color: #ffd9a8; text-decoration: none; transition: background .2s, color .2s, transform .2s; }
+.dock a:hover, .dock a:focus-visible { background: linear-gradient(135deg, #ffb347, #ff6b5a 55%, #e8407e); color: #1b0f2e; transform: scale(1.12); }
+.dock svg { width: 22px; height: 22px; }
+.dock a::after { content: attr(data-tip); position: absolute; left: 52px; top: 50%; transform: translateY(-50%); white-space: nowrap; background: var(--ink); color: #fff; font-size: .74rem; font-weight: 600; padding: 5px 9px; border-radius: 6px; opacity: 0; pointer-events: none; transition: opacity .2s; }
+.dock a:hover::after, .dock a:focus-visible::after { opacity: 1; }
+@media (max-width: 900px) {
+  .dock { top: auto; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); transform: none; flex-direction: row; gap: 2px; padding: 5px 7px; }
+  .dock::before { left: -9px; top: 50%; width: 7px; height: 30px; transform: translateY(-50%); background: linear-gradient(180deg, #1e5bb8 0 20%, #f5f1e6 20% 40%, #d8262e 40% 60%, #2f9e44 60% 80%, #f4c20d 80%); }
+  .dock a { width: 32px; height: 32px; } .dock svg { width: 17px; height: 17px; } .dock a::after { display: none; }
+}
+
+main { position: relative; z-index: 2; overflow-x: clip; } /* clip (not hidden) keeps the pinned games stage working */
+section { position: relative; padding-block: clamp(90px, 13vw, 170px); }
+.wrap { max-width: 1200px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+@media (min-width: 901px) { .wrap { padding-left: 96px; padding-right: 64px; } }
+
+/* chapter title: a thin line, a big Nepali word, then the English name in spaced caps */
+.ch { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; margin: 0 auto clamp(48px, 7vw, 90px); }
+.ch-line { width: 1px; height: 56px; background: #ffe3c4; opacity: .6; transform-origin: top; }
+.ch-dv { font-size: clamp(76px, 11vw, 170px); margin: 0; filter: drop-shadow(0 6px 24px rgba(20,8,40,.45)); }
+.ch-en { font: 600 .8rem/1 var(--sans); letter-spacing: .4em; color: #ffd9b8; text-transform: uppercase; }
+.ch-en .dvs { font-size: 1.2em; }
+.lead { color: #f6e6d6; max-width: 56ch; margin: 0 auto; text-align: center; font-size: 1.05rem; text-shadow: 0 1px 12px rgba(20,8,40,.55); }
+.lead a { color: #ffc857; }
+
+/* ---------- shared console and cartridge parts ---------- */
+.mcart { position: relative; aspect-ratio: 5 / 6; border-radius: 9px 9px 5px 5px; background: linear-gradient(155deg, #555b68, #2c3039); box-shadow: inset 1px 1px 0 rgba(255,255,255,.2), 0 10px 20px rgba(0,0,0,.3); }
+.mcart::before { content: ""; position: absolute; left: 12%; right: 12%; top: 5%; height: 6%; background: repeating-linear-gradient(180deg, rgba(0,0,0,.4) 0 2px, rgba(255,255,255,.07) 2px 4px); }
+.mcart .ml { position: absolute; left: 8%; right: 8%; top: 15%; bottom: 20%; border-radius: 4px; background: linear-gradient(160deg, #4b7ec8, #1b2d55); display: flex; align-items: flex-end; padding: 5px; font: 700 .78rem/1 var(--serif); letter-spacing: .05em; color: #fff; }
+.mcart .mp { position: absolute; left: 14%; right: 14%; bottom: 4%; height: 8%; background: repeating-linear-gradient(90deg, #d6ad55 0 3px, #15171c 3px 5px); }
+.ctop { position: relative; height: 22px; border-radius: 12px 12px 3px 3px; background: linear-gradient(#4a505c, #2d313a); box-shadow: inset 0 1px 0 rgba(255,255,255,.2); }
+.cslot { position: absolute; left: 50%; top: 7px; width: 70%; transform: translateX(-50%); height: 8px; border-radius: 4px; background: #040507; box-shadow: inset 0 3px 4px #000; }
+.cbody { height: 44px; border-radius: 0 0 14px 14px; background: linear-gradient(#272b33, #15181e); display: flex; align-items: center; justify-content: space-between; padding: 0 14px; }
+.led { width: 8px; height: 8px; border-radius: 50%; background: #4d1717; transition: background .2s, box-shadow .2s; }
+.cbrand { font: 400 7px/1 var(--pixel); color: #8a92a6; letter-spacing: .14em; }
+.vents { width: 34px; height: 14px; background: repeating-linear-gradient(90deg, #0b0c10 0 3px, transparent 3px 6px); border-radius: 3px; }
+
+/* ---------- boot: PC + console, the cartridge goes in, the screen counts up and zooms into the hero ---------- */
+.boot { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: radial-gradient(circle at 50% 60%, #4a1f5e, #1b0f2e 70%); overflow: hidden; }
+.boot[hidden] { display: none; }
+.b-rig { position: relative; width: min(78vw, 440px); aspect-ratio: 1; }
+.b-monitor { position: absolute; left: 0; top: 2%; width: 76%; aspect-ratio: 4 / 3.3; border-radius: 22px; padding: 14px 14px 30px; background: linear-gradient(160deg, #ece6d8, #c6bdab); box-shadow: inset 0 2px 0 #fff, inset 0 -4px 0 rgba(0,0,0,.15), 0 30px 60px rgba(60,40,10,.3); }
+.b-screen { position: relative; width: 100%; height: 100%; border-radius: 12px / 16px; overflow: hidden; background: #0b100d; box-shadow: inset 0 0 30px rgba(0,0,0,.9); display: grid; place-items: center; }
+.b-screen::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(180deg, rgba(0,0,0,.2) 0 1px, transparent 1px 3px); }
+.b-text { display: grid; justify-items: center; gap: 10px; font: 400 8px/1.6 var(--pixel); color: #4a6b54; letter-spacing: .14em; text-align: center; }
+.b-text b { font: 400 22px/1 var(--pixel); }
+.boot.on .b-text { color: #4dff88; text-shadow: 0 0 8px rgba(77,255,136,.6); }
+.b-bar { width: 140px; height: 8px; border: 2px solid currentColor; padding: 1px; }
+.b-bar i { display: block; height: 100%; width: 0; background: currentColor; }
+.b-neck { position: absolute; left: 32%; top: 64%; width: 12%; height: 10%; background: linear-gradient(90deg, #b3aa98, #d8d0bf, #b3aa98); }
+.b-foot { position: absolute; left: 21%; top: 73%; width: 34%; height: 4.5%; border-radius: 10px 10px 4px 4px; background: linear-gradient(#d8d0bf, #a69d8b); }
+.b-cart { position: absolute; right: 12%; top: 58%; width: 21%; z-index: 3; }
+.b-console { position: absolute; right: 0; bottom: 4%; width: 46%; z-index: 4; filter: drop-shadow(0 14px 22px rgba(0,0,0,.35)); }
+.boot.on .led { background: #4dff88; box-shadow: 0 0 10px #4dff88; }
+.boot-name { position: absolute; left: 0; right: 0; bottom: calc(9vh + env(safe-area-inset-bottom, 0px)); text-align: center; font: 600 clamp(1.4rem, 3vw, 2rem)/1 var(--serif); letter-spacing: .3em; color: #fff; }
+.boot-name span { color: #ffc857; }
+.boot-skip { position: absolute; top: calc(18px + env(safe-area-inset-top, 0px)); right: 20px; border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 7px 14px; font-size: .8rem; cursor: pointer; }
+
+/* ---------- CH.01 hero ---------- */
+#hero { height: 100vh; min-height: 640px; padding: 0; overflow: hidden; color: #fff; }
+.h-layer { position: absolute; inset: 0; pointer-events: none; }
+.h-back { z-index: 1; } .h-front { z-index: 3; }
+.h-art { position: absolute; right: 6%; bottom: 0; height: 94%; aspect-ratio: 1219 / 1290; margin: 0; z-index: 2;
+  -webkit-mask-image: radial-gradient(ellipse 70% 78% at 50% 44%, #000 60%, transparent 100%); mask-image: radial-gradient(ellipse 70% 78% at 50% 44%, #000 60%, transparent 100%); }
+.h-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.h-art .sketch { filter: grayscale(1) contrast(1.3) brightness(1.1); }
+.h-art .color { -webkit-mask-image: linear-gradient(100deg, #000 42%, transparent 58%); mask-image: linear-gradient(100deg, #000 42%, transparent 58%);
+  -webkit-mask-size: 260% 100%; mask-size: 260% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: 100% 0; mask-position: 100% 0;
+  transition: -webkit-mask-position 2.2s cubic-bezier(.3,.7,.2,1) .15s, mask-position 2.2s cubic-bezier(.3,.7,.2,1) .15s; }
+#hero.painted .h-art .color { -webkit-mask-position: 0 0; mask-position: 0 0; }
+.h-name { position: absolute; left: max(96px, 8vw); bottom: 15vh; z-index: 4; max-width: 46vw; }
+.h-name .hi { font: 700 1.7rem/1 var(--hand); color: #ffe3a3; display: inline-block; transform: rotate(-3deg); margin-bottom: 8px; }
+.h-name h1 { margin: 0; font-size: clamp(66px, 9vw, 150px); filter: drop-shadow(0 6px 30px rgba(20,8,40,.55)); }
+.h-name h1 .np { display: table; }
+.h-name h1 .last { margin-top: .04em; }
+.h-name p { font: 600 .78rem/1 var(--sans); letter-spacing: .34em; margin: 22px 0 10px; }
+.h-name small { display: block; font-size: .8rem; opacity: .85; }
+.h-dv { position: absolute; right: 4%; top: 15vh; z-index: 4; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+.h-dv .dv { font-size: clamp(54px, 6vw, 96px); filter: drop-shadow(0 6px 24px rgba(20,8,40,.5)); }
+.h-dv .cap { font: 600 .72rem/1 var(--sans); letter-spacing: .3em; }
+.h-dv .cap .dvs { font-size: 1.25em; }
+.h-scroll { position: absolute; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 4; display: grid; justify-items: center; gap: 8px; font: 600 .66rem/1 var(--sans); letter-spacing: .4em; }
+.h-scroll i { width: 1px; height: 46px; background: rgba(255,255,255,.4); position: relative; overflow: hidden; }
+.h-scroll i::after { content: ""; position: absolute; left: 0; top: -46px; width: 100%; height: 46px; background: #fff; animation: drop 1.8s ease-in-out infinite; }
+@keyframes drop { to { top: 46px; } }
+/* the starting console sits in the hero's lower-right corner; scrolling turns it into the handheld */
+.h-console { position: absolute; right: max(24px, 3%); bottom: calc(28px + env(safe-area-inset-bottom, 0px)); width: 200px; z-index: 5; filter: drop-shadow(0 18px 26px rgba(10,30,70,.45)); transform-origin: 100% 100%; }
+.h-console .led { background: #4dff88; box-shadow: 0 0 10px #4dff88; }
+.h-console .tag { position: absolute; right: 0; bottom: calc(100% + 10px); font: 400 7px/1.5 var(--pixel); letter-spacing: .1em; color: #fff; text-align: right; }
+@media (max-width: 900px) {
+  /* phones: the portrait sits in the upper part, the name below it where nothing covers it */
+  .h-art { height: 54%; top: 10%; bottom: auto; left: 50%; right: auto; translate: -50% 0; }
+  .h-name { left: 20px; right: 128px; bottom: 92px; max-width: none; }
+  .h-name h1 { font-size: clamp(56px, 16vw, 76px); }
+  .h-name p { margin: 12px 0 6px; }
+  .h-dv { top: 12vh; right: 4%; } .h-dv .dv { font-size: 40px; }
+  .hero-garland { top: 52px; }
+  .h-console { width: 104px; bottom: 76px; } .h-console .tag { display: none; }
+  .h-scroll { display: none; }
+}
+
+/* ---------- the handheld in the lower-right corner: Island and Pocket Wilds ---------- */
+.hcorner { position: fixed; right: max(18px, env(safe-area-inset-right, 0px)); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 60; width: 190px; height: 150px; transform-origin: 100% 100%; }
+.hcorner .float { position: absolute; inset: 0; animation: bob 4s ease-in-out infinite; }
+@keyframes bob { 50% { translate: 0 -6px; } }
+.hh { position: absolute; left: 0; right: 0; bottom: 0; height: 100px; z-index: 2; border-radius: 22px; background: linear-gradient(160deg, #ffd08a, #ff8a5c 55%, #e8506e);
+  box-shadow: inset 2px 2px 0 rgba(255,255,255,.35), inset -3px -4px 0 rgba(0,0,0,.2), 0 18px 34px rgba(10,60,55,.35); }
+.hh .slot2 { position: absolute; left: 50%; top: -4px; width: 62px; margin-left: -31px; height: 8px; border-radius: 4px; background: #5a1f3a; box-shadow: inset 0 3px 3px rgba(0,0,0,.6); }
+.hh .screenframe { position: absolute; left: 46px; right: 46px; top: 11px; bottom: 11px; border-radius: 9px; background: #1b1e26; padding: 6px; box-shadow: inset 0 2px 4px rgba(0,0,0,.7); }
+.scr { position: relative; width: 100%; height: 100%; border-radius: 4px; overflow: hidden; background: #0c0f0d; display: grid; place-items: center; text-align: center; transition: background .4s; }
+.scr .msg { font: 400 5px/1.7 var(--pixel); color: #3f5a47; letter-spacing: .08em; }
+.scr.on .msg { color: #fff; font-size: 6px; }
+.scr.on.island { background: linear-gradient(#5ab8f0 0 55%, #1d6f9a 55%); }
+.scr.on.wilds { background: linear-gradient(#77d46a 0 60%, #3c8a3e 60%); }
+.scr .blink { display: block; margin-top: 4px; animation: blink 1s steps(2) infinite; }
+.dpad { position: absolute; left: 14px; top: 50%; width: 24px; height: 24px; margin-top: -12px; }
+.dpad::before, .dpad::after { content: ""; position: absolute; background: #3a1530; border-radius: 2px; }
+.dpad::before { left: 8px; top: 0; width: 8px; height: 24px; } .dpad::after { top: 8px; left: 0; width: 24px; height: 8px; }
+.btns { position: absolute; right: 12px; top: 50%; width: 28px; height: 28px; margin-top: -14px; }
+.btns i { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: var(--coral); }
+.btns i:first-child { right: 0; top: 2px; } .btns i:last-child { left: 0; bottom: 2px; }
+.hh .pwr { position: absolute; left: 16px; top: 12px; width: 5px; height: 5px; border-radius: 50%; background: #6b2440; }
+.hh.on .pwr { background: #ff5a5a; box-shadow: 0 0 6px #ff5a5a; }
+.gcard { --rot: 0deg; position: absolute; top: 0; z-index: 1; width: 50px; height: 62px; border: 0; padding: 0; cursor: pointer; background: none; transform: rotate(var(--rot)); transition: transform .45s cubic-bezier(.2,.8,.2,1), filter .3s; }
+.gcard.island { left: 18px; --rot: -12deg; } .gcard.wilds { right: 18px; --rot: 10deg; }
+.gcard:hover, .gcard:focus-visible { transform: rotate(var(--rot)) translateY(-8px) scale(1.08); filter: drop-shadow(0 0 10px rgba(31,158,136,.7)); outline: none; }
+.gcard.flying { transition: transform .42s cubic-bezier(.3,.7,.3,1); }
+.gcard .shell { position: absolute; inset: 0; border-radius: 7px 7px 5px 5px; background: linear-gradient(160deg, #4a4f5c, #2a2d35); clip-path: polygon(0 0, 76% 0, 100% 14%, 100% 100%, 0 100%); }
+.gcard .glabel { position: absolute; left: 5px; right: 5px; top: 9px; bottom: 12px; border-radius: 3px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 2px; font: 400 4.5px/1.3 var(--pixel); color: #fff; text-align: center; text-shadow: 0 1px 0 #000; overflow: hidden; }
+.gcard.island .glabel { background: linear-gradient(#5ab8f0 0 50%, #1d6f9a 50%); }
+.gcard.wilds .glabel { background: linear-gradient(160deg, #6fcf5f, #2f7a3a); }
+.gcard .glabel svg { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); }
+.gcard .gpins { position: absolute; left: 7px; right: 7px; bottom: 3px; height: 6px; background: repeating-linear-gradient(90deg, #d6ad55 0 2px, #16181d 2px 4px); }
+.hc-tip { position: absolute; right: 0; bottom: calc(100% + 4px); font: 400 6px/1 var(--pixel); color: var(--mint); letter-spacing: .08em; white-space: nowrap; opacity: 0; transition: opacity .3s; }
+.hcorner:hover .hc-tip { opacity: 1; }
+@media (max-width: 900px) { .hcorner { width: 130px; height: 104px; } .hh { height: 70px; border-radius: 16px; } .hh .screenframe { left: 32px; right: 32px; top: 8px; bottom: 8px; } .dpad { left: 8px; transform: scale(.7); } .btns { right: 6px; transform: scale(.75); } .gcard { width: 36px; height: 44px; } .gcard.island { left: 10px; } .gcard.wilds { right: 10px; } .gcard .glabel { font-size: 3.5px; } .gcard .glabel svg { transform: translate(-50%, -50%) scale(.7); } }
+.loading { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; align-content: center; gap: 16px; background: #0b0d12; font: 400 11px/1 var(--pixel); letter-spacing: .15em; color: #4dff88; }
+.loading[hidden] { display: none; }
+.loading .bar2 { width: 200px; height: 8px; border: 2px solid #4dff88; padding: 1px; }
+.loading .bar2 i { display: block; height: 100%; width: 0; background: #4dff88; transition: width 1s steps(10); }
+.loading.run .bar2 i { width: 100%; }
+.loading small { font: 500 .8rem/1 var(--sans); color: #8a92a6; letter-spacing: 0; }
+
+/* ---------- CH.02 about ---------- */
+.about { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: clamp(32px, 6vw, 80px); align-items: start; }
+.sheet { position: relative; background: #fffdf8; border: 1px solid var(--line); border-radius: 6px; padding: 28px 28px 24px; box-shadow: 0 30px 60px rgba(60,40,10,.12); }
+.sheet .stampp { position: absolute; right: 18px; top: -14px; background: var(--coral); color: #fff; font: 400 7px/1 var(--pixel); letter-spacing: .12em; padding: 8px 10px; transform: rotate(4deg); }
+.sheet h3 { font: 700 2.4rem/1 var(--serif); margin: 0 0 4px; }
+.sheet .dvsub { font: 500 1rem/1.4 var(--dev); color: var(--muted); }
+.kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px 18px; margin: 20px 0 0; border-top: 1px solid var(--line); padding-top: 18px; }
+.kv dt { font: 400 7px/2 var(--pixel); color: var(--mint); letter-spacing: .1em; }
+.kv dd { margin: 0; }
+.kv .ok { color: var(--palm); font-weight: 600; }
+.note { background: #fffaf0; border-radius: 6px; padding: 28px 30px; box-shadow: 0 30px 60px rgba(20,8,40,.3); }
+.note p { margin: 0 0 16px; color: var(--muted); }
+.note .big1 { font: 600 clamp(1.6rem, 2.6vw, 2.2rem)/1.25 var(--serif); color: var(--ink); }
+.note .sign { font: 700 2rem/1 var(--hand); color: var(--coral); }
+.slashes { overflow: hidden; margin-top: clamp(56px, 8vw, 100px); border-block: 1px solid rgba(255,255,255,.25); padding-block: 14px; }
+.slashes div { white-space: nowrap; font: 600 clamp(1rem, 2vw, 1.35rem)/1.8 var(--sans); letter-spacing: .3em; color: #f3d9c4; will-change: transform; }
+.slashes div:nth-child(2) { color: #ffc857; margin-left: -30%; }
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: clamp(48px, 7vw, 90px); }
+.tcard { position: relative; border-radius: 16px; padding: 20px; background: #fffdf8; border: 2px solid var(--c); box-shadow: 0 0 0 4px var(--paper), 0 0 0 5px var(--c), 0 20px 40px rgba(60,40,10,.12); transition: transform .35s cubic-bezier(.2,.8,.2,1); }
+.tcard:hover { transform: translateY(-8px) rotate(-1deg); }
+.tcard .ty { display: flex; justify-content: space-between; font: 400 8px/1 var(--pixel); color: var(--c); letter-spacing: .1em; }
+.tcard h3 { font: 700 2.3rem/1 var(--serif); margin: 16px 0 4px; }
+.tcard .sub { font-size: .76rem; color: var(--dim); letter-spacing: .14em; text-transform: uppercase; }
+.tcard p { color: var(--muted); font-size: .95rem; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips i { font-style: normal; font-size: .76rem; padding: 4px 9px; border-radius: 999px; background: var(--paper); border: 1px solid var(--line); }
+@media (max-width: 900px) { .about, .cards { grid-template-columns: 1fr; } }
+
+/* ---------- CH.03 experience ---------- */
+.tl { position: relative; padding-left: 48px; display: grid; gap: 18px; max-width: 960px; margin: 0 auto; }
+.tl::before, .tl-fill { content: ""; position: absolute; left: 14px; top: 0; bottom: 0; width: 2px; background: var(--line); }
+.tl-fill { background: var(--coral); transform-origin: top; }
+.save { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 120px; gap: 18px; padding: 22px 24px; border-radius: 14px; background: #fffdf8; border: 1px solid var(--line); box-shadow: 0 18px 40px rgba(60,40,10,.1); }
+.save::before { content: ""; position: absolute; left: -42px; top: 28px; width: 14px; height: 14px; border-radius: 50%; background: var(--paper); border: 3px solid var(--coral); }
+.save .slot { font: 400 7px/1 var(--pixel); color: var(--mint); letter-spacing: .1em; }
+.save h3 { font: 700 1.9rem/1.05 var(--serif); margin: 8px 0 2px; }
+.save .co { color: var(--coral); font-weight: 600; font-size: .95rem; margin-bottom: 8px; }
+.save p, .save li { color: var(--muted); font-size: .95rem; margin: 0; }
+.save ul { margin: 6px 0 0; padding-left: 18px; }
+.save .time { text-align: right; font: 400 7px/1.8 var(--pixel); color: var(--dim); }
+.save .time b { display: block; font: 700 1.5rem/1 var(--serif); color: var(--ink); }
+@media (max-width: 760px) { .save { grid-template-columns: 1fr; } .save .time { text-align: left; } }
+
+/* ---------- CH.04 games: pinned stage + cartridge library ---------- */
+.pin { position: relative; }
+.pin-stage { position: sticky; top: 0; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding-block: 76px 20px; }
+.pin-stage > .wrap { width: 100%; min-width: 0; } /* lets the shelf scroll inside the screen instead of widening the page */
+.library, .rack { min-width: 0; max-width: 100%; }
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 70px); align-items: center; }
+.case-wrap { position: relative; width: min(100%, 520px); aspect-ratio: 5 / 4; justify-self: center; --cl: 33%; --ct: 14%; }
+.case-wrap.out { --cl: 63%; --ct: 32%; }
+.case-wrap.inserted { --cl: 63%; --ct: 60%; }
+.ocart { position: absolute; left: var(--cl); top: var(--ct); width: 28%; height: 38%; z-index: 0; border: 0; padding: 0; cursor: pointer; border-radius: 10px 10px 6px 6px; background: linear-gradient(155deg, #555b68, #2c3039);
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,.2), 0 16px 30px rgba(0,0,0,.3); transition: left .8s cubic-bezier(.2,.8,.2,1), top .7s cubic-bezier(.2,.8,.2,1); }
+.case-wrap.out .ocart { animation: hov 2.4s ease-in-out infinite; }
+.case-wrap.out .ocart:hover, .ocart:focus-visible { filter: drop-shadow(0 0 14px rgba(31,158,136,.6)); }
+.case-wrap.inserted .ocart { animation: none; cursor: default; transition: top .55s cubic-bezier(.55,0,.85,.35); }
+@keyframes hov { 50% { translate: 0 -8px; } }
+.ocart::before { content: ""; position: absolute; left: 12%; right: 12%; top: 4%; height: 6%; background: repeating-linear-gradient(180deg, rgba(0,0,0,.4) 0 2px, rgba(255,255,255,.07) 2px 4px); }
+.ocart .ol { position: absolute; left: 8%; right: 8%; top: 14%; bottom: 20%; border-radius: 5px; background: linear-gradient(160deg, var(--gc), #121520 90%); }
+.ocart .op { position: absolute; left: 14%; right: 14%; bottom: 5%; height: 8%; background: repeating-linear-gradient(90deg, #d6ad55 0 3px, #15171c 3px 5px); border-radius: 2px; }
+.ins-hint { position: absolute; left: 57%; width: 40%; top: 23%; text-align: center; font: 400 7px/1 var(--pixel); color: var(--mint); letter-spacing: .1em; opacity: 0; }
+.case-wrap.out .ins-hint { opacity: 1; animation: blink 1.1s steps(2) infinite; }
+.case-wrap.inserted .ins-hint { opacity: 0; animation: none; }
+@keyframes blink { 50% { opacity: .15; } }
+.wdock { position: absolute; right: 0; bottom: 0; width: 46%; z-index: 2; filter: drop-shadow(0 14px 22px rgba(0,0,0,.3)); }
+.case-wrap.inserted .led { background: #4dff88; box-shadow: 0 0 10px #4dff88; }
+.case { position: absolute; left: 0; top: 4%; width: 62%; height: 77.5%; z-index: 1; border-radius: 10px; overflow: hidden; background: #15171f; box-shadow: 0 30px 60px rgba(30,20,10,.35), inset 0 0 0 1px rgba(255,255,255,.08); }
+.case::before { content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none; background: linear-gradient(115deg, rgba(255,255,255,.2) 0%, transparent 30%, transparent 70%, rgba(255,255,255,.06)); }
+.case .cover { position: absolute; inset: 0; background: linear-gradient(150deg, var(--gc), #10121a 95%); }
+.case .cover img { width: 100%; height: 100%; object-fit: cover; }
+.case .initials { position: absolute; inset: 0; display: grid; place-items: center; font: 700 clamp(4rem, 11vw, 7rem)/1 var(--serif); color: rgba(255,255,255,.92); }
+.case .script { position: absolute; left: 7%; right: 7%; bottom: 14%; z-index: 3; font: 700 clamp(2rem, 4vw, 3.2rem)/.9 var(--hand); color: #fff; text-shadow: 0 3px 16px rgba(0,0,0,.65); transform: rotate(-6deg); }
+.case .sticker { position: absolute; left: 6%; bottom: 5%; z-index: 3; background: #fff; color: #111; font: 700 .6rem/1.1 var(--sans); letter-spacing: .08em; text-transform: uppercase; padding: 5px 7px; border: 2px solid #111; }
+.case .num { position: absolute; left: 6%; top: 5%; z-index: 3; font: 400 9px/1 var(--pixel); color: #fff; text-shadow: 0 1px 0 #000; }
+.case-wrap.swap .case { animation: swapin .55s cubic-bezier(.2,.8,.2,1); }
+@keyframes swapin { from { transform: translateX(-30px) rotate(-3deg); opacity: .3; } }
+.info { background: #fffaf0; border-radius: 16px; padding: 22px 24px; box-shadow: 0 24px 50px rgba(20,8,40,.3); }
+.info .count { font: 400 8px/1 var(--pixel); color: var(--mint); letter-spacing: .1em; }
+.info h3 { font: 700 clamp(2.4rem, 4.6vw, 4rem)/.95 var(--serif); margin: 12px 0 12px; }
+.info .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.info .tags span { font-size: .78rem; padding: 4px 10px; border-radius: 999px; background: #fffdf8; border: 1px solid var(--line); }
+.info p { color: var(--muted); max-width: 46ch; margin: 0 0 8px; }
+.info .stack-line { font-size: .85rem; color: var(--dim); }
+.info .links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.info .links a { text-decoration: none; font-weight: 600; font-size: .88rem; border: 1px solid var(--ink); border-radius: 999px; padding: 7px 14px; background: #fffdf8; }
+.info .links.live a { border-color: var(--mint); box-shadow: 0 0 0 3px rgba(31,158,136,.18); }
+.info .links.live::before { content: "▶ LOADED · PLAY IT HERE"; flex-basis: 100%; font: 400 7px/1 var(--pixel); color: var(--mint); letter-spacing: .1em; }
+.info .nolink { font-size: .85rem; color: var(--dim); }
+.ctrl { display: flex; gap: 10px; margin-top: 20px; }
+.ctrl button { min-width: 46px; height: 46px; border-radius: 999px; border: 1px solid var(--ink); background: #fffdf8; cursor: pointer; }
+.ctrl .insert { padding: 0 18px; font-weight: 600; font-size: .9rem; background: var(--ink); color: #fff; }
+.library { margin-top: 30px; }
+.rack { display: flex; gap: 10px; align-items: flex-end; overflow-x: auto; padding: 30px 14px 0; scrollbar-width: none; }
+.rack::-webkit-scrollbar { display: none; }
+.lcart { position: relative; flex: 0 0 auto; width: 66px; height: 86px; border: 0; padding: 0; cursor: pointer; border-radius: 8px 8px 4px 4px; background: linear-gradient(155deg, #555b68, #2c3039);
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,.2), 0 8px 14px rgba(0,0,0,.22); transition: transform .4s cubic-bezier(.2,.8,.2,1), box-shadow .3s; }
+.lcart::before { content: ""; position: absolute; left: 12%; right: 12%; top: 5px; height: 5px; background: repeating-linear-gradient(180deg, rgba(0,0,0,.4) 0 1px, rgba(255,255,255,.07) 1px 2px); }
+.lcart .ll { position: absolute; left: 6px; right: 6px; top: 14px; bottom: 20px; border-radius: 4px; overflow: hidden; background: linear-gradient(160deg, var(--gc), #121520); display: grid; place-items: center; font: 700 1rem/1 var(--serif); color: #fff; }
+.lcart .ll img { width: 100%; height: 100%; object-fit: cover; }
+.lcart .ln { position: absolute; left: 4px; right: 4px; bottom: 5px; font: 600 .5rem/1.1 var(--sans); color: #d8dbe2; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lcart:hover { transform: translateY(-8px); }
+.lcart[aria-current="true"] { transform: translateY(-24px); box-shadow: 0 0 0 3px var(--mint), 0 18px 24px rgba(0,0,0,.3); }
+.plank { height: 18px; border-radius: 4px; background: linear-gradient(#e2c391, #b88d57); box-shadow: inset 0 2px 0 rgba(255,255,255,.4), 0 12px 20px rgba(60,40,10,.2); }
+.scrollhint { text-align: center; color: #f3d9c4; font-size: .8rem; margin: 10px 0 0; }
+@media (max-width: 900px) {
+  .stage { grid-template-columns: 1fr; gap: 14px; }
+  .case-wrap { width: min(100%, 300px); }
+  .info h3 { font-size: 2.1rem; margin: 6px 0; }
+  .info p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .info .stack-line, .scrollhint { display: none; }
+  .ctrl { margin-top: 10px; }
+  .info { padding: 14px 16px; }
+  .lcart { width: 46px; height: 60px; } .lcart .ln { display: none; } .lcart .ll { bottom: 10px; top: 11px; }
+  .library { margin-top: 8px; } .rack { padding-top: 22px; }
+  .pin-stage { padding-block: 62px 60px; }
+}
+
+/* ---------- CH.05 gameplay ---------- */
+.tvset { position: relative; max-width: 760px; margin: 0 auto; padding: 26px 26px 54px; border-radius: 34px; background: linear-gradient(160deg, #7a5a3c, #4a3322); box-shadow: inset 0 2px 0 rgba(255,255,255,.15), 0 40px 80px rgba(60,40,10,.3); }
+.tvset .screen { position: relative; aspect-ratio: 16 / 10; border-radius: 26px / 34px; overflow: hidden; background: #000; box-shadow: inset 0 0 40px rgba(0,0,0,.9); }
+.tvset .screen img { width: 100%; height: 100%; object-fit: cover; }
+.tvset .screen::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(180deg, rgba(0,0,0,.25) 0 1px, transparent 1px 3px), radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.55)); pointer-events: none; }
+.tvset .play { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; text-decoration: none; }
+.tvset .play span { width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; background: rgba(226,85,61,.92); font-size: 2rem; color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,.5); transition: transform .2s; }
+.tvset .play:hover span { transform: scale(1.1); }
+.tvset .knobs { position: absolute; right: 34px; bottom: 14px; display: flex; gap: 12px; }
+.tvset .knobs i { width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #c9b8a3, #5a4632); }
+.tvset .label { position: absolute; left: 34px; bottom: 16px; font: 400 8px/1 var(--pixel); color: #e7d6bf; letter-spacing: .14em; }
+.jump { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; margin-top: 26px; }
+.jump span { font-size: .8rem; color: #f3d9c4; letter-spacing: .14em; text-transform: uppercase; margin-right: 6px; }
+.jump a { font: 400 8px/1 var(--pixel); text-decoration: none; padding: 9px 11px; border-radius: 6px; border: 1px solid var(--ink); background: #fffdf8; }
+
+/* ---------- CH.06 art: prints hanging on strings ---------- */
+.gallery { position: relative; --sway: 0deg; }
+.bigword { position: absolute; left: 50%; top: -60px; transform: translateX(-50%); font: 700 clamp(56px, 11vw, 170px)/1 var(--serif); letter-spacing: .02em; color: transparent; -webkit-text-stroke: 1px rgba(255,230,210,.28); white-space: nowrap; pointer-events: none; }
+.filters { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 30px; position: relative; }
+.filters button { border: 1px solid var(--ink); background: #fffdf8; border-radius: 999px; padding: 7px 14px; cursor: pointer; font-size: .85rem; }
+.filters button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+.string { position: relative; display: flex; justify-content: space-around; align-items: flex-start; padding-top: 34px; margin-bottom: 40px; }
+.string > svg { position: absolute; left: -2%; width: 104%; top: 6px; height: 46px; overflow: visible; }
+.hang { --rot: 0deg; position: relative; width: clamp(130px, 21%, 230px); margin-top: var(--dy, 0px); border: 0; padding: 10px 10px 36px; background: #fff; cursor: zoom-in; text-align: left;
+  box-shadow: 0 18px 30px rgba(60,40,10,.18); transform-origin: 50% -20px; transform: rotate(calc(var(--rot) + var(--sway))); transition: box-shadow .3s; }
+.hang:hover, .hang:focus-visible { box-shadow: 0 26px 44px rgba(60,40,10,.3); }
+.hang .peg { position: absolute; top: -22px; left: 50%; width: 12px; height: 30px; transform: translateX(-50%); border-radius: 3px; background: linear-gradient(90deg, #b88d57, #e2c391, #b88d57); }
+.hang img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+.hang b { position: absolute; left: 12px; right: 12px; bottom: 9px; font: 700 1.15rem/1 var(--hand); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ig { display: block; width: max-content; margin: 10px auto 0; text-decoration: none; font-weight: 600; border-bottom: 2px solid #ffc857; padding-bottom: 2px; color: #fff; }
+.lb { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; background: rgba(245,239,227,.96); padding: 24px; }
+.lb[hidden] { display: none; }
+.lb figure { margin: 0; max-width: min(92vw, 640px); }
+.lb img { max-height: 76vh; width: auto; margin: 0 auto; background: #fff; padding: 10px; box-shadow: 0 30px 60px rgba(60,40,10,.25); }
+.lb figcaption { display: flex; justify-content: space-between; gap: 16px; margin-top: 12px; color: var(--muted); font-size: .9rem; }
+.lb figcaption b { color: var(--ink); }
+.lb .x, .lb .pv, .lb .nx { position: absolute; width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--ink); background: #fffdf8; cursor: pointer; font-size: 1.1rem; }
+.lb .x { top: calc(16px + env(safe-area-inset-top, 0px)); right: 16px; } .lb .pv { left: 16px; top: 50%; } .lb .nx { right: 16px; top: 50%; }
+
+/* ---------- CH.07 tech stack ---------- */
+.lid { position: relative; max-width: 820px; aspect-ratio: 16 / 10; margin: 0 auto; border-radius: 26px; background: linear-gradient(150deg, #d9dce2, #b9bec8 60%, #a9aeb9); box-shadow: inset 0 2px 0 rgba(255,255,255,.7), 0 40px 80px rgba(60,40,10,.22); overflow: hidden; touch-action: none; }
+.lid .logo { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font: 700 3rem/1 var(--serif); color: rgba(255,255,255,.75); }
+.stk { position: absolute; left: var(--x); top: var(--y); transform: translate(-50%, -50%) rotate(var(--r)); padding: 10px 16px; border-radius: 12px; font: 700 clamp(.95rem, 2.1vw, 1.3rem)/1 var(--sans);
+  color: var(--fg, #fff); background: var(--bgc); border: 3px solid #fff; box-shadow: 0 6px 12px rgba(0,0,0,.25); cursor: grab; user-select: none; white-space: nowrap; }
+.stk.round { border-radius: 999px; }
+.stk.circle { width: clamp(64px, 11vw, 92px); height: clamp(64px, 11vw, 92px); padding: 0; border-radius: 50%; display: grid; place-items: center; }
+.stk.drag { cursor: grabbing; box-shadow: 0 18px 30px rgba(0,0,0,.35); z-index: 5; }
+.stack-note { text-align: center; color: #f3d9c4; font-size: .85rem; margin-top: 16px; }
+
+/* ---------- CH.08 achievements ---------- */
+.certs { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: clamp(28px, 5vw, 64px); align-items: center; }
+.plaque { margin: 0; padding: 18px; border-radius: 14px; background: linear-gradient(160deg, #6b4a2b, #43301c); box-shadow: inset 0 0 0 3px #c9a24a, inset 0 0 0 9px #43301c, 0 30px 60px rgba(60,40,10,.3); transform: rotate(-1deg); }
+.plaque img { border-radius: 6px; width: 100%; height: auto; }
+.achs { display: grid; gap: 16px; }
+.ach { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 14px; align-items: center; padding: 16px 18px; border-radius: 14px; background: #fffdf8; border: 1px solid var(--line); box-shadow: 0 18px 40px rgba(60,40,10,.1); }
+.ach .trophy { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--ink); box-shadow: inset 0 0 0 2px var(--tc); }
+.ach small { display: block; font: 400 7px/1.6 var(--pixel); color: var(--mint); letter-spacing: .1em; }
+.ach b { display: block; font: 700 1.45rem/1.1 var(--serif); margin: 4px 0 2px; }
+.ach span { color: var(--muted); font-size: .9rem; }
+@media (max-width: 900px) { .certs { grid-template-columns: 1fr; } }
+
+/* ---------- CH.09 contact ---------- */
+.contact-h { font: 700 clamp(56px, 10vw, 150px)/.95 var(--serif); text-align: center; margin: 0; color: #fff; text-shadow: 0 6px 30px rgba(20,8,40,.5); }
+.contact-h em { font-style: italic; color: #ffc857; }
+.cgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; margin-top: 56px; background: #fffaf0; border-radius: 18px; padding: 30px; box-shadow: 0 30px 60px rgba(20,8,40,.3); }
+.cgrid h4 { font: 400 8px/1 var(--pixel); color: var(--mint); letter-spacing: .12em; margin: 0 0 12px; }
+.cgrid p { color: var(--muted); margin: 0 0 10px; }
+.mail { font: 700 clamp(1.4rem, 2.6vw, 2rem)/1.15 var(--serif); background: none; border: 0; padding: 0; cursor: pointer; text-align: left; text-decoration: underline; text-decoration-color: var(--coral); text-underline-offset: 6px; overflow-wrap: anywhere; }
+.soc { display: grid; gap: 8px; }
+.soc a { text-decoration: none; display: flex; justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; color: #f3d9c4; font-size: .85rem; padding-block: 28px 100px; border-top: 1px solid rgba(255,255,255,.2); margin-top: 60px; }
+@media (max-width: 900px) { .cgrid { grid-template-columns: 1fr; } }
+</style>
+
+<div class="scene" id="scene" aria-hidden="true">
+  <div class="sky gold"></div><div class="sky dusk" id="skyDusk"></div><div class="sky night" id="skyNight"></div>
+  <div class="stars" id="stars"></div>
+  <div class="glow"></div>
+  <div class="sun" id="sun"></div>
+  <svg class="mtn" id="mtn" viewBox="0 0 1440 300" preserveAspectRatio="none">
+    <path fill="#6b3f8f" opacity=".78" d="M0,210 L90,150 L160,185 L250,95 L330,160 L420,120 L510,175 L600,70 L700,150 L780,110 L880,170 L960,60 L1060,150 L1150,105 L1240,165 L1330,90 L1440,160 L1440,300 L0,300Z"/>
+    <path fill="#ffe0ec" opacity=".75" d="M250,95 L276,116 L262,113 L250,124 L238,113 L224,116Z M600,70 L630,94 L614,90 L600,102 L586,90 L570,94Z M960,60 L992,86 L974,82 L960,94 L946,82 L928,86Z M1330,90 L1358,112 L1342,108 L1330,120 L1318,108 L1302,112Z"/>
+    <path fill="#47286c" d="M0,250 L120,190 L210,230 L320,160 L410,215 L520,150 L640,225 L760,175 L860,230 L980,165 L1100,225 L1210,180 L1320,235 L1440,200 L1440,300 L0,300Z"/>
+  </svg>
+  <svg class="city" id="city" viewBox="0 0 1440 220" preserveAspectRatio="none">
+    <g fill="#1c0d2c">
+      <rect x="0" y="186" width="1440" height="34"/>
+      <rect x="0" y="160" width="70" height="60"/><rect x="70" y="148" width="46" height="72"/><rect x="118" y="166" width="60" height="54"/>
+      <rect x="300" y="158" width="80" height="62"/><rect x="380" y="170" width="50" height="50"/><rect x="470" y="160" width="56" height="60"/><rect x="560" y="150" width="60" height="70"/>
+      <rect x="820" y="162" width="70" height="58"/><rect x="890" y="150" width="40" height="70"/><rect x="980" y="168" width="90" height="52"/>
+      <rect x="1250" y="155" width="70" height="65"/><rect x="1320" y="165" width="60" height="55"/><rect x="1380" y="150" width="60" height="70"/>
+      <!-- pagoda temple -->
+      <path d="M180,186 V160 H280 V186Z M168,160 L292,160 L262,140 L198,140Z M200,140 V128 H260 V140Z M188,128 L272,128 L248,110 L212,110Z M216,110 V100 H244 V110Z M204,100 L256,100 L238,86 L222,86Z M228,86 L232,86 L230,68Z"/>
+      <!-- stupa -->
+      <path d="M640,188 Q720,92 800,188Z M708,120 H732 V102 H708Z M711,102 L729,102 L723,64 L717,64Z"/><circle cx="720" cy="58" r="5"/>
+      <!-- second pagoda -->
+      <path d="M1100,186 V160 H1220 V186Z M1086,160 L1234,160 L1200,136 L1120,136Z M1124,136 V124 H1196 V136Z M1108,124 L1212,124 L1186,104 L1134,104Z M1140,104 V92 H1180 V104Z M1126,92 L1194,92 L1172,76 L1148,76Z M1158,76 L1162,76 L1160,56Z"/>
+    </g>
+    <!-- the stupa's eyes, in gold -->
+    <path d="M709,112 q5,-4 9,0 M722,112 q5,-4 9,0" stroke="#ffc857" stroke-width="1.6" fill="none"/>
+  </svg>
+  <div class="haze"></div><div class="shade"></div>
+</div>
+<div class="storm" id="storm" aria-hidden="true"></div>
+
+<!-- Boot: the console starts the portfolio (skipped when motion is off) -->
+<div class="boot" id="boot" hidden>
+  <div class="b-rig" id="brig">
+    <div class="b-monitor"><div class="b-screen" id="bscreen"><div class="b-text" id="btext"><span>INITIALIZE SYSTEM</span><b id="bpct">0%</b><span class="b-bar"><i id="bfill"></i></span></div></div></div>
+    <div class="b-neck"></div><div class="b-foot"></div>
+    <div class="b-cart" id="bcart"><div class="mcart"><div class="ml">PORTFOLIO</div><div class="mp"></div></div></div>
+    <div class="b-console"><div class="ctop"><div class="cslot"></div></div><div class="cbody"><span class="led"></span><span class="cbrand">SP-1</span><span class="vents"></span></div></div>
+  </div>
+  <div class="boot-name">SHRAYASH <span>PRADHAN</span></div>
+  <button type="button" class="boot-skip" id="bootSkip">Skip ▸</button>
+</div>
+
+<header class="top" id="top">
+  <a class="brand" href="#hero">SP</a>
+  <nav class="nav" aria-label="Chapters">
+    <a href="#about">About</a><a href="#experience">Experience</a><a href="#work">Games</a><a href="#gameplay">Gameplay</a><a href="#art">Art</a><a href="#stack">Stack</a><a href="#certs">Achievements</a><a href="#contact">Contact</a>
+  </nav>
+  <div class="tright">
+    <button type="button" class="mtoggle" id="motion"><i></i><span id="motionText">Motion on</span></button>
+    <a class="eject" href="#hero" id="eject" aria-label="Eject: back to the home page"><span>⏏ Eject</span><span aria-hidden="true">↗</span></a>
+  </div>
+</header>
+<div class="rail hide" id="rail" aria-hidden="true"><span class="no" id="railNo">CH.01</span><span class="bar"><i id="railFill"></i></span><span class="name" id="railName">START</span></div>
+
+<!-- Always-visible social dock -->
+<nav class="dock" aria-label="Find me">
+  <a href="https://github.com/shrayash1" target="_blank" rel="noopener" aria-label="GitHub" data-tip="GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.8 0c2.2-1.5 3.2-1.2 3.2-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A11.5 11.5 0 0 0 23.5 12C23.5 5.7 18.3.5 12 .5z"/></svg></a>
+  <a href="https://linkedin.com/in/shrayash-pradhan-17b905326" target="_blank" rel="noopener" aria-label="LinkedIn" data-tip="LinkedIn"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9h4v12H3zM9 9h3.8v1.7h.1c.5-1 1.8-2 3.8-2 4 0 4.8 2.6 4.8 6V21h-4v-5.3c0-1.3 0-2.9-1.8-2.9s-2 1.4-2 2.8V21H9z"/></svg></a>
+  <a href="mailto:pradhan.shrayash677@gmail.com" aria-label="Email" data-tip="Email"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.5 6.5 12 13l8.5-6.5" fill="none" stroke="currentColor" stroke-width="2"/></svg></a>
+  <a href="https://www.instagram.com/shr_vector_arts/" target="_blank" rel="noopener" aria-label="Instagram" data-tip="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.4" cy="6.6" r="1.3" fill="currentColor"/></svg></a>
+  <a href="#" data-play="wilds" aria-label="Play Pocket Wilds" data-tip="Play Pocket Wilds"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><ellipse cx="12" cy="16" rx="5" ry="4.2"/><circle cx="5.5" cy="10.5" r="2.2"/><circle cx="9.5" cy="6.5" r="2.2"/><circle cx="14.5" cy="6.5" r="2.2"/><circle cx="18.5" cy="10.5" r="2.2"/></g></svg></a>
+  <a href="#" data-play="island" aria-label="Play the Island game" data-tip="Play Island"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 7h10a5 5 0 0 1 4.9 6l-.8 4a2.5 2.5 0 0 1-4.3 1.2L14.6 16H9.4l-2.2 2.2A2.5 2.5 0 0 1 2.9 17l-.8-4A5 5 0 0 1 7 7zm0 3v1.5H5.5v1.5H7v1.5h1.5V13H10v-1.5H8.5V10zm8.5.2a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm2 2a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg></a>
+</nav>
+
+<!-- The handheld in the lower-right corner (the starting console turns into it as you scroll) -->
+<div class="hcorner" id="hcorner">
+  <div class="float">
+    <span class="hc-tip">PICK A GAME CARD</span>
+    <button class="gcard island" type="button" data-game="island" aria-label="Island game card: insert to play">
+      <span class="shell"></span>
+      <span class="glabel"><svg width="30" height="16" viewBox="0 0 40 22" aria-hidden="true"><ellipse cx="20" cy="18" rx="18" ry="5" fill="#d9c38e"/><ellipse cx="20" cy="15" rx="13" ry="4" fill="#4f9a4a"/><path d="M12 14 L15 5 L18 14Z M24 14 L27 3 L30 14Z" fill="#2f7a44"/></svg>ISLAND</span>
+      <span class="gpins"></span>
+    </button>
+    <button class="gcard wilds" type="button" data-game="wilds" aria-label="Pocket Wilds game card: insert to play">
+      <span class="shell"></span>
+      <span class="glabel"><svg width="18" height="18" viewBox="0 0 26 26" aria-hidden="true"><ellipse cx="13" cy="17" rx="7" ry="6" fill="#fff"/><circle cx="6" cy="10" r="3" fill="#fff"/><circle cx="11" cy="6" r="3" fill="#fff"/><circle cx="16" cy="6" r="3" fill="#fff"/><circle cx="21" cy="10" r="3" fill="#fff"/></svg>POCKET WILDS</span>
+      <span class="gpins"></span>
+    </button>
+    <div class="hh" id="hh">
+      <span class="slot2" id="hhslot"></span><span class="pwr"></span><span class="dpad"></span>
+      <div class="screenframe"><div class="scr" id="scr"><span class="msg">PICK A<br>GAME</span></div></div>
+      <span class="btns"><i></i><i></i></span>
+    </div>
+  </div>
+</div>
+<div class="loading" id="loading" hidden><span id="loadtext">LOADING…</span><span class="bar2"><i></i></span><small>Prototype: the real site opens the game here.</small></div>
+
+<main>
+  <!-- CH.01 -->
+  <section id="hero" data-ch="01" data-name="Start">
+    <div class="h-layer h-back" id="hBack"></div>
+    <figure class="h-art" id="hArt">
+      <img class="sketch" src="img/me-portrait.webp" alt="">
+      <img class="color" src="img/me-portrait.webp" alt="Painted portrait of Shrayash in sunglasses and a floral shirt">
+    </figure>
+    <div class="h-layer h-front" id="hFront"></div>
+    <div class="garland hero-garland" id="heroGarland"></div>
+    <div class="h-name" id="hName">
+      <span class="hi">Hello! I'm</span>
+      <h1><span class="np grad">Shrayash</span><span class="np grad last">Pradhan</span></h1>
+      <p>UNITY GAME DEVELOPER</p>
+      <small>I build games that teach and delight · Maryland, USA</small>
+    </div>
+    <div class="h-dv" aria-hidden="true"><span class="dv np grad">Namaste</span><span class="cap"><span class="dvs">नमस्ते</span> · CH.01</span></div>
+    <div class="h-console" id="hConsole" aria-hidden="true"><span class="tag">SP-1 · ON<br>SCROLL ▼</span><div class="ctop"><div class="cslot"></div></div><div class="cbody"><span class="led"></span><span class="cbrand">SP-1</span><span class="vents"></span></div></div>
+    <div class="h-scroll" aria-hidden="true">SCROLL<i></i></div>
+  </section>
+
+  <!-- CH.02 -->
+  <section id="about" data-ch="02" data-name="About">
+    <div class="wrap">
+      <header class="ch"><span class="ch-line"></span><h2 class="ch-dv np grad">About</h2><span class="ch-en"><span class="dvs">परिचय</span> · CH.02</span></header>
+      <div class="about">
+        <div class="sheet rv">
+          <span class="stampp">PLAYER 1</span>
+          <h3>Shrayash Pradhan</h3>
+          <div class="dvsub">खेल विकासकर्ता · game developer</div>
+          <dl class="kv">
+            <dt>CLASS</dt><dd>Unity Game Developer</dd>
+            <dt>LEVEL</dt><dd>4+ years of Unity &amp; C#</dd>
+            <dt>LOOT</dt><dd>15+ games shipped &amp; built</dd>
+            <dt>GUILDS</dt><dd>3 studios, team lead at 2</dd>
+            <dt>BASE</dt><dd>Maryland, USA</dd>
+            <dt>STATUS</dt><dd class="ok">Open to game development and software engineering roles</dd>
+          </dl>
+        </div>
+        <div class="note rv">
+          <p class="big1">I'm a Unity game developer with 4+ years of C#, shipping mobile and web games for kids from prototype to the App Store and Google Play.</p>
+          <p>At DarkMatter Production, Danson Solutions and Neo Digital I led small teams, trained interns, and built everything from core mechanics and quest systems to UI/UX and animation. I'm now doing a Master's in Software Design &amp; Management in Maryland, USA, and I'm open to game development and software engineering roles.</p>
+          <p class="sign">— Shrayash</p>
+        </div>
+      </div>
+      <div class="slashes" aria-hidden="true">
+        <div id="sl1">/ UNITY / C# / GAME DESIGN / LEVEL DESIGN / PROTOTYPING / UNITY / C# / GAME DESIGN / LEVEL DESIGN / PROTOTYPING /</div>
+        <div id="sl2">/ UI-UX / FIGMA / VECTOR ART / TEAM LEAD / MULTIPLAYER / UI-UX / FIGMA / VECTOR ART / TEAM LEAD / MULTIPLAYER /</div>
+      </div>
+      <div class="cards">
+        <article class="tcard rv" style="--c:#1f9e88"><div class="ty"><span>CLASS 01</span><span>★★★</span></div><h3>Gameplay</h3><div class="sub">Unity · C#</div><p>Core mechanics, quest, inventory and shop systems, physics, animation and sound, built to feel good on phones.</p><div class="chips"><i>Unity</i><i>C#</i><i>Unreal</i><i>Prototyping</i></div></article>
+        <article class="tcard rv" style="--c:#e0a325"><div class="ty"><span>CLASS 02</span><span>★★★</span></div><h3>Design</h3><div class="sub">Game · Level · UI</div><p>Game and level design for kids' learning games, plus UI/UX in Figma and my own illustration and vector art.</p><div class="chips"><i>Game design</i><i>Level design</i><i>Figma</i><i>Vector art</i></div></article>
+        <article class="tcard rv" style="--c:#e2553d"><div class="ty"><span>CLASS 03</span><span>★★★</span></div><h3>Teams</h3><div class="sub">Lead · Ship</div><p>Leading small teams, mentoring interns, testing and shipping to Google Play, the App Store and the web.</p><div class="chips"><i>Team lead</i><i>GitHub</i><i>Trello</i><i>Multiplayer</i></div></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- CH.03 -->
+  <section id="experience" data-ch="03" data-name="Experience">
+    <div class="wrap">
+      <header class="ch"><span class="ch-line"></span><h2 class="ch-dv np grad">Experience</h2><span class="ch-en"><span class="dvs">अनुभव</span> · CH.03</span></header>
+      <div class="tl" id="tl">
+        <span class="tl-fill" id="tlFill"></span>
+        <article class="save rv"><div><span class="slot">SAVE FILE 01 · IN PROGRESS</span><h3>Master's student</h3><div class="co">Washington University of Science &amp; Technology</div><p>Master's in Software Design &amp; Management, after a B.E. in Software Engineering with First Class Honors from Nepal College of Information Technology (2017–2022).</p></div><div class="time">PLAYTIME<b>2024–now</b></div></article>
+        <article class="save rv"><div><span class="slot">SAVE FILE 02 · CLEARED</span><h3>Game Developer</h3><div class="co">DarkMatter Production</div><p>Led development of KidSage Colorbook and KidSage, a learning game where a friendly yeti helps a village through shape and math quests, plus a horse race betting game.</p><ul><li>Built quest, inventory and shop systems, animation, sound and UI/UX.</li><li>Coded, prototyped and tested; trained interns as team lead.</li></ul></div><div class="time">PLAYTIME<b>2024</b></div></article>
+        <article class="save rv"><div><span class="slot">SAVE FILE 03 · CLEARED</span><h3>Game Developer &amp; Team Lead</h3><div class="co">Danson Solutions</div><p>Shipped Arithmetica, Wack-a-Rat, Spell-Splatter, Frog Jump, Vidhya's Adventure, Rhythm Game and Multi-Brawl.</p><ul><li>Prototyped, tested and mentored interns.</li></ul></div><div class="time">PLAYTIME<b>2023</b></div></article>
+        <article class="save rv"><div><span class="slot">SAVE FILE 04 · CLEARED</span><h3>Game Developer</h3><div class="co">Neo Digital Pvt. Ltd.</div><p>Designed, built, QA'd and deployed Super World Saga, 2 Player Football, Nimble Noggins and Ludo Super.</p></div><div class="time">PLAYTIME<b>2022–23</b></div></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- CH.04 -->
+  <section id="work" data-ch="04" data-name="Games" style="padding-bottom:0">
+    <div class="wrap">
+      <header class="ch"><span class="ch-line"></span><h2 class="ch-dv np grad">Games</h2><span class="ch-en"><span class="dvs">खेल</span> · CH.04</span></header>
+      <p class="lead">Mobile and web games for kids and casual players, published on Google Play, the App Store and the web. Scroll to pull each cartridge from the library, then insert it to play.</p>
+    </div>
+    <div class="pin" id="pin">
+      <div class="pin-stage">
+        <div class="wrap">
+          <div class="stage">
+            <div class="case-wrap" id="caseWrap">
+              <button type="button" class="ocart" id="ocart" aria-label="Insert the cartridge"><span class="ol"></span><span class="op"></span></button>
+              <div class="case" aria-hidden="true"><div class="cover" id="cover"></div><span class="num" id="caseNum">01</span><span class="script" id="caseScript"></span><span class="sticker" id="caseSticker"></span></div>
+              <span class="ins-hint" aria-hidden="true">▼ INSERT TO PLAY</span>
+              <div class="wdock" aria-hidden="true"><div class="ctop"><div class="cslot"></div></div><div class="cbody"><span class="led"></span><span class="cbrand">SP-1</span><span class="vents"></span></div></div>
+            </div>
+            <div class="info" aria-live="polite">
+              <span class="count" id="gCount">GAME 01 OF 11</span>
+              <h3 id="gTitle"></h3>
+              <div class="tags" id="gTags"></div>
+              <p id="gDesc"></p>
+              <p class="stack-line" id="gStack"></p>
+              <div class="links" id="gLinks"></div>
+              <div class="ctrl"><button type="button" id="gPrev" aria-label="Previous game">←</button><button type="button" class="insert" id="gInsert">Insert cartridge ▸</button><button type="button" id="gNext" aria-label="Next game">→</button></div>
+            </div>
+          </div>
+          <div class="library"><div class="rack" id="rack" aria-label="Game library"></div><div class="plank"></div></div>
+          <p class="scrollhint">Scroll to pull the next cartridge, or pick one from the shelf</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CH.05 -->
+  <section id="gameplay" data-ch="05" data-name="Gameplay">
+    <div class="wrap">
+      <header class="ch"><span class="ch-line"></span><h2 class="ch-dv np grad">Gameplay</h2><span class="ch-en"><span class="dvs">खेलाइ</span> · CH.05</span></header>
+      <p class="lead" style="margin-bottom:40px">A full playthrough of Super World Saga, all 24 levels, recorded by <a href="https://www.youtube.com/@AngryEmma" target="_blank" rel="noopener">Angry Emma</a> on YouTube.</p>
+      <div class="tvset rv">
+        <div class="screen">
+          <img src="img/super-world-saga.jpg" alt="Super World Saga">
+          <a class="play" href="https://www.youtube.com/watch?v=6bCW7ueh8qU" target="_blank" rel="noopener" aria-label="Watch the Super World Saga playthrough on YouTube"><span aria-hidden="true">▶</span></a>
+        </div>
+        <span class="label">SP-TV · CH 05</span><span class="knobs"><i></i><i></i></span>
+      </div>
+      <div class="jump"><span>Jump to</span>
+        <a href="https://www.youtube.com/watch?v=6bCW7ueh8qU&amp;t=0s" target="_blank" rel="noopener">0:00</a>
+        <a href="https://www.youtube.com/watch?v=6bCW7ueh8qU&amp;t=1151s" target="_blank" rel="noopener">19:11</a>
+        <a href="https://www.youtube.com/watch?v=6bCW7ueh8qU&amp;t=2302s" target="_blank" rel="noopener">38:22</a>
+        <a href="https://www.youtube.com/watch?v=6bCW7ueh8qU&amp;t=3453s" target="_blank" rel="noopener">57:33</a>
+        <a href="https://www.youtube.com/watch?v=6bCW7ueh8qU&amp;t=4380s" target="_blank" rel="noopener">1:13:00</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CH.06 -->
+  <section id="art" data-ch="06" data-name="Art">
+    <div class="wrap">
+      <header class="ch"><span class="ch-line"></span><h2 class="ch-dv np grad">Art</h2><span class="ch-en"><span class="dvs">कला</span> · CH.06</span></header>
+      <p class="lead" style="margin-bottom:34px">Vector portraits, paintings and hand-painted decor. More on my Instagram, <a href="https://www.instagram.com/shr_vector_arts/" target="_blank" rel="noopener">@shr_vector_arts</a>.</p>
+      <div class="gallery" id="gallery">
+        <span class="bigword" aria-hidden="true">SHR_VECTOR_ARTS</span>
+        <div class="filters" id="filters" aria-label="Filter artwork"></div>
+        <div id="strings"></div>
+      </div>
+      <a class="ig" href="https://www.instagram.com/shr_vector_arts/" target="_blank" rel="noopener">Follow @shr_vector_arts ↗</a>
+    </div>
+  </section>
+
+  <!-- CH.07 -->
+  <section id="stack" data-ch="07" data-name="Stack">
+    <div class="wrap">
+      <header class="ch"><span class="ch-line"></span><h2 class="ch-dv np grad">Tech Stack</h2><span class="ch-en"><span class="dvs">प्रविधि</span> · CH.07</span></header>
+      <p class="lead" style="margin-bottom:36px">The tools on my laptop lid. Drag the stickers around.</p>
+      <div class="lid rv" id="lid" role="list" aria-label="Tech stack"><span class="logo" aria-hidden="true">SP</span></div>
+      <p class="stack-note">Unity · C# · Unreal · C++ · Java · Python · Photon · Netcode · WebGL · Figma · Miro · GitHub · Trello</p>
+    </div>
+  </section>
+
+  <!-- CH.08 -->
+  <section id="certs" data-ch="08" data-name="Achievements">
+    <div class="wrap">
+      <header class="ch"><span class="ch-line"></span><h2 class="ch-dv np grad">Achievements</h2><span class="ch-en"><span class="dvs">उपलब्धि</span> · CH.08</span></header>
+      <div class="certs">
+        <figure class="plaque rv"><img src="img/cert-google.jpg" alt="Google for Startups Startup School: Prompt to Prototype, certificate of completion awarded to Shrayash Pradhan on December 9, 2025" loading="lazy"></figure>
+        <div class="achs">
+          <div class="ach rv" style="--tc:#e0a325"><span class="trophy" style="color:#e0a325"><svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 3h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 14.9V17h3v2H8v-2h3v-2.1A5 5 0 0 1 8.3 12H8a4 4 0 0 1-4-4V5h3V3zm-1 4v1a2 2 0 0 0 2 2V7H6zm12 0h-2v3a2 2 0 0 0 2-2V7z"/></svg></span><div><small>ACHIEVEMENT UNLOCKED · DEC 9, 2025</small><b>Startup School: Prompt to Prototype</b><span>Google for Startups · certificate of completion</span></div></div>
+          <div class="ach rv" style="--tc:#c0c7d4"><span class="trophy" style="color:#c0c7d4"><svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 3h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 14.9V17h3v2H8v-2h3v-2.1A5 5 0 0 1 8.3 12H8a4 4 0 0 1-4-4V5h3V3zm-1 4v1a2 2 0 0 0 2 2V7H6zm12 0h-2v3a2 2 0 0 0 2-2V7z"/></svg></span><div><small>ACHIEVEMENT UNLOCKED · 2019</small><b>NCIT Expo on Technology 2019</b><span>Nepal College of Information Technology · project competition certificate</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CH.09 -->
+  <section id="contact" data-ch="09" data-name="Contact">
+    <div class="wrap">
+      <header class="ch"><span class="ch-line"></span><h2 class="ch-dv np grad">Contact</h2><span class="ch-en"><span class="dvs">सम्पर्क</span> · CH.09</span></header>
+      <h2 class="contact-h">Let's make <em>a game.</em></h2>
+      <div class="cgrid">
+        <div><h4>EMAIL</h4><button type="button" class="mail" id="mail">pradhan.shrayash677@gmail.com</button><p id="copied" aria-live="polite" style="min-height:1.6em;margin-top:8px"></p>
+          <h4>BASED IN</h4><p>Maryland, USA. Open to game development and software engineering roles. References available on request.</p></div>
+        <div><h4>EDUCATION</h4><p>Master's in Software Design &amp; Management, WUST, 2024–present</p><p>B.E. Software Engineering, First Class Honors, NCIT, 2017–2022</p></div>
+        <div class="soc"><h4>SOCIAL</h4>
+          <a href="https://github.com/shrayash1" target="_blank" rel="noopener">GitHub <span>↗</span></a>
+          <a href="https://linkedin.com/in/shrayash-pradhan-17b905326" target="_blank" rel="noopener">LinkedIn <span>↗</span></a>
+          <a href="https://www.instagram.com/shr_vector_arts/" target="_blank" rel="noopener">Instagram <span>↗</span></a>
+          <a href="#hero">Back to the home console <span>⏏</span></a>
+        </div>
+      </div>
+      <footer><span>Designed and developed by <b>Shrayash Pradhan</b></span><span>© 2026 · shrayashpradhan.com.np</span></footer>
+    </div>
+  </section>
+</main>
+
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Artwork viewer" hidden>
+  <button type="button" class="pv" id="lbPrev" aria-label="Previous artwork">←</button>
+  <figure><img id="lbImg" alt=""><figcaption><span><b id="lbTitle"></b> · <span id="lbKind"></span></span><a id="lbLink" target="_blank" rel="noopener">See on Instagram ↗</a></figcaption></figure>
+  <button type="button" class="nx" id="lbNext" aria-label="Next artwork">→</button>
+  <button type="button" class="x" id="lbClose" aria-label="Close">✕</button>
+</div>
+
+<script>
+(() => {
+  const DEMO = true; // In this prototype the game pages don't exist, so the handheld shows the loading screen and then resets.
+  const $ = s => document.querySelector(s);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+
+  // ---------- motion: follows the device setting unless the visitor flips the switch ----------
+  const OS_REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let saved = null;
+  try { saved = localStorage.getItem("sp-motion"); } catch { /* storage blocked: use the device setting */ }
+  const motion = saved ? saved === "on" : !OS_REDUCE;
+  document.documentElement.classList.toggle("still", !motion);
+  $("#motionText").textContent = motion ? "Motion on" : (OS_REDUCE && !saved ? "Animations off (device) · turn on" : "Motion off · turn on");
+  $("#motion").setAttribute("aria-pressed", String(motion));
+  $("#motion").addEventListener("click", () => {
+    try { localStorage.setItem("sp-motion", motion ? "off" : "on"); } catch { /* ignore */ }
+    location.reload();
+  });
+  const G = motion && window.gsap && window.ScrollTrigger ? window.gsap : null;
+  if (G) G.registerPlugin(ScrollTrigger);
+
+  // ---------- data (same as the live portfolio) ----------
+  const GAMES = [
+    { n: "KidSage Colorbook", i: "kidsage-colorbook.jpg", c: "#fbbf24", k: "KC", tag: ["Coloring game", "iOS & Android"], d: "My latest game at DarkMatter: a coloring book for kids in the KidSage series. I built the whole game mechanism and how it all works, and led development.", s: "Unity, C#", l: [["App Store", "https://apps.apple.com/app/kidsage-colorbook/id6775496904"], ["Google Play", "https://play.google.com/store/apps/details?id=com.Darkmatter.Colorbook"]] },
+    { n: "KidSage", i: "kidsage.jpg", c: "#5eead4", k: "KS", tag: ["Learning game", "iOS & Android"], d: "A learning game for kids where a friendly yeti, Tashi, helps a village by solving shape and math quests. I built the quest, inventory and shop systems, the animation and sound, and the UI/UX.", s: "Unity, C#, Figma, Miro", l: [["App Store", "https://apps.apple.com/us/app/kidsage/id6736458717"], ["Google Play", "https://play.google.com/store/apps/details?id=com.Darkmatter.kidsage"]] },
+    { n: "Spell-Splatter", i: "spell-splatter.jpg", c: "#c084fc", k: "SS", tag: ["Spelling game", "WebGL"], d: "Shoot balloons carrying letters to spell the answer. I came up with the idea and designed the game and its balloon-pop and goo-splat animations.", s: "Unity, C#, WebGL", l: [["Danson games", "https://site.chimpvine.com"]] },
+    { n: "Frog Jump", i: "frog-jump.jpg", c: "#4ade80", k: "FJ", tag: ["Learning game", "WebGL"], d: "A web game where you hop a frog onto the leaf with the correct answer. I built the frog movement, animation, sound and a day-night cycle.", s: "Unity, C#, WebGL", l: [["Danson games", "https://site.chimpvine.com"]] },
+    { n: "Vidhya's Adventure", c: "#fb923c", k: "VA", tag: ["Farming narrative", "Nepali culture"], d: "A farming game with a narrative about Nepali culture. I developed the farming mechanics and tool interactions.", s: "Unity, C#, Figma", l: [] },
+    { n: "Nimble Noggins", c: "#f472b6", k: "NN", tag: ["Toddler mini games", "Mobile"], d: "A toddler-friendly collection of mini games. I made about 8 of them, including drawing, coloring, counting and matching.", s: "Unity, C#, Mobile", l: [["Google Play", "https://play.google.com/store/apps/details?id=com.neodigitalnp.koollearninggames"]] },
+    { n: "Ludo Super", c: "#60a5fa", k: "LS", tag: ["Board game", "Android"], d: "Digital Ludo with pawn pathing, dice rolling and animation, a random number generator and board selection menus.", s: "Unity, C#, Android", l: [["Google Play", "https://play.google.com/store/apps/details?id=com.neodigitalnp.ludoonline"]] },
+    { n: "2 Player Football", c: "#86efac", k: "2P", tag: ["Local multiplayer", "Android"], d: "A quick local two-player football game for mobile.", s: "Unity, C#, Android", l: [["Google Play", "https://play.google.com/store/apps/details?id=com.neodigitalnp.minifootball"]] },
+    { n: "Super World Saga", i: "super-world-saga.jpg", c: "#ffb703", k: "SW", tag: ["Platform runner", "Android"], d: "A free platform runner with a jetpack twist. My first published game: gameplay, game design, level design and testing.", s: "Unity, C#, Android", l: [["Full playthrough on YouTube", "https://www.youtube.com/watch?v=6bCW7ueh8qU"]] },
+    { n: "Rally Racer", c: "#f87171", k: "RR", tag: ["Racing prototype", "Open source"], d: "A racing game prototype with source code on GitHub.", s: "Unity, C#", l: [["Source on GitHub", "https://github.com/shrayash1/Rally-Racer"]] },
+    { n: "Bot Runner", c: "#94a3b8", k: "BR", tag: ["Endless runner", "Desktop build"], d: "An endless runner you can try as a downloadable build.", s: "Unity, C#", l: [["Download build", "https://drive.google.com/file/d/1W56Yp-u8T3AsY9tYaU-vVLTNzuc3iCVC/view?usp=sharing"]] },
+  ];
+  const ART = [
+    { f: "art-04.jpg", t: "Leather jacket portrait", k: "Digital art", u: "p/CE9D_GqATIV/", a: "Vector-style digital portrait of a woman with dark hair in a black leather jacket, against a background of printed text" },
+    { f: "art-09.jpg", t: "Krishna in watercolour", k: "Paintings", u: "p/CBQXbGznids/", a: "Watercolour painting of Lord Krishna in blue with a golden peacock-feather turban, playing a bamboo flute" },
+    { f: "art-10.jpg", t: "Denim & bandana", k: "Digital art", u: "p/CApOpwkgy0g/", a: "Vector portrait of a woman in a denim jacket and blue bandana holding a glass, over a chalk-doodle background" },
+    { f: "art-06.jpg", t: "Buddha at sunset", k: "Paintings", u: "p/CEeHg9unQx5/", a: "Painting on wooden planks of a seated Buddha silhouette against a glowing orange sun on a deep red background" },
+    { f: "art-11.jpg", t: "Shearling jacket portrait", k: "Digital art", u: "p/CAQBJpLj4Mg/", a: "Vector portrait of a man in round sunglasses and a brown shearling jacket on a turquoise background with orange swirls" },
+    { f: "art-03.jpg", t: "Sunset elephants", k: "Painted decor", u: "p/CGHZDoUHZQM/", a: "Hand-painted plate showing an elephant and its calf in silhouette against a red and yellow sunset" },
+    { f: "art-12.jpg", t: "Aviators portrait", k: "Digital art", u: "p/CAMtgdrjEgc/", a: "Vector portrait of a man in aviator sunglasses and a pink shirt on a yellow and blue striped background" },
+    { f: "art-01.jpg", t: "Happy Janmashtami", k: "Digital art", u: "reel/DNer_BFOPpF/", a: "Digital illustration of Lord Krishna with a peacock-feather crown and flute, with Happy Krishna Janmashtami lettering" },
+    { f: "art-05.jpg", t: "Mickey & Minnie bottles", k: "Painted decor", u: "p/CEg_6WPHIjG/", a: "Two glass bottles hand-painted as Minnie Mouse with a polka-dot bow and Mickey Mouse with ears and buttons" },
+    { f: "art-02.jpg", t: "Floral plate", k: "Painted decor", u: "p/CGHk6qtH-Z8/", a: "Bright blue hand-painted plate decorated with pink flowers and leaves" },
+    { f: "art-07.jpg", t: "Love is life", k: "Painted decor", u: "p/CEeGYwEHC_1/", a: "Yellow hand-painted wooden wall hanging with hummingbirds and branches above a small sign reading Love is life" },
+    { f: "art-08.jpg", t: "Krishna sketch", k: "Sketches", u: "reel/CBQnAVAgQHD/", a: "Pencil sketch in progress of Lord Krishna playing the flute" },
+  ];
+  const STACK = [
+    ["Unity", "#111", "#fff", "", 18, 24, -8], ["C#", "#8b5cf6", "#fff", "circle", 40, 20, 6], ["Unreal", "#0f172a", "#fff", "round", 70, 22, -4],
+    ["C++", "#2563eb", "#fff", "circle", 86, 46, 10], ["Java", "#f59e0b", "#1a1a1a", "", 16, 56, 5], ["Python", "#facc15", "#1d4ed8", "round", 36, 74, -6],
+    ["Photon", "#ef4444", "#fff", "", 62, 80, 8], ["Netcode", "#10b981", "#04201b", "round", 84, 78, -10], ["WebGL", "#e2553d", "#fff", "", 30, 42, 3],
+    ["Figma", "#f472b6", "#1a1a1a", "circle", 66, 50, -7], ["Miro", "#ffd02f", "#1a1a1a", "round", 50, 30, 12], ["GitHub", "#1e2233", "#fff", "", 12, 86, -3], ["Trello", "#0ea5e9", "#fff", "round", 88, 14, 5],
+  ];
+  const HGAMES = { island: { name: "Island", page: "world.html" }, wilds: { name: "Pocket Wilds", page: "pocket-wilds/" } };
+
+  // ---------- prayer flags: the five colours, on strings above each chapter and across the hero ----------
+  const FLAGC = ["#1e5bb8", "#f5f1e6", "#d8262e", "#2f9e44", "#f4c20d"];
+  function buildGarland(el, n, sag = 26) {
+    el.innerHTML = `<svg viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0,2 Q50,${sag} 100,2" fill="none" stroke="rgba(255,236,214,.75)" stroke-width="1.2" vector-effect="non-scaling-stroke"/></svg>`;
+    for (let i = 0; i < n; i++) {
+      const t = (i + .5) / n, y = (1 - t) * (1 - t) * 2 + 2 * (1 - t) * t * sag + t * t * 2; // point on the string, in viewBox units (40 = 80px)
+      const f = document.createElement("span");
+      f.className = "flag";
+      f.style.cssText = `left:${(t * 100).toFixed(2)}%;top:${(y * 2).toFixed(1)}px;--c:${FLAGC[i % 5]};--rot:${((1 - 2 * t) * 9).toFixed(1)}deg;--d:${(-(i % 6) * .35).toFixed(2)}s`;
+      el.appendChild(f);
+    }
+  }
+  const nFlags = innerWidth < 700 ? 9 : 15;
+  buildGarland($("#heroGarland"), innerWidth < 700 ? 10 : 22, 18);
+  document.querySelectorAll(".ch").forEach(ch => { const g = document.createElement("div"); g.className = "garland"; g.setAttribute("aria-hidden", "true"); ch.before(g); buildGarland(g, nFlags); });
+  // stars for the night sky
+  for (let i = 0; i < 70; i++) { const st = document.createElement("i"); st.style.cssText = `left:${(i * 37.7) % 100}%;top:${(i * 53.3) % 100}%;opacity:${(.4 + (i % 5) * .12).toFixed(2)}`; $("#stars").appendChild(st); }
+
+  // ---------- smooth scrolling (Lenis), like tenztan.in ----------
+  let lenis = null;
+  if (motion && window.Lenis) {
+    lenis = new Lenis({ duration: 1.15, smoothWheel: true });
+    const raf = t => { lenis.raf(t); requestAnimationFrame(raf); };
+    requestAnimationFrame(raf);
+    if (G) lenis.on("scroll", ScrollTrigger.update);
+  }
+  const scrollToY = y => lenis ? lenis.scrollTo(y) : scrollTo({ top: y, behavior: motion ? "smooth" : "auto" });
+  document.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener("click", e => {
+    const id = a.getAttribute("href");
+    if (id === "#") return;
+    const t = document.querySelector(id);
+    if (!t) return;
+    e.preventDefault();
+    scrollToY(t.getBoundingClientRect().top + scrollY);
+  }));
+
+  // ---------- hero intro ----------
+  const hero = $("#hero");
+  function heroIntro() {
+    hero.classList.add("painted"); // the colour paints over the pencil sketch
+    if (!G) return;
+    G.from("#hName > *", { y: 50, opacity: 0, stagger: .12, duration: 1, ease: "power4.out" });
+    G.from("#heroGarland .flag", { y: -40, opacity: 0, stagger: .03, duration: .8, ease: "back.out(1.6)" });
+    G.from(".h-dv", { x: 40, opacity: 0, duration: 1.1, ease: "power3.out", delay: .2 });
+    G.from("#hConsole", { y: 60, opacity: 0, duration: .9, ease: "back.out(1.6)", delay: .5 });
+  }
+
+  // ---------- boot: cartridge in, count to 100%, the screen zooms into the hero ----------
+  function boot() {
+    const b = $("#boot");
+    if (!G) { heroIntro(); return; }
+    b.hidden = false;
+    lenis?.stop();
+    const pct = { v: 0 };
+    let done = false;
+    const finish = () => { if (done) return; done = true; b.remove(); lenis?.start(); heroIntro(); };
+    const tl = G.timeline({ onComplete: finish });
+    tl.from("#brig", { y: 40, opacity: 0, duration: .6, ease: "power3.out" })
+      .from("#bcart", { y: -160, duration: .55, ease: "power2.in" }, "-=.1")
+      .add(() => b.classList.add("on"))
+      .to(pct, { v: 100, duration: 1.5, ease: "power1.inOut", onUpdate: () => { $("#bpct").textContent = Math.round(pct.v) + "%"; $("#bfill").style.width = pct.v + "%"; } })
+      .to("#btext", { opacity: 0, duration: .2 })
+      .add(() => {
+        // zoom the whole rig so the monitor screen fills the window, centred, then fade into the hero
+        const rig = $("#brig"), r = $("#bscreen").getBoundingClientRect(), rr = rig.getBoundingClientRect();
+        const s = Math.max(innerWidth / r.width, innerHeight / r.height) * 1.15;
+        G.set(rig, { transformOrigin: `${r.left + r.width / 2 - rr.left}px ${r.top + r.height / 2 - rr.top}px` });
+        tl.to(rig, { x: innerWidth / 2 - (r.left + r.width / 2), y: innerHeight / 2 - (r.top + r.height / 2), scale: s, duration: .85, ease: "power3.in" }, ">")
+          .to("#bscreen", { backgroundColor: "#c2406e", duration: .4 }, "<.2")
+          .to(b, { autoAlpha: 0, duration: .35 });
+      });
+    $("#bootSkip").addEventListener("click", () => { tl.kill(); finish(); });
+    // Safety net: if the browser pauses animation frames (a background tab, a power saver), never leave the boot screen up.
+    setTimeout(() => { if (!done) { tl.kill(); finish(); } }, 7000);
+  }
+
+  // ---------- scroll-driven scenes (GSAP ScrollTrigger) ----------
+  if (G) {
+    const scrub = { trigger: "#hero", start: "top top", end: "bottom top", scrub: true };
+    G.to("#hArt", { yPercent: 10, scale: 1.05, ease: "none", scrollTrigger: scrub });
+    G.to("#hBack", { yPercent: 18, ease: "none", scrollTrigger: scrub });
+    G.to("#hFront", { yPercent: -35, ease: "none", scrollTrigger: scrub });
+    G.to("#hName", { y: -90, opacity: .2, ease: "none", scrollTrigger: scrub });
+    if (matchMedia("(hover: hover)").matches) {
+      const qb = G.quickTo("#hBack", "x", { duration: .9 }), qf = G.quickTo("#hFront", "x", { duration: .9 }), qa = G.quickTo("#hArt", "x", { duration: 1.2 });
+      hero.addEventListener("pointermove", e => { const m = e.clientX / innerWidth - .5; qb(m * -26); qf(m * 46); qa(m * -12); });
+    }
+    // the starting console stays in the corner while it shrinks away, and the handheld grows in its place
+    G.set("#hcorner", { autoAlpha: 0, scale: .4, y: 30 });
+    G.timeline({ scrollTrigger: { trigger: "#hero", start: "top top", end: "bottom 35%", scrub: true } })
+      .to("#hConsole", { y: () => hero.offsetHeight * .65, scale: .35, autoAlpha: 0, ease: "none" }, 0)
+      .to("#hcorner", { autoAlpha: 1, scale: 1, y: 0, ease: "none" }, .35);
+    // leaf storm as the hero scrolls away
+    // a gust of prayer flags sweeps up the screen as the hero scrolls away
+    const storm = $("#storm"), sp = [];
+    for (let i = 0; i < 46; i++) {
+      const el = document.createElement("span"), w = 30 + (i % 5) * 12;
+      el.className = "flag";
+      el.style.cssText = `left:${(i * 23.7) % 100}%;top:0;width:${w}px;height:${Math.round(w * 1.25)}px;--c:${FLAGC[i % 5]};--rot:${(i * 41) % 60 - 30}deg;--d:${(i % 7) * -.3}s`;
+      storm.appendChild(el);
+      sp.push(el);
+    }
+    G.set(sp, { y: () => innerHeight * 1.2 });
+    G.timeline({ scrollTrigger: { trigger: "#hero", start: "bottom 90%", end: "bottom -30%", scrub: 1 } })
+      .to(sp, { y: () => -innerHeight * 1.4, rotation: "+=200", ease: "none", stagger: { each: .02, from: "random" } });
+    // the sun sets, the sky turns from golden hour to dusk to night, and the hills lean with the mouse
+    const maxS = () => ScrollTrigger.maxScroll(window);
+    G.to("#sun", { y: () => innerHeight * .34, ease: "none", scrollTrigger: { start: 0, end: () => maxS() * .8, scrub: true } });
+    G.to("#skyDusk", { opacity: 1, ease: "none", scrollTrigger: { start: () => maxS() * .15, end: () => maxS() * .5, scrub: true } });
+    G.to("#skyNight, #stars", { opacity: 1, ease: "none", scrollTrigger: { start: () => maxS() * .55, end: () => maxS() * .9, scrub: true } });
+    G.to("#mtn", { y: () => innerHeight * .05, ease: "none", scrollTrigger: { start: 0, end: () => maxS(), scrub: true } });
+    if (matchMedia("(hover: hover)").matches) {
+      const qm = G.quickTo("#mtn", "x", { duration: 1.2 }), qc = G.quickTo("#city", "x", { duration: 1 });
+      addEventListener("pointermove", e => { const m = e.clientX / innerWidth - .5; qm(m * -16); qc(m * -30); }, { passive: true });
+    }
+    document.querySelectorAll(".ch").forEach(ch => {
+      const tl = G.timeline({ scrollTrigger: { trigger: ch, start: "top 82%" } });
+      tl.from(ch.querySelector(".ch-line"), { scaleY: 0, duration: .7, ease: "power2.out" })
+        .from(ch.querySelector(".ch-dv"), { y: 50, opacity: 0, filter: "blur(10px)", duration: 1, ease: "power3.out" }, "-=.3")
+        .from(ch.querySelector(".ch-en"), { opacity: 0, letterSpacing: "0.05em", duration: .9, ease: "power2.out" }, "-=.6");
+    });
+    document.querySelectorAll(".rv").forEach(el => G.from(el, { y: 60, opacity: 0, duration: 1, ease: "power3.out", scrollTrigger: { trigger: el, start: "top 88%" } }));
+    G.to("#sl1", { xPercent: -18, ease: "none", scrollTrigger: { trigger: ".slashes", start: "top bottom", end: "bottom top", scrub: true } });
+    G.to("#sl2", { xPercent: 14, ease: "none", scrollTrigger: { trigger: ".slashes", start: "top bottom", end: "bottom top", scrub: true } });
+    G.fromTo("#tlFill", { scaleY: 0 }, { scaleY: 1, ease: "none", scrollTrigger: { trigger: "#tl", start: "top 70%", end: "bottom 60%", scrub: true } });
+    G.from(".contact-h", { y: 80, opacity: 0, duration: 1.2, ease: "power4.out", scrollTrigger: { trigger: ".contact-h", start: "top 85%" } });
+  }
+
+  // ---------- handheld: put a game card in to play Island or Pocket Wilds ----------
+  let busyH = false;
+  async function insertGame(btn) {
+    if (busyH) return;
+    busyH = true;
+    if (G) G.to("#hcorner", { autoAlpha: 1, scale: 1, y: 0, duration: .3 });
+    const g = HGAMES[btn.dataset.game];
+    const s = $("#hhslot").getBoundingClientRect(), b = btn.getBoundingClientRect();
+    const dx = (s.left + s.width / 2) - (b.left + b.width / 2), above = (s.top - b.height / 2 - 4) - (b.top + b.height / 2);
+    btn.classList.add("flying");
+    btn.style.transform = `translate(${dx}px, ${above}px) rotate(0deg)`;
+    await wait(motion ? 450 : 0);
+    btn.style.transform = `translate(${dx}px, ${above + b.height * .62}px) rotate(0deg)`;
+    await wait(motion ? 380 : 0);
+    $("#hh").classList.add("on");
+    $("#scr").className = `scr on ${btn.dataset.game}`;
+    $("#scr").innerHTML = `<span class="msg">${g.name.toUpperCase()}<span class="blink">PRESS START</span></span>`;
+    await wait(1000);
+    const L = $("#loading");
+    $("#loadtext").textContent = `LOADING ${g.name.toUpperCase()}…`;
+    L.hidden = false; L.classList.remove("run"); void L.offsetWidth; L.classList.add("run");
+    await wait(1200);
+    if (!DEMO) { location.href = g.page; return; }
+    await wait(500);
+    L.hidden = true;
+    btn.classList.remove("flying"); btn.style.transform = "";
+    $("#hh").classList.remove("on"); $("#scr").className = "scr"; $("#scr").innerHTML = `<span class="msg">PICK A<br>GAME</span>`;
+    busyH = false;
+  }
+  document.querySelectorAll(".gcard").forEach(c => c.addEventListener("click", () => insertGame(c)));
+  document.querySelectorAll("[data-play]").forEach(a => a.addEventListener("click", e => { e.preventDefault(); insertGame(document.querySelector(`.gcard[data-game="${a.dataset.play}"]`)); }));
+
+  // ---------- top bar, chapter rail and the game library follow the scroll ----------
+  const sections = [...document.querySelectorAll("main section[data-ch]")];
+  const navLinks = [...document.querySelectorAll(".nav a")];
+  let lastY = scrollY, vel = 0, ticking = false;
+  function frame() {
+    ticking = false;
+    const y = scrollY, max = document.documentElement.scrollHeight - innerHeight;
+    $("#top").classList.toggle("on-paper", y > hero.offsetHeight - 70);
+    $("#rail").classList.toggle("hide", y < hero.offsetHeight * .6);
+    let cur = sections[0];
+    for (const s of sections) if (s.getBoundingClientRect().top < innerHeight * .45) cur = s;
+    $("#railNo").textContent = "CH." + cur.dataset.ch;
+    $("#railName").textContent = cur.dataset.name.toUpperCase();
+    $("#railFill").style.height = (max > 0 ? y / max * 100 : 0).toFixed(1) + "%";
+    navLinks.forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + cur.id));
+    workScroll();
+  }
+  addEventListener("scroll", () => { vel = scrollY - lastY; lastY = scrollY; if (!ticking) { ticking = true; requestAnimationFrame(frame); } }, { passive: true });
+  addEventListener("resize", frame);
+
+  // ---------- games: the case, the console and the cartridge library ----------
+  let gi = -1;
+  const rack = $("#rack");
+  rack.innerHTML = GAMES.map((g, i) => `<button type="button" class="lcart" style="--gc:${g.c}" data-i="${i}" aria-label="${g.n}"><span class="ll">${g.i ? `<img src="img/${g.i}" alt="">` : g.k}</span><span class="ln">${g.n}</span></button>`).join("");
+  const lcarts = [...rack.children];
+  function showGame(i, anim = true) {
+    if (i === gi) return;
+    gi = i;
+    const g = GAMES[gi], wrap = $("#caseWrap");
+    wrap.classList.remove("inserted"); $("#gInsert").textContent = "Insert cartridge ▸"; $("#gLinks").classList.remove("live");
+    wrap.style.setProperty("--gc", g.c);
+    $("#cover").innerHTML = g.i ? `<img src="img/${g.i}" alt="">` : `<span class="initials">${g.k}</span>`;
+    $("#caseNum").textContent = String(gi + 1).padStart(2, "0");
+    $("#caseScript").textContent = g.n;
+    $("#caseSticker").textContent = g.tag[0];
+    $("#gCount").textContent = `GAME ${String(gi + 1).padStart(2, "0")} OF ${GAMES.length}`;
+    $("#gTitle").textContent = g.n;
+    $("#gTags").innerHTML = g.tag.map(t => `<span>${t}</span>`).join("");
+    $("#gDesc").textContent = g.d;
+    $("#gStack").textContent = "Built with " + g.s;
+    $("#gLinks").innerHTML = g.l.length ? g.l.map(([t, u]) => `<a href="${u}" target="_blank" rel="noopener">${t} ↗</a>`).join("") : `<span class="nolink">No public link yet.</span>`;
+    lcarts.forEach((b, k) => b.setAttribute("aria-current", k === gi ? "true" : "false"));
+    const b = lcarts[gi];
+    rack.scrollTo({ left: b.offsetLeft - rack.clientWidth / 2 + b.offsetWidth / 2, behavior: motion ? "smooth" : "auto" });
+    if (anim && motion) { wrap.classList.remove("out", "swap"); void wrap.offsetWidth; wrap.classList.add("swap"); setTimeout(() => wrap.classList.add("out"), 260); }
+    else wrap.classList.add("out");
+  }
+  const pin = $("#pin"), N = GAMES.length;
+  pin.style.height = `calc(100vh + ${(N - 1) * 55}vh)`;
+  const pinRange = () => [pin.getBoundingClientRect().top + scrollY, pin.offsetHeight - innerHeight];
+  function workScroll() {
+    const [top, range] = pinRange();
+    showGame(clamp(Math.round((scrollY - top) / range * (N - 1)), 0, N - 1));
+  }
+  const goGame = i => { const [top, range] = pinRange(); scrollToY(top + range * clamp(i, 0, N - 1) / (N - 1) + 1); };
+  $("#gPrev").addEventListener("click", () => goGame(gi - 1));
+  $("#gNext").addEventListener("click", () => goGame(gi + 1));
+  lcarts.forEach(b => b.addEventListener("click", () => goGame(+b.dataset.i)));
+  function insertCart() {
+    const w = $("#caseWrap");
+    if (w.classList.contains("inserted")) { w.classList.remove("inserted"); $("#gInsert").textContent = "Insert cartridge ▸"; $("#gLinks").classList.remove("live"); return; }
+    w.classList.add("out", "inserted");
+    $("#gInsert").textContent = "⏏ Eject";
+    setTimeout(() => { if (w.classList.contains("inserted")) $("#gLinks").classList.add("live"); }, motion ? 600 : 0);
+  }
+  $("#ocart").addEventListener("click", insertCart);
+  $("#gInsert").addEventListener("click", insertCart);
+
+  // ---------- art: prints hang on strings and sway with the scroll speed ----------
+  const KINDS = ["All", "Digital art", "Paintings", "Painted decor", "Sketches"];
+  let kind = "All", list = ART, li = 0, opener = null;
+  $("#filters").innerHTML = KINDS.map(k => `<button type="button" aria-pressed="${k === "All"}">${k}</button>`).join("");
+  function hangArt() {
+    list = ART.filter(a => kind === "All" || a.k === kind);
+    const per = innerWidth < 700 ? 2 : 4, rows = [];
+    for (let i = 0; i < list.length; i += per) rows.push(list.slice(i, i + per));
+    $("#strings").innerHTML = rows.map((row, r) => `<div class="string"><svg viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0,4 Q50,${row.length > 1 ? 34 : 14} 100,4" fill="none" stroke="#d46a7e" stroke-width="1.4" vector-effect="non-scaling-stroke"/></svg>${row.map((a, k) => {
+      const t = (k + .5) / per, dy = Math.round(26 * 4 * t * (1 - t));
+      return `<button type="button" class="hang" data-i="${list.indexOf(a)}" style="--rot:${[-3, 2, -1.5, 3][(k + r) % 4]}deg;--dy:${dy}px" aria-label="${a.t}, ${a.k}. Open larger"><span class="peg"></span><img src="img/${a.f}" alt="${a.a}" loading="lazy"><b>${a.t}</b></button>`;
+    }).join("")}</div>`).join("");
+    document.querySelectorAll(".hang").forEach(h => h.addEventListener("click", () => { opener = h; lbShow(+h.dataset.i); $("#lb").hidden = false; $("#lbClose").focus(); }));
+  }
+  [...$("#filters").children].forEach(b => b.addEventListener("click", () => {
+    kind = b.textContent;
+    [...$("#filters").children].forEach(x => x.setAttribute("aria-pressed", x === b));
+    hangArt();
+  }));
+  let lastPer = innerWidth < 700 ? 2 : 4;
+  addEventListener("resize", () => { const p = innerWidth < 700 ? 2 : 4; if (p !== lastPer) { lastPer = p; hangArt(); } });
+  hangArt();
+  if (motion) {
+    let sway = 0;
+    const swing = () => { sway += (clamp(vel * .35, -9, 9) - sway) * .08; vel *= .9; $("#gallery").style.setProperty("--sway", sway.toFixed(2) + "deg"); requestAnimationFrame(swing); };
+    requestAnimationFrame(swing);
+  }
+  function lbShow(i) {
+    li = (i + list.length) % list.length; const a = list[li];
+    $("#lbImg").src = "img/" + a.f; $("#lbImg").alt = a.a; $("#lbTitle").textContent = a.t; $("#lbKind").textContent = a.k; $("#lbLink").href = "https://www.instagram.com/" + a.u;
+  }
+  const lbClose = () => { $("#lb").hidden = true; opener?.focus(); };
+  $("#lbClose").addEventListener("click", lbClose);
+  $("#lbPrev").addEventListener("click", () => lbShow(li - 1));
+  $("#lbNext").addEventListener("click", () => lbShow(li + 1));
+  $("#lb").addEventListener("click", e => { if (e.target === $("#lb")) lbClose(); });
+  addEventListener("keydown", e => {
+    if ($("#lb").hidden) return;
+    if (e.key === "Escape") lbClose(); else if (e.key === "ArrowLeft") lbShow(li - 1); else if (e.key === "ArrowRight") lbShow(li + 1);
+  });
+
+  // ---------- tech stickers: drag them around the lid ----------
+  const lid = $("#lid");
+  STACK.forEach(([t, bg, fg, shape, x, y, r]) => {
+    const s = document.createElement("span");
+    s.className = "stk " + shape; s.textContent = t; s.setAttribute("role", "listitem");
+    s.style.cssText = `--x:${x}%;--y:${y}%;--r:${r}deg;--bgc:${bg};--fg:${fg}`;
+    lid.appendChild(s);
+  });
+  let drag = null;
+  lid.addEventListener("pointerdown", e => { const s = e.target.closest(".stk"); if (!s) return; drag = s; s.classList.add("drag"); s.setPointerCapture(e.pointerId); lid.appendChild(s); });
+  lid.addEventListener("pointermove", e => {
+    if (!drag) return;
+    const r = lid.getBoundingClientRect();
+    drag.style.setProperty("--x", clamp((e.clientX - r.left) / r.width * 100, 4, 96) + "%");
+    drag.style.setProperty("--y", clamp((e.clientY - r.top) / r.height * 100, 6, 94) + "%");
+  });
+  const drop = () => { if (drag) { drag.classList.remove("drag"); drag = null; } };
+  lid.addEventListener("pointerup", drop); lid.addEventListener("pointercancel", drop);
+
+  // ---------- copy email ----------
+  $("#mail").addEventListener("click", () => {
+    const ok = () => { $("#copied").textContent = "Copied to your clipboard."; setTimeout(() => { $("#copied").textContent = ""; }, 1800); };
+    navigator.clipboard?.writeText("pradhan.shrayash677@gmail.com").then(ok, () => { const r = document.createRange(); r.selectNodeContents($("#mail")); getSelection().removeAllRanges(); getSelection().addRange(r); });
+  });
+
+  // ---------- start ----------
+  showGame(0, false);
+  frame();
+  if (motion) boot(); else heroIntro();
+})();
+</script>
