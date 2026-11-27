@@ -77,6 +77,13 @@ describe("Game", () => {
     expect(update).toHaveBeenLastCalledWith(expect.any(Number), 0.25);
   });
 
+  it("calls setLamps only after build has run", async () => {
+    const order: string[] = [];
+    const g5 = new Game({ host: {} as HTMLElement, era: "school" });
+    await g5.start({ ...chapter, build: async () => { order.push("build"); }, setLamps: () => { order.push("lamps"); } });
+    expect(order).toEqual(["build", "lamps"]);
+  });
+
   it("clamps the player to the chapter bounds", () => {
     inp.move = { x: 1, y: 0 };
     for (let i = 0; i < 100; i++) g.step(0.05);

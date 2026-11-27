@@ -39,8 +39,9 @@ export class Game {
     this.r = r; this.chapter = chapter;
     store.set({ loading: true });
     this.sky = createSky(this.scene, r.renderer);
-    chapter.setLamps?.(this.sky.setTime(chapter.time));
+    const lamps = this.sky.setTime(chapter.time);
     await chapter.build(this.scene);
+    chapter.setLamps?.(lamps); // after build: the chapter only has its lamp materials once built
     if (this.disposed) return;
     this.pc = await loadPlayer(this.opts.era, (note) => store.set({ note }));
     if (this.disposed) return;

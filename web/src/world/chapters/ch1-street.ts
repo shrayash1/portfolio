@@ -5,7 +5,7 @@ import { put, rbox, mergeBuckets } from "../engine/build";
 export const ROAD = 3.2; // road half-width
 export const WALK = 4.6; // building line
 export const SZ = -158; // stupa centre z
-export const CAFE_Z = -60, TEA_Z = -14, GATE_Z = -140;
+export const CAFE_Z = -58.5, TEA_Z = -14, GATE_Z = -140;
 
 export function buildStreet(scene: THREE.Scene) {
   let seed = 7;
@@ -158,8 +158,8 @@ export function buildStreet(scene: THREE.Scene) {
 
   // the cyber café's glowing doorway (unlit material, so it glows by day)
   const glow = new THREE.MeshBasicMaterial({ color: 0xffc46b });
-  const door = new THREE.Mesh(BOX, glow); door.scale.set(0.12, 2.2, 1.4); door.position.set(WALK - 0.1, 1.26, CAFE_Z);
-  const cafeSign = new THREE.Mesh(BOX, glow); cafeSign.scale.set(0.1, 0.4, 2.2); cafeSign.position.set(WALK - 0.15, 3.0, CAFE_Z);
+  const door = new THREE.Mesh(BOX, glow); door.scale.set(0.12, 2.2, 1.4); door.position.set(WALK - 0.18, 1.26, CAFE_Z);
+  const cafeSign = new THREE.Mesh(BOX, glow); cafeSign.scale.set(0.1, 0.4, 2.2); cafeSign.position.set(WALK - 0.15, 3.4, CAFE_Z);
   scene.add(door, cafeSign);
 
   mergeBuckets(scene, mats);
