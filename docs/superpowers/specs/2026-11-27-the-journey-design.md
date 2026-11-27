@@ -132,7 +132,7 @@ Side quests: the 11 games, placed as described on the design canvas (arcade cabi
 
 ## Milestones
 
-1. **Vertical slice:** Chapter 1 complete, plus the start screen, Chapter select, HUD, dialogue, objective, touch controls and quality modes. Replaces `world.html`.
+1. **Vertical slice: DONE (2026-11-27).** Chapter 1 playable at `world.html`, with start screen, chapter select, HUD, pause/settings and touch controls. The player is Shrayash's school-era avatar, NPCs come from Mesh2Motion, and there are High/Lite quality modes.
 2. Chapters 2–5.
 3. Chapter 6 cutscene, and Chapter 7 with free roam, side quests and the ending.
 4. Polish: sound, phone tuning, the custom player model, credits.
