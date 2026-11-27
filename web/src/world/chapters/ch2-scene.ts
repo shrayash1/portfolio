@@ -42,7 +42,7 @@ export function buildCampus(scene: THREE.Scene) {
   const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const c = (key: string, geo: THREE.BufferGeometry, color: number, ...a: number[]) => put(key, tint(geo, color), ...(a as [number, number, number]));
   const mats: Record<string, THREE.Material> = {
-    ground: new THREE.MeshStandardMaterial({ color: 0x5e8a46, roughness: 1 }),
+    ground: new THREE.MeshStandardMaterial({ color: 0x62874a, roughness: 1 }),
     terrain: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }),
     pool: new THREE.MeshStandardMaterial({ color: 0x2b6470, roughness: 0.05, metalness: 0.25 }),
     bike: bikeMaterial(),
@@ -50,6 +50,9 @@ export function buildCampus(scene: THREE.Scene) {
 
   // ---------- campus ----------
   put("ground", new THREE.PlaneGeometry(1400, 1400), 200, 0, 0, 0, -Math.PI / 2); // reaches the falls too
+  // the lawn inside the compound: patchy greens, not one flat colour
+  put("flat", heightfield(0, 0.2, WALL_X * 2, 34.8, 36, 42, () => 0.005, (_y, _s, x, z) =>
+    new THREE.Color(0x55823f).lerp(new THREE.Color(0x7c9a52), wave(x * 5, z * 5, 3)).lerp(new THREE.Color(0x4a7239), 0.35 * wave(z * 11, x * 9, 8)).getHex()), 0, 0, 0);
   c("flat", BOX, 0x9d958a, 0, Y / 2, -0.5, 0, 0, 0, 3, Y, 33); // main path, spawn → college
   c("flat", BOX, 0x9d958a, -2.6, Y / 2, LAB.z, 0, 0, 0, 2.2, Y, 2.2); // to the lab door
   c("flat", BOX, 0x9d958a, 8.1, Y / 2, GATE_Z, 0, 0, 0, 13.2, Y, 2.4); // to the gate
@@ -169,9 +172,14 @@ export function buildCampus(scene: THREE.Scene) {
 
   // Lalitpur beyond the wall (Ch.1's layered city), the valley rim, the far Himalayas
   {
-    const FAR: Record<string, number> = { far1: 0x8a5a48, far2: 0x9a7a72, far3: 0xa896a4, gold: 0xd9a937 };
+    // Ch.1's city, pushed out to 120–200 m either side and flattened to just over half height in hazy tones, so it
+    // reads as valley rooftops low on the horizon, never as buildings next door
+    const FAR: Record<string, number> = { far1: 0x9c8074, far2: 0xab968e, far3: 0xb6abb4, gold: 0xc9a24a };
+    const CITY_OUT = 95, CITY_Y = 0.55;
     let sd = 99;
-    farCity((key, geo, ...a) => put("far", tint(geo, FAR[key]), ...a), () => (sd = (sd * 16807) % 2147483647) / 2147483647);
+    farCity((key, geo, x, y, z, ry = 0, rx = 0, rz = 0, sx = 1, sy = 1, sz = 1) =>
+      put("far", tint(geo, FAR[key]), Math.sign(x) * (CITY_OUT + Math.abs(x)), y * CITY_Y - 1, z * 1.1 - 20, ry, rx, rz, sx, sy * CITY_Y, sz),
+    () => (sd = (sd * 16807) % 2147483647) / 2147483647);
     put("far", heightfield(0, -40, 640, 640, 64, 64, (x, z) => {
       const r = Math.hypot(x, z + 40);
       return r < 150 ? -2 : smooth(150, 270, r) * (38 + 48 * wave(x, z, 2)) + 6 * wave(z * 3, x * 3, 6) - 2;
