@@ -61,6 +61,11 @@ export function createRenderer(canvasHost: HTMLElement): RendererResult {
     try {
       const ao = new GTAOPass(scene, camera, w, h);
       ao.blendIntensity = 0.85;
+      // GTAO hides Points and Lines from its normal/depth pass but not Sprites, so a translucent sprite (steam) would shade a solid rectangle: hide them too
+      ao.overrideVisibility = function () {
+        const cache = (this as unknown as { _visibilityCache: Map<THREE.Object3D, boolean> })._visibilityCache;
+        scene.traverse((o) => { cache.set(o, o.visible); if ((o as THREE.Points).isPoints || (o as THREE.Line).isLine || (o as THREE.Sprite).isSprite) o.visible = false; });
+      };
       composer.addPass(ao);
     } catch {
       /* AO unsupported: skip it */

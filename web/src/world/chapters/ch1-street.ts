@@ -235,14 +235,12 @@ export function buildStreet(scene: THREE.Scene) {
     sp.position.set(-4.2, 1.7, TEA_Z + dz); scene.add(sp); return { sp, off };
   }));
 
-  // the cyber café's glowing doorway: unlit and not tone-mapped so it blooms, plus a halo and a small light
+  // the cyber café's glowing doorway: unlit and not tone-mapped so it blooms, plus a small light
   const glow = new THREE.MeshBasicMaterial({ color: 0xffd48a, toneMapped: false });
   const door = new THREE.Mesh(BOX, glow); door.scale.set(0.14, 2.4, 1.9); door.position.set(WALK - 0.18, 1.36, CAFE_Z);
   const cafeSign = new THREE.Mesh(BOX, glow); cafeSign.scale.set(0.12, 0.5, 2.8); cafeSign.position.set(WALK - 0.15, 3.5, CAFE_Z);
-  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: blob, color: 0xffa04a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.7 }));
-  halo.scale.set(9, 7, 1); halo.position.set(WALK - 1, 2, CAFE_Z);
   const cafeLight = new THREE.PointLight(0xffa04a, 18, 14, 1.6); cafeLight.position.set(WALK - 1.5, 1.8, CAFE_Z);
-  scene.add(door, cafeSign, halo, cafeLight);
+  scene.add(door, cafeSign, cafeLight);
 
   // the backdrop: far rows of Kathmandu houses and temple tops, then valley hills (the Himalayas are further out)
   {
