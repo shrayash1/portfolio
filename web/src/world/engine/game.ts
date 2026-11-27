@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { createRenderer } from "./renderer";
-import { createSky } from "./sky";
+import { createRenderer, type Quality } from "./renderer";
+import { createSky, type TimeName } from "./sky";
 import { createInput } from "./input";
 import { clampDt, followCamera } from "./camera";
 import { loadPlayer, loadNpc, type Character } from "./characters";
@@ -29,7 +29,7 @@ export class Game {
   private onResize = () => { this.camera.aspect = innerWidth / innerHeight; this.camera.updateProjectionMatrix(); this.r.resize(); };
   private onWheel = (e: WheelEvent) => { this.dist = THREE.MathUtils.clamp(this.dist + e.deltaY * 0.004, 2.6, 9); };
 
-  constructor(private opts: { host: HTMLElement; era: Era }) {}
+  constructor(private opts: { host: HTMLElement; era: Era; onPause?: () => void; onComplete?: () => void }) {}
 
   get player() { return this.pc.root; }
 
@@ -67,8 +67,11 @@ export class Game {
     this.resume();
   }
 
+  setTime(name: TimeName): void { this.chapter.setLamps?.(this.sky.setTime(name)); }
+  setQuality(q: Quality): void { this.r.setQuality(q); }
+
   pause() { this.paused = true; cancelAnimationFrame(this.raf); }
-  resume() { this.paused = false; this.last = performance.now(); cancelAnimationFrame(this.raf); this.raf = requestAnimationFrame(this.loop); }
+  resume() { this.input?.state(); /* drop one-shot keys (the Esc that closed the menu) */ this.paused = false; this.last = performance.now(); cancelAnimationFrame(this.raf); this.raf = requestAnimationFrame(this.loop); }
 
   dispose() {
     this.disposed = true;
@@ -108,6 +111,7 @@ export class Game {
     if (this.pending?.completes) this.objectives.complete(this.pending.completes);
     this.dialogue = null;
     store.set({ objective: this.objectives.active()?.text ?? null });
+    if (this.objectives.allRequiredDone()) this.opts.onComplete?.();
   }
 
   step(dt: number) {
@@ -116,6 +120,7 @@ export class Game {
     this.yaw -= inp.lookDX * 0.005;
     this.pitch = THREE.MathUtils.clamp(this.pitch + inp.lookDY * 0.003, -0.15, 0.7);
     this.input.consumeLook();
+    if (inp.pause) this.opts.onPause?.();
     if (inp.interact) this.interact();
 
     // movement is relative to the camera, and frozen while someone is talking

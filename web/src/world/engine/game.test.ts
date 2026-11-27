@@ -77,6 +77,16 @@ describe("Game", () => {
     expect(update).toHaveBeenLastCalledWith(expect.any(Number), 0.25);
   });
 
+  it("setTime re-lights the lamps and setQuality reaches the renderer", async () => {
+    const setLamps = vi.fn();
+    const g5 = new Game({ host: {} as HTMLElement, era: "school" });
+    await g5.start({ ...chapter, setLamps });
+    setLamps.mockClear();
+    g5.setTime("dusk");
+    expect(setLamps).toHaveBeenCalledWith(0.5);
+    expect(() => g5.setQuality("lite")).not.toThrow();
+  });
+
   it("calls setLamps only after build has run", async () => {
     const order: string[] = [];
     const g5 = new Game({ host: {} as HTMLElement, era: "school" });

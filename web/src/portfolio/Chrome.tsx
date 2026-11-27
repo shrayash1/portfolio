@@ -71,7 +71,7 @@ export function Dock() {
       <a href={legacy("pocket-wilds/")} onClick={(e) => { e.preventDefault(); play("wilds"); }} aria-label="Play Pocket Wilds" data-tip="Play Pocket Wilds">
         <svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><ellipse cx="12" cy="16" rx="5" ry="4.2" /><circle cx="5.5" cy="10.5" r="2.2" /><circle cx="9.5" cy="6.5" r="2.2" /><circle cx="14.5" cy="6.5" r="2.2" /><circle cx="18.5" cy="10.5" r="2.2" /></g></svg>
       </a>
-      <a href={legacy("world.html")} onClick={(e) => { e.preventDefault(); play("island"); }} aria-label="Play the Island game" data-tip="Play Island">
+      <a href="world.html" onClick={(e) => { e.preventDefault(); play("island"); }} aria-label="Play The Journey" data-tip="Play The Journey">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 7h10a5 5 0 0 1 4.9 6l-.8 4a2.5 2.5 0 0 1-4.3 1.2L14.6 16H9.4l-2.2 2.2A2.5 2.5 0 0 1 2.9 17l-.8-4A5 5 0 0 1 7 7zm0 3v1.5H5.5v1.5H7v1.5h1.5V13H10v-1.5H8.5V10zm8.5.2a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm2 2a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" /></svg>
       </a>
     </nav>
@@ -79,9 +79,9 @@ export function Dock() {
 }
 
 export type GameId = "island" | "wilds";
-const HGAMES: Record<GameId, { name: string; page: string }> = { island: { name: "Island", page: legacy("world.html") }, wilds: { name: "Pocket Wilds", page: legacy("pocket-wilds/") } };
+const HGAMES: Record<GameId, { name: string; page: string }> = { island: { name: "The Journey", page: "world.html" }, wilds: { name: "Pocket Wilds", page: legacy("pocket-wilds/") } };
 
-/** The handheld docked in the lower-right corner: put a game card in to play Island or Pocket Wilds. */
+/** The handheld docked in the lower-right corner: put a game card in to play The Journey or Pocket Wilds. */
 export function CornerHandheld() {
   const [on, setOn] = useState<GameId | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
@@ -130,11 +130,11 @@ export function CornerHandheld() {
       <div className="hcorner" id="hcorner">
         <div className="float">
           <span className="hc-tip">PICK A GAME CARD</span>
-          <button className="gcard island" type="button" ref={(el) => { cards.current.island = el; }} onClick={() => insert("island")} aria-label="Island game card: insert to play">
+          <button className="gcard island" type="button" ref={(el) => { cards.current.island = el; }} onClick={() => insert("island")} aria-label="The Journey game card: insert to play">
             <span className="shell" />
             <span className="glabel">
               <svg width="30" height="16" viewBox="0 0 40 22" aria-hidden="true"><ellipse cx="20" cy="18" rx="18" ry="5" fill="#d9c38e" /><ellipse cx="20" cy="15" rx="13" ry="4" fill="#4f9a4a" /><path d="M12 14 L15 5 L18 14Z M24 14 L27 3 L30 14Z" fill="#2f7a44" /></svg>
-              ISLAND
+              THE<br />JOURNEY
             </span>
             <span className="gpins" />
           </button>

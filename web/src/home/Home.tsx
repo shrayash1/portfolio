@@ -23,11 +23,11 @@ const CARTS: { id: CartId; name: string; screen?: string; page?: string; strip: 
 ];
 // The two games play on the floating handheld.
 const GAMES: Record<GameId, { name: string; page: string }> = {
-  island: { name: "Island", page: legacy("world.html") },
+  island: { name: "The Journey", page: "world.html" },
   wilds: { name: "Pocket Wilds", page: legacy("pocket-wilds/") },
 };
-const NAMES: Record<PanelId, string> = { about: "About", portfolio: "Portfolio", art: "Art", career: "Career", island: "Island", wilds: "Pocket Wilds" };
-const DEV: Record<PanelId, string> = { about: "परिचय", portfolio: "काम", art: "कला", career: "अनुभव", island: "टापु", wilds: "खेल" };
+const NAMES: Record<PanelId, string> = { about: "About", portfolio: "Portfolio", art: "Art", career: "Career", island: "The Journey", wilds: "Pocket Wilds" };
+const DEV: Record<PanelId, string> = { about: "परिचय", portfolio: "काम", art: "कला", career: "अनुभव", island: "यात्रा", wilds: "खेल" };
 const STEP = 36; // degrees between cartridges on the drum
 
 export function Home() {
@@ -394,7 +394,7 @@ function GameCard({ id, refCb, onPlay, onHover }: { id: GameId; refCb: (el: HTML
             <ellipse cx="13" cy="17" rx="7" ry="6" fill="#fff" /><circle cx="6" cy="10" r="3" fill="#fff" /><circle cx="11" cy="6" r="3" fill="#fff" /><circle cx="16" cy="6" r="3" fill="#fff" /><circle cx="21" cy="10" r="3" fill="#fff" />
           </svg>
         )}
-        {id === "island" ? "ISLAND" : <>POCKET<br />WILDS</>}
+        {id === "island" ? <>THE<br />JOURNEY</> : <>POCKET<br />WILDS</>}
       </span>
       <span className="gpins" />
     </button>

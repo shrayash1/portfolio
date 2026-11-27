@@ -6,7 +6,7 @@ import { resolve } from "node:path";
 // The older pages the new site still links to (Pocket Wilds), copied from the repo root as they are.
 const LEGACY = ["pocket-wilds"];
 
-// Each page is its own entry: index.html (home) and portfolio.html.
+// Each page is its own entry: index.html (home), portfolio.html and world.html (The Journey).
 // base "./" keeps every link relative, so the built site works from any folder.
 export default defineConfig({
   base: "./",
