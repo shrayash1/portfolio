@@ -48,7 +48,7 @@ export class Game {
     this.pc.root.position.copy(chapter.spawn);
     this.scene.add(this.pc.root);
     for (const spec of chapter.npcs) {
-      const c = await loadNpc(spec.url);
+      const c = await loadNpc(spec.url, spec.tint);
       if (this.disposed) return;
       c.root.position.set(...spec.position); c.root.rotation.y = spec.rotationY;
       c.play(spec.motion);
@@ -61,7 +61,7 @@ export class Game {
     addEventListener("resize", this.onResize);
     const { pos, look } = followCamera(this.player.position, this.yaw, this.pitch, this.dist);
     this.camera.position.copy(pos); this.camLook.copy(look);
-    store.set({ loading: false, objective: this.objectives.active()?.text ?? null });
+    store.set({ loading: false, ...this.objectiveText() });
     if (import.meta.env.DEV) (globalThis as unknown as { __world: unknown }).__world = { step: (dt: number) => { this.step(dt); this.render(); } };
     this.step(1); this.render();
     this.resume();
@@ -107,10 +107,15 @@ export class Game {
     }
   }
 
+  private objectiveText() {
+    const opt = this.chapter.objectives.find((o) => o.optional && !this.objectives.isDone(o.id));
+    return { objective: this.objectives.active()?.text ?? null, optional: opt?.text ?? null };
+  }
+
   private finish() {
     if (this.pending?.completes) this.objectives.complete(this.pending.completes);
     this.dialogue = null;
-    store.set({ objective: this.objectives.active()?.text ?? null });
+    store.set(this.objectiveText());
     if (this.objectives.allRequiredDone()) this.opts.onComplete?.();
   }
 

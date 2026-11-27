@@ -76,10 +76,24 @@ export async function loadPlayer(era: Era, onNote: (text: string) => void): Prom
   }
 }
 
-export async function loadNpc(url: string): Promise<Character> {
+export async function loadNpc(url: string, tint?: Record<string, number>): Promise<Character> {
   const { model, clips } = await prepare(url);
   // each NPC gets its own skeleton; the clips address bones by name, so they carry over
-  return build(cloneSkinned(model), clips);
+  const copy = cloneSkinned(model);
+  if (tint) {
+    // clone the materials first: the cached model's are shared with every other NPC
+    copy.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (!m.isMesh) return;
+      m.material = (Array.isArray(m.material) ? m.material : [m.material]).map((mat) => {
+        const c = (mat as THREE.MeshStandardMaterial).clone();
+        if (c.name in tint) { c.color.setHex(tint[c.name]); c.map = null; }
+        return c;
+      }) as THREE.Material[];
+      if (m.material.length === 1) m.material = m.material[0];
+    });
+  }
+  return build(copy, clips);
 }
 
 // ---------- the simple figure shown while (or instead of) the avatar ----------

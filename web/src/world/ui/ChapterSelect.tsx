@@ -6,7 +6,7 @@ export function ChapterSelect({ onPick, onBack }: { onPick: (id: number) => void
       <h1 className="big small">Chapter select</h1>
       <ul className="tiles">
         {CHAPTERS.map((c) => (
-          <li key={c.id}>
+          <li key={c.id} className={"ch" + c.id}>
             <button type="button" className="tile" disabled={!c.available} onClick={() => onPick(c.id)}>
               <span className="label">Chapter {c.id}</span>
               <b>{c.en}</b>

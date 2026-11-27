@@ -16,8 +16,9 @@ export function loadProgress(): Progress {
 }
 
 export function saveProgress(p: Progress): void {
+  const done = [...new Set([...loadProgress().done, ...p.done])].sort((a, b) => a - b); // never forget a finished chapter
   try {
-    localStorage.setItem(KEY, JSON.stringify(p));
+    localStorage.setItem(KEY, JSON.stringify({ ...p, done }));
   } catch {
     /* storage unavailable: progress just isn't kept */
   }

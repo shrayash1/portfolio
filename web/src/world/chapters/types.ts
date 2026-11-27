@@ -7,6 +7,7 @@ export interface NpcSpec {
   position: [number, number, number];
   rotationY: number;
   motion: "idle" | "talk" | "walk";
+  tint?: Record<string, number>; // material name -> flat colour, so shared models look like different people
   patrol?: { axis: "z"; range: number };
 }
 

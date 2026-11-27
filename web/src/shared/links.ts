@@ -1,4 +1,4 @@
-// The Island game and Pocket Wilds are still plain files at the repo root. In dev they are served on port 8080
+// Pocket Wilds is still a plain folder at the repo root. In dev they are served on port 8080
 // (see .env.development); in the built site they are copied next to these pages, so the base is empty.
 const base = (import.meta.env.VITE_LEGACY_BASE as string | undefined) ?? "";
 export const legacy = (path: string) => base + path;

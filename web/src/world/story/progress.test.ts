@@ -16,3 +16,11 @@ it("round-trips progress", () => {
   saveProgress({ lastChapter: 2, done: [1] });
   expect(loadProgress()).toEqual({ lastChapter: 2, done: [1] });
 });
+
+it("saveProgress keeps chapters done earlier", () => {
+  const m = new Map<string, string>();
+  vi.stubGlobal("localStorage", { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v) });
+  saveProgress({ lastChapter: 1, done: [1] });
+  saveProgress({ lastChapter: 2, done: [2] });
+  expect(loadProgress()).toEqual({ lastChapter: 2, done: [1, 2] });
+});

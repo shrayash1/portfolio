@@ -22,26 +22,30 @@ export function WorldApp() {
   const [settings, setSettings] = useState<Settings>({ quality: defaultQuality(matchMedia("(hover: none)").matches), time: "golden", subtitles: true });
   const host = useRef<HTMLDivElement>(null);
   const game = useRef<Game | null>(null);
+  const pauseRef = useRef<() => void>(() => {});
   const live = useRef(settings); live.current = settings;
   const ui = useSyncExternalStore(store.subscribe, store.get);
 
   useEffect(() => {
     if (screen !== "play" || !host.current) return;
     const el = host.current;
+    const pause = () => { g.pause(); setPaused(true); };
+    pauseRef.current = pause;
     const g = new Game({
       host: el, era: CHAPTERS[chapterId - 1].era,
-      onPause: () => { g.pause(); setPaused(true); },
+      onPause: pause,
       onComplete: () => saveProgress({ lastChapter: chapterId, done: [chapterId] }),
     });
     game.current = g;
     setFailed(false);
     void g.start(SCENES[chapterId]).then(() => {
+      if (game.current !== g) return; // left or switched chapter while loading
       if (!el.querySelector("canvas")) setFailed(true); // no WebGL: the note says why
       else { g.setQuality(live.current.quality); g.setTime(live.current.time); }
     });
     return () => {
       g.dispose(); game.current = null; el.replaceChildren();
-      store.set({ objective: null, prompt: null, dialogue: null, note: null, loading: false });
+      store.set({ objective: null, optional: null, prompt: null, dialogue: null, note: null, loading: false });
       setPaused(false);
     };
   }, [screen, chapterId]);
@@ -67,7 +71,7 @@ export function WorldApp() {
         </main>
       )}
       {screen === "play" && !failed && !ui.loading && (
-        <Hud chapter={CHAPTERS[chapterId - 1]} subtitles={settings.subtitles} onTalk={() => game.current?.interact()} />
+        <Hud chapter={CHAPTERS[chapterId - 1]} subtitles={settings.subtitles} onTalk={() => game.current?.interact()} onPause={() => pauseRef.current()} />
       )}
       {screen === "play" && paused && (
         <PauseMenu settings={settings} onSettings={change} onResume={resume} onSelect={() => setScreen("select")} />

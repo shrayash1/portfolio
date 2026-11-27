@@ -49,7 +49,7 @@ export function PanelText({ id, onCart, onGame }: Props) {
     case "island":
       return (
         <section key="island">
-          <p><b>Island.</b> Walk around my island as a little cartoon me, find 9 stars that tell my story, and stack blocks.</p>
+          <p><b>The Journey.</b> Play through my story, from school in Kathmandu to Maryland.</p>
           <button type="button" className="go" onClick={() => onGame("island")}>Insert card and play ▸</button>
         </section>
       );
