@@ -27,11 +27,11 @@ describe("chapter 1", () => {
     expect(chapter1.interactables.find((i) => i.id === "school-gate")?.completes).toBe("walk-to-school");
   });
 
-  it("places five NPCs from the two CC0 models", () => {
+  it("places five different CC0 Mesh2Motion people", () => {
     expect(chapter1.npcs).toHaveLength(5);
     expect(chapter1.npcs.filter((n) => n.motion === "walk")).toHaveLength(2);
     expect(chapter1.npcs.map((n) => n.motion).sort()).toEqual(["idle", "idle", "talk", "walk", "walk"]);
-    expect(new Set(chapter1.npcs.map((n) => n.url))).toEqual(new Set(["journey/npcs/base.glb", "journey/npcs/mannequin-female.glb"]));
+    expect(new Set(chapter1.npcs.map((n) => n.url))).toEqual(new Set(["male-32", "male-05", "female-08", "male-10", "female-31"].map((n) => `journey/npcs/${n}.glb`)));
   });
 
   it("walks on the sidewalks and the road", () => {

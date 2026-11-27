@@ -97,6 +97,17 @@ export async function loadNpc(url: string, tint?: Record<string, number>): Promi
   return build(copy, clips);
 }
 
+// an animal (or any model) looping one clip made for its own rig, e.g. the Mesh2Motion dog asleep
+export async function loadCreature(url: string, clipUrl: string, scale = 1): Promise<{ root: THREE.Object3D; update(dt: number): void }> {
+  const [gltf, anim] = await Promise.all([loader.loadAsync(url), loader.loadAsync(clipUrl)]);
+  const root = gltf.scene;
+  root.scale.setScalar(scale);
+  root.traverse((o) => { if ((o as THREE.Mesh).isMesh) { o.castShadow = true; o.frustumCulled = false; } });
+  const mixer = new THREE.AnimationMixer(root);
+  mixer.clipAction(anim.animations[0]).play();
+  return { root, update: (dt) => mixer.update(dt) };
+}
+
 // ---------- the simple figure shown while (or instead of) the avatar ----------
 export function standIn(): Character {
   const M = (color: number, roughness = 0.85) => new THREE.MeshStandardMaterial({ color, roughness });

@@ -1,9 +1,12 @@
 import * as THREE from "three";
 import type { ChapterScene } from "./types";
 import { buildStreet, ROAD, WALK, CAFE_Z, TEA_Z, GATE_Z } from "./ch1-street";
+import { loadCreature } from "../engine/characters";
 
-const BASE = "journey/npcs/base.glb", FEMALE = "journey/npcs/mannequin-female.glb";
+const NPC = (name: string) => `journey/npcs/${name}.glb`;
+const DOG: [number, number, number] = [2.1, 0.01, -18]; // asleep at the edge of the road
 let street: ReturnType<typeof buildStreet> | null = null;
+let dog: { update(dt: number): void } | null = null;
 
 export const chapter1: ChapterScene = {
   id: 1,
@@ -13,13 +16,18 @@ export const chapter1: ChapterScene = {
     street = buildStreet(scene);
     chapter1.colliders!.length = 0;
     chapter1.colliders!.push(...street.colliders);
+    dog = null;
+    // the dog is scenery: if it fails to load, the street still plays
+    await loadCreature("journey/animals/dog.glb", "journey/animals/dog-sleep.glb", 0.55)
+      .then((d) => { d.root.position.set(...DOG); d.root.rotation.y = 2.2; scene.add(d.root); dog = d; })
+      .catch((e) => console.warn("street dog failed to load", e));
   },
   setLamps(level) {
     if (!street) return;
     street.glass.emissiveIntensity = level * 2.2;
     street.bulb.emissiveIntensity = level * 4;
   },
-  update(t) { street?.updateFlags(t); },
+  update(t, dt) { street?.updateFlags(t); dog?.update(dt); },
   spawn: new THREE.Vector3(0.8, 0.16, 8),
   bounds: { minX: -(WALK - 0.4), maxX: WALK - 0.4, minZ: GATE_Z + 1.5, maxZ: 14 },
   groundY: (x) => (Math.abs(x) > ROAD ? 0.16 : 0.01),
@@ -56,14 +64,14 @@ export const chapter1: ChapterScene = {
     { id: "t-spawn", label: "", position: [0.8, 0.16, 8], radius: 3, auto: true, thought: "Golden light on the bricks again. Another school day in Kathmandu." },
     { id: "t-flags", label: "", position: [0, 0.01, -2], radius: 3, auto: true, thought: "The flags are snapping in the wind today. They say every flutter carries a prayer up the valley." },
     { id: "t-bikes", label: "", position: [2.7, 0.16, -8.5], radius: 3, auto: true, thought: "One day I'll ride one of these all the way to the hills." },
-    { id: "t-cow", label: "", position: [1.4, 0.01, -18], radius: 3, auto: true, thought: "Even the cow is in less of a hurry than me." },
+    { id: "t-dog", label: "", position: [DOG[0], DOG[1], DOG[2]], radius: 3, auto: true, thought: "Even the street dog is in less of a hurry than me." },
     { id: "t-stupa", label: "", position: [-2, 0.01, -30], radius: 5, auto: true, thought: "The stupa's eyes watch over the whole street. Feels like they're watching me too." },
   ],
   npcs: [
-    { url: BASE, position: [-3.6, 0.16, TEA_Z], rotationY: Math.PI / 2, motion: "talk", tint: { Main: 0x8a3b2a } },
-    { url: BASE, position: [-3.9, 0.16, -42], rotationY: Math.PI / 2, motion: "walk", tint: { Main: 0x5d7f86 }, patrol: { axis: "z", range: 8 } },
-    { url: FEMALE, position: [3.8, 0.16, -26], rotationY: -Math.PI / 2, motion: "walk", tint: { "M_Main.001": 0xa64a42, "M_Joints.001": 0x8a5a3c }, patrol: { axis: "z", range: 6 } },
-    { url: BASE, position: [3.7, 0.16, -8.7], rotationY: -Math.PI / 2, motion: "idle", tint: { Main: 0x6f7a55 } },
-    { url: FEMALE, position: [2.3, 0.16, GATE_Z - 1.2], rotationY: Math.PI, motion: "idle", tint: { "M_Main.001": 0x2f5f9a, "M_Joints.001": 0x8a5a3c } }, // the school friend, in a blue uniform
+    { url: NPC("male-32"), position: [-3.6, 0.16, TEA_Z], rotationY: Math.PI / 2, motion: "talk" }, // the tea-shop dai
+    { url: NPC("male-05"), position: [-3.9, 0.16, -42], rotationY: Math.PI / 2, motion: "walk", patrol: { axis: "z", range: 8 } },
+    { url: NPC("female-08"), position: [3.8, 0.16, -26], rotationY: -Math.PI / 2, motion: "walk", patrol: { axis: "z", range: 6 } },
+    { url: NPC("male-10"), position: [3.7, 0.16, -8.7], rotationY: -Math.PI / 2, motion: "idle" },
+    { url: NPC("female-31"), position: [2.3, 0.16, GATE_Z - 1.2], rotationY: Math.PI, motion: "idle" }, // the school friend
   ],
 };

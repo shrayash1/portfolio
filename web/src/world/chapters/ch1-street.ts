@@ -313,17 +313,7 @@ export function buildStreet(scene: THREE.Scene) {
     flags.instanceMatrix.needsUpdate = true;
   }
 
-  // a resting cow and a few parked motorbikes
-  {
-    const cow = new THREE.Group();
-    const cm = M(0xeee7dc), dm = M(0x3a2a22);
-    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 1.1, 6, 14), cm); body.rotation.z = Math.PI / 2; body.position.y = 0.42; body.scale.set(1, 1, 0.85);
-    const head = new THREE.Mesh(rbox(0.36, 0.38, 0.55, 0.1), cm); head.position.set(0.95, 0.68, 0);
-    const horn = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.22, 6), dm); horn.position.set(0.95, 0.92, 0.12);
-    const horn2 = horn.clone(); horn2.position.z = -0.12;
-    [body, head, horn, horn2].forEach((m) => { m.castShadow = true; cow.add(m); });
-    cow.position.set(1.4, 0.01, -18); cow.rotation.y = 2.2; scene.add(cow);
-  }
+  // a few parked motorbikes (the sleeping street dog is loaded in ch1.ts)
   for (const [x, z, c] of [[2.7, -8, 0xa83a2e], [2.75, -9.4, 0x1b1b22], [-2.7, -33, 0x2f5f9a]]) {
     const b = new THREE.Group();
     const wheel = new THREE.TorusGeometry(0.28, 0.08, 8, 20);
