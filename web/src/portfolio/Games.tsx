@@ -55,11 +55,15 @@ export function Games() {
     rack.scrollTo({ left: b.offsetLeft - rack.clientWidth / 2 + b.offsetWidth / 2, behavior: MOTION.on ? "smooth" : "auto" });
     if (first.current) { first.current = false; return; }
     if (!MOTION.on) { setOut(true); return; }
+    // The cartridge tucks away while scrolling and only comes out once scrolling rests on a game;
+    // restarting the slide on every game passed made it shake back and forth.
     setOut(false);
-    setSwap(false);
-    const r = requestAnimationFrame(() => setSwap(true)); // re-adding the class restarts the animation
-    const t = setTimeout(() => setOut(true), 260);
-    return () => { cancelAnimationFrame(r); clearTimeout(t); };
+    let t2 = 0;
+    const t = setTimeout(() => {
+      setSwap(false);
+      t2 = window.setTimeout(() => { setSwap(true); setOut(true); }, 30); // re-adding the class restarts the animation
+    }, 220);
+    return () => { clearTimeout(t); clearTimeout(t2); };
   }, [gi]);
 
   const toggleInsert = () => {
@@ -80,6 +84,8 @@ export function Games() {
           <div className="wrap">
             <div className="stage">
               <div className={`case-wrap${out ? " out" : ""}${swap ? " swap" : ""}${inserted ? " inserted" : ""}`} ref={wrapRef} style={{ "--gc": g.c } as CSSProperties}>
+                {/* the back half of the console top sits behind the cartridge, the front lip in front, so it goes into the slot */}
+                <div className="wdock back" aria-hidden="true"><div className="ctop"><div className="cslot" /></div><div className="cbody" /></div>
                 <button type="button" className="ocart" aria-label={inserted ? "Eject the cartridge" : "Insert the cartridge"} onClick={toggleInsert}><span className="ol" /><span className="op" /></button>
                 <div className="case" aria-hidden="true">
                   <div className="cover">{g.i ? <img src={`img/${g.i}`} alt="" /> : <span className="initials">{g.k}</span>}</div>
@@ -88,6 +94,7 @@ export function Games() {
                   <span className="sticker">{g.tag[0]}</span>
                 </div>
                 <span className="ins-hint" aria-hidden="true">▼ INSERT TO PLAY</span>
+                {live && <span className="loaded-splash" aria-hidden="true">Cartridge<br />loaded</span>}
                 <div className="wdock" aria-hidden="true"><div className="ctop"><div className="cslot" /></div><div className="cbody"><span className="led" /><span className="cbrand">SP-1</span><span className="vents" /></div></div>
               </div>
               <div className="info" aria-live="polite">

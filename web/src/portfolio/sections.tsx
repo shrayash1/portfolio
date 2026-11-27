@@ -11,7 +11,8 @@ export function Chapter({ en, dv, ch }: { en: string; dv: string; ch: string }) 
       <Garland n={NARROW ? 9 : 15} />
       <header className="ch">
         <span className="ch-line" />
-        <h2 className="ch-dv np grad">{en}</h2>
+        {/* --n = longest word, so the title shrinks to fit narrow phones */}
+        <h2 className="ch-dv np grad" style={{ "--n": Math.max(...en.split(" ").map((w) => w.length)) } as CSSProperties}>{en}</h2>
         <span className="ch-en"><span className="dvs">{dv}</span> · {ch}</span>
       </header>
     </>
@@ -35,11 +36,6 @@ export function Hero({ painted }: { painted: boolean }) {
         <small>I build games that teach and delight · Maryland, USA</small>
       </div>
       <div className="h-dv" aria-hidden="true"><span className="dv np grad">Namaste</span><span className="cap"><span className="dvs">नमस्ते</span> · CH.01</span></div>
-      <div className="h-console" id="hConsole" aria-hidden="true">
-        <span className="tag">SP-1 · ON<br />SCROLL ▼</span>
-        <div className="ctop"><div className="cslot" /></div>
-        <div className="cbody"><span className="led" /><span className="cbrand">SP-1</span><span className="vents" /></div>
-      </div>
       <div className="h-scroll" aria-hidden="true">SCROLL<i /></div>
     </section>
   );

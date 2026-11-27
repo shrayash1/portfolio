@@ -113,7 +113,9 @@ export function Home() {
     const cr = el.getBoundingClientRect(), sr = slot.getBoundingClientRect(), dk = dock.getBoundingClientRect();
     const slotY = sr.top + sr.height / 2;
     el.classList.add("inserting");
-    el.style.setProperty("--lift", `${slotY - cr.bottom + Math.min(cr.height * 0.45, dk.bottom - slotY - 8)}px`);
+    // the front cartridge sits nearer the viewer, so 1px of lift moves it more than 1px on screen: divide by that scale
+    const scale = cr.height / el.offsetHeight;
+    el.style.setProperty("--lift", `${(slotY - cr.bottom + Math.min(cr.height * 0.45, dk.bottom - slotY - 14)) / scale}px`);
     await wait(650);
     setDockOn(true);
     flash();
@@ -302,6 +304,8 @@ export function Home() {
         <div className="drumhint">{TOUCH ? "Swipe to turn · tap the front cartridge to insert" : "Scroll or drag to turn · click the front cartridge to insert"}</div>
 
         {/* the console: page cartridges go in here */}
+        {/* its back half sits behind the cartridges (z 2 < drum 3), the front lip in front, so a cartridge goes into the slot */}
+        <div className="dock back" aria-hidden="true"><div className="top"><div className="slot" /></div><div className="body" /></div>
         <div className={`dock${dockOn ? " on" : ""}`} ref={dockRef} aria-hidden="true">
           <div className="top"><div className="slot" ref={slotRef} /></div>
           <div className="body"><span className="led" /><span className="brand">SP-1</span><span className="vents" /></div>

@@ -174,6 +174,7 @@ export function Boot() {
       <div className="b-rig" id="brig">
         <div className="b-monitor"><div className="b-screen" id="bscreen"><div className="b-text" id="btext"><span>INITIALIZE SYSTEM</span><b id="bpct">0%</b><span className="b-bar"><i id="bfill" /></span></div></div></div>
         <div className="b-neck" /><div className="b-foot" />
+        <div className="b-console back" aria-hidden="true"><div className="ctop"><div className="cslot" /></div><div className="cbody" /></div>
         <div className="b-cart" id="bcart"><div className="mcart"><div className="ml">PORTFOLIO</div><div className="mp" /></div></div>
         <div className="b-console"><div className="ctop"><div className="cslot" /></div><div className="cbody"><span className="led" /><span className="cbrand">SP-1</span><span className="vents" /></div></div>
       </div>

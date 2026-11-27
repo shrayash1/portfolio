@@ -59,7 +59,6 @@ export function Portfolio() {
         gsap.from("#hName > *", { y: 50, opacity: 0, stagger: 0.12, duration: 1, ease: "power4.out" });
         gsap.from(".hero-garland .flag", { y: -40, opacity: 0, stagger: 0.03, duration: 0.8, ease: "back.out(1.6)" });
         gsap.from(".h-dv", { x: 40, opacity: 0, duration: 1.1, ease: "power3.out", delay: 0.2 });
-        gsap.from("#hConsole", { y: 60, opacity: 0, duration: 0.9, ease: "back.out(1.6)", delay: 0.5 });
       });
     };
 
@@ -74,10 +73,9 @@ export function Portfolio() {
           lean = (e) => { const m = e.clientX / innerWidth - 0.5; qa(m * -12); qm(m * -16); qc(m * -30); };
           addEventListener("pointermove", lean, { passive: true });
         }
-        // the starting console shrinks away in its corner and the handheld grows in its place
+        // the handheld grows into the bottom-right corner as the hero scrolls away
         gsap.set("#hcorner", { autoAlpha: 0, scale: 0.4, y: 30 });
         gsap.timeline({ scrollTrigger: { trigger: "#hero", start: "top top", end: "bottom 35%", scrub: true } })
-          .to("#hConsole", { y: () => (document.getElementById("hero")?.offsetHeight ?? innerHeight) * 0.65, scale: 0.35, autoAlpha: 0, ease: "none" }, 0)
           .to("#hcorner", { autoAlpha: 1, scale: 1, y: 0, ease: "none" }, 0.35);
         // prayer-flag gust after the hero
         gsap.set(".storm .flag", { y: () => innerHeight * 1.2 });
