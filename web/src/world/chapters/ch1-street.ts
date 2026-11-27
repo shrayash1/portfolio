@@ -4,9 +4,9 @@ import { put as rawPut, rbox, mergeBuckets } from "../engine/build";
 // Kathmandu street at golden hour, ported from the approved look test (seed 7, same layout)
 export const ROAD = 3.2; // road half-width
 export const WALK = 4.6; // building line
-export const SZ = -84; // stupa centre z
-export const CAFE_Z = -36, TEA_Z = -14, SCHOOL_Z = -59; // the school sits ~70 m from spawn, on the right
-export const END = -98; // nothing is built past here
+export const STX = -38, SZ = -70; // the stupa stands off the street, behind the left house row
+export const CAFE_Z = -36, TEA_Z = -14, GATE_Z = -63.5; // the school closes the street ~70 m from spawn
+export const END = -66; // houses stop at the school
 
 // canvas texture for a sign board
 function boardTexture(w: number, h: number, draw: (c: CanvasRenderingContext2D) => void) {
@@ -48,7 +48,7 @@ export function buildStreet(scene: THREE.Scene) {
   put("ground", new THREE.PlaneGeometry(900, 900), 0, 0, -300, 0, -Math.PI / 2);
   put("road", new THREE.PlaneGeometry(ROAD * 2, 120), 0, 0.01, -40, 0, -Math.PI / 2);
   for (const s of [-1, 1]) put("sidewalk", rbox(WALK - ROAD, 0.16, 120, 0.04), s * (ROAD + (WALK - ROAD) / 2), 0.08, -40);
-  for (let z = 10; z > -100; z -= 2.2) put("sidewalk", BOX, 0, 0.015, z, 0, 0, 0, ROAD * 2, 0.01, 0.06); // paving joints
+  for (let z = 10; z > -64; z -= 2.2) put("sidewalk", BOX, 0, 0.015, z, 0, 0, 0, ROAD * 2, 0.01, 0.06); // paving joints
 
   // houses: two rows of Newari-style brick buildings
   for (const side of [-1, 1]) {
@@ -56,7 +56,7 @@ export function buildStreet(scene: THREE.Scene) {
     while (z > -140) {
       const w = 5 + rnd() * 3.5, d = 9, floors = 2 + Math.floor(rnd() * 3), fh = 3.1, h = floors * fh + 0.6;
       const cx = side * (WALK + d / 2), cz = z - w / 2;
-      live = cz > END && !(side === 1 && cz - w / 2 < SCHOOL_Z + 7.5 && cz + w / 2 > SCHOOL_Z - 7.5); // the school takes the place of the houses it overlaps
+      live = cz > END;
       if (live) colliders.push(new THREE.Box3(new THREE.Vector3(Math.min(cx - d / 2, cx + d / 2), 0, cz - w / 2), new THREE.Vector3(Math.max(cx - d / 2, cx + d / 2), h + 1, cz + w / 2)));
       const body = pick(["brickA", "brickB", "brickC", "brickA", "plaster"]);
       put(body, rbox(d, h, w - 0.08, 0.1), cx, h / 2, cz);
@@ -104,11 +104,11 @@ export function buildStreet(scene: THREE.Scene) {
   }
 
   // the stupa at the end of the street
-  for (let i = 0; i < 3; i++) put("white", rbox(26 - i * 5, 1.1, 26 - i * 5, 0.15), 0, 0.55 + i * 1.1, SZ);
-  put("white", new THREE.SphereGeometry(9, 48, 24, 0, Math.PI * 2, 0, Math.PI / 2), 0, 3.3, SZ);
-  put("gold", new THREE.ConeGeometry(2.4, 10, 24, 1, true), 0, 17.3, SZ);
-  for (let i = 0; i < 9; i++) put("gold", new THREE.TorusGeometry(2.2 - i * 0.2, 0.12, 6, 24), 0, 13 + i * 1, SZ, 0, Math.PI / 2);
-  put("gold", new THREE.ConeGeometry(1.5, 0.6, 24), 0, 22.6, SZ);
+  for (let i = 0; i < 3; i++) put("white", rbox(26 - i * 5, 1.1, 26 - i * 5, 0.15), STX, 0.55 + i * 1.1, SZ);
+  put("white", new THREE.SphereGeometry(9, 48, 24, 0, Math.PI * 2, 0, Math.PI / 2), STX, 3.3, SZ);
+  put("gold", new THREE.ConeGeometry(2.4, 10, 24, 1, true), STX, 17.3, SZ);
+  for (let i = 0; i < 9; i++) put("gold", new THREE.TorusGeometry(2.2 - i * 0.2, 0.12, 6, 24), STX, 13 + i * 1, SZ, 0, Math.PI / 2);
+  put("gold", new THREE.ConeGeometry(1.5, 0.6, 24), STX, 22.6, SZ);
   // the painted eyes on the harmika, drawn once into a canvas texture
   const eyes = document.createElement("canvas"); eyes.width = 256; eyes.height = 256;
   {
@@ -127,7 +127,7 @@ export function buildStreet(scene: THREE.Scene) {
   }
   const eyeTex = new THREE.CanvasTexture(eyes); eyeTex.colorSpace = THREE.SRGBColorSpace;
   const harmika = new THREE.Mesh(new THREE.BoxGeometry(4.2, 3.6, 4.2), new THREE.MeshStandardMaterial({ map: eyeTex, roughness: 0.8 }));
-  harmika.position.set(0, 13.2 - 1.8 + 0.1, SZ); harmika.castShadow = true; scene.add(harmika);
+  harmika.position.set(STX, 13.2 - 1.8 + 0.1, SZ); harmika.castShadow = true; scene.add(harmika);
 
   // Himalayas far away (haze makes them pale)
   for (let i = 0; i < 14; i++) {
@@ -138,7 +138,7 @@ export function buildStreet(scene: THREE.Scene) {
 
   // utility poles + tangled power lines
   const poles: THREE.Vector3[] = [];
-  for (let z = 2; z > -100; z -= 22) for (const s of [-1, 1]) {
+  for (let z = 2; z > -62; z -= 22) for (const s of [-1, 1]) {
     const x = s * (ROAD + 0.6), zz = z + (s > 0 ? -11 : 0);
     put("concrete", new THREE.CylinderGeometry(0.11, 0.16, 9, 8), x, 4.5, zz);
     put("concrete", BOX, x, 8.4, zz, 0, 0, 0, 1.6, 0.12, 0.12);
@@ -157,7 +157,7 @@ export function buildStreet(scene: THREE.Scene) {
     catenary(L[i].clone().add(new THREE.Vector3(0.4, -k * 0.25, 0)), R[i].clone().add(new THREE.Vector3(-0.4, -k * 0.3, 0)), 1.2 + k * 0.4);
 
   // street lamps (light up at dusk)
-  for (let z = -8; z > -100; z -= 26) for (const s of [-1, 1]) {
+  for (let z = -8; z > -50; z -= 26) for (const s of [-1, 1]) {
     const x = s * (ROAD + 0.4), zz = z + (s > 0 ? -13 : 0);
     put("concrete", new THREE.CylinderGeometry(0.06, 0.08, 5.2, 8), x, 2.6, zz);
     put("concrete", BOX, x - s * 0.5, 5.15, zz, 0, 0, 0, 1, 0.08, 0.08);
@@ -170,45 +170,43 @@ export function buildStreet(scene: THREE.Scene) {
     for (let k = 0; k < 5; k++) put("leaf", new THREE.IcosahedronGeometry(1.3 + rnd() * 0.7, 1), x + (rnd() - 0.5) * 1.8, 3.6 + rnd() * 1.6, z + (rnd() - 0.5) * 1.8);
   }
 
-  // Sunrise School on the right: courtyard, gate with a sign board, a two-storey building and a flagpole
+  // Sunrise School closes the end of the street (a T-junction): gate across the road, courtyard, two-storey building, flagpole
   {
-    const bx = 11.3, bd = 7.4, bw = 15, bh = 7; // building centre x, depth (x), width (z), height
-    const face = bx - bd / 2; // street-facing wall
-    put("cream", rbox(bd, bh, bw, 0.1), bx, bh / 2, SCHOOL_Z);
-    put("blueBand", BOX, face - 0.04, 3.45, SCHOOL_Z, 0, 0, 0, 0.1, 0.55, bw + 0.05); // blue band between the floors
-    put("blueBand", BOX, face - 0.04, 0.35, SCHOOL_Z, 0, 0, 0, 0.1, 0.7, bw + 0.05); // and a blue plinth
-    put("cream", rbox(bd + 0.3, 0.3, bw + 0.3, 0.05), bx, bh + 0.15, SCHOOL_Z);
-    for (const dz of [-bw / 2, bw / 2]) put("cream", BOX, bx, bh + 0.55, SCHOOL_Z + dz, 0, 0, 0, bd + 0.3, 0.6, 0.2); // flat roof with a low parapet
-    put("cream", BOX, face - 0.05, bh + 0.55, SCHOOL_Z, 0, 0, 0, 0.2, 0.6, bw + 0.3);
-    put("cream", BOX, bx + bd / 2, bh + 0.55, SCHOOL_Z, 0, 0, 0, 0.2, 0.6, bw + 0.3);
-    for (const row of [1.9, 5.3]) for (let k = 0; k < 6; k++) {
-      const wz = SCHOOL_Z + (k - 2.5) * 2.3;
-      put("trim", BOX, face - 0.06, row, wz, 0, 0, 0, 0.14, 1.5, 1.3);
-      put("glass", BOX, face - 0.12, row, wz, 0, 0, 0, 0.1, 1.3, 1.1);
+    const bw = 26, bd = 8, bh = 7, FZ = GATE_Z - 4.5; // building width (x), depth (z), height; z of its front wall
+    const cz = FZ - bd / 2;
+    put("cream", rbox(bw, bh, bd, 0.1), 0, bh / 2, cz);
+    put("blueBand", BOX, 0, 3.45, FZ + 0.04, 0, 0, 0, bw + 0.05, 0.55, 0.1); // blue band between the floors
+    put("blueBand", BOX, 0, 0.35, FZ + 0.04, 0, 0, 0, bw + 0.05, 0.7, 0.1); // and a blue plinth
+    put("cream", rbox(bw + 0.3, 0.3, bd + 0.3, 0.05), 0, bh + 0.15, cz);
+    for (const dz of [-bd / 2, bd / 2]) put("cream", BOX, 0, bh + 0.55, cz + dz, 0, 0, 0, bw + 0.3, 0.6, 0.2); // flat roof with a low parapet
+    for (const dx of [-bw / 2, bw / 2]) put("cream", BOX, dx, bh + 0.55, cz, 0, 0, 0, 0.2, 0.6, bd + 0.3);
+    for (const row of [1.9, 5.3]) for (let k = 0; k < 8; k++) {
+      const wx = (k - 3.5) * 3.4;
+      put("trim", BOX, wx, row, FZ + 0.06, 0, 0, 0, 1.5, 1.5, 0.14);
+      put("glass", BOX, wx, row, FZ + 0.12, 0, 0, 0, 1.3, 1.3, 0.1);
     }
-    put("blueBand", BOX, face - 0.1, 1.2, SCHOOL_Z, 0, 0, 0, 0.12, 2.2, 1.8); // main door
-    put("concrete", rbox(0.6, 0.2, 2.6, 0.04), face - 0.3, 0.1, SCHOOL_Z); // steps
-    // courtyard paving, and a low wall either side of the gate
-    put("sidewalk", BOX, (WALK + face) / 2, 0.08, SCHOOL_Z, 0, 0, 0, face - WALK, 0.16, bw);
-    for (const dz of [-1, 1]) put("cream", rbox(0.3, 1.0, 5.6, 0.04), WALK + 0.05, 0.66, SCHOOL_Z + dz * 5);
-    // gate: two pillars and a sign board across the opening
-    for (const dz of [-1, 1]) {
-      put("cream", rbox(0.7, 4.0, 0.7, 0.06), WALK - 0.25, 2.1, SCHOOL_Z + dz * 2.45);
-      put("blueBand", rbox(0.8, 0.3, 0.8, 0.04), WALK - 0.25, 4.15, SCHOOL_Z + dz * 2.45);
+    put("blueBand", BOX, 0, 1.2, FZ + 0.1, 0, 0, 0, 1.8, 2.2, 0.12); // main door
+    put("concrete", rbox(2.6, 0.2, 0.6, 0.04), 0, 0.1, FZ + 0.3); // steps
+    put("sidewalk", BOX, 0, 0.08, (GATE_Z + FZ) / 2, 0, 0, 0, WALK * 2, 0.16, GATE_Z - FZ); // courtyard paving
+    // gate across the road: two pillars and a sign board
+    for (const dx of [-1, 1]) {
+      put("cream", rbox(0.7, 4.2, 0.7, 0.06), dx * (WALK - 0.3), 2.1, GATE_Z);
+      put("blueBand", rbox(0.8, 0.3, 0.8, 0.04), dx * (WALK - 0.3), 4.35, GATE_Z);
     }
-    put("blueBand", rbox(0.3, 1.0, 5.2, 0.04), WALK - 0.25, 3.5, SCHOOL_Z);
+    put("blueBand", rbox(WALK * 2 - 0.6, 0.3, 0.3, 0.04), 0, 3.0, GATE_Z);
     const signTex = boardTexture(512, 128, (c) => {
       c.fillStyle = "#2f5f9a"; c.fillRect(0, 0, 512, 128);
       c.strokeStyle = "#f4efe6"; c.lineWidth = 4; c.strokeRect(6, 6, 500, 116);
       c.fillStyle = "#f4efe6"; c.font = "700 56px Arial, sans-serif"; c.textAlign = "center"; c.textBaseline = "middle";
       c.fillText("Sunrise School", 256, 68);
     });
-    const board = new THREE.Mesh(new THREE.PlaneGeometry(5, 0.95), new THREE.MeshStandardMaterial({ map: signTex, roughness: 0.8 }));
-    board.rotation.y = -Math.PI / 2; board.position.set(WALK - 0.25 - 0.16, 3.5, SCHOOL_Z); scene.add(board);
-    // flagpole in the courtyard
-    put("steel", new THREE.CylinderGeometry(0.06, 0.08, 9, 8), 7.2, 4.5, SCHOOL_Z + 4);
-    put("shutterR", BOX, 7.2, 8.3, SCHOOL_Z + 4.6, 0, 0, 0, 0.04, 0.8, 1.2);
-    colliders.push(new THREE.Box3(new THREE.Vector3(face, 0, SCHOOL_Z - bw / 2), new THREE.Vector3(face + bd, bh + 1, SCHOOL_Z + bw / 2)));
+    const board = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 1.1), new THREE.MeshStandardMaterial({ map: signTex, roughness: 0.8 }));
+    board.position.set(0, 3.7, GATE_Z + 0.17); scene.add(board); // faces +z, toward the player
+    const back = new THREE.Mesh(BOX, mats.blueBand); back.scale.set(6.6, 1.3, 0.3); back.position.set(0, 3.7, GATE_Z); scene.add(back);
+    // flagpole beside the gate
+    put("steel", new THREE.CylinderGeometry(0.06, 0.08, 9, 8), 3.2, 4.5, GATE_Z - 2);
+    put("shutterR", BOX, 3.9, 8.3, GATE_Z - 2, 0, 0, 0, 1.2, 0.8, 0.04);
+    colliders.push(new THREE.Box3(new THREE.Vector3(-bw / 2, 0, FZ - bd), new THREE.Vector3(bw / 2, bh + 1, FZ)));
   }
 
   // the tea shop on the left sidewalk: counter, kettles, glasses, stools, a board, a little steam
@@ -250,16 +248,20 @@ export function buildStreet(scene: THREE.Scene) {
       const key = (["far1", "far2", "far3"] as const)[layer], x0 = 26 + layer * 24;
       for (let z = 24; z > -170; ) {
         const w = 7 + r2() * 5, d = 9 + r2() * 6, h = 9 + r2() * 8 + layer * 3, x = side * (x0 + d / 2 + r2() * 6);
+        live = !(Math.abs(x - STX) < 24 && Math.abs(z - SZ) < 24);
         put(key, BOX, x, h / 2, z - w / 2, 0, 0, 0, d, h, w - 0.5);
         if (r2() < 0.45) put(key, new THREE.ConeGeometry(Math.max(d, w) * 0.75, 3.2, 4, 1), x, h + 1.6, z - w / 2, Math.PI / 4, 0, 0, d / Math.max(d, w), 1, w / Math.max(d, w));
+        live = true;
         z -= w + r2() * 3;
       }
       // temple tops: stacked roofs with a gold finial, taller than the houses
       for (let k = 0; k < 3; k++) {
         const x = side * (x0 + 4 + r2() * 14), z = 10 - r2() * 150, y0 = 12 + layer * 3;
+        live = !(Math.abs(x - STX) < 24 && Math.abs(z - SZ) < 24);
         put(key, BOX, x, y0 / 2, z, 0, 0, 0, 7, y0, 7);
         for (let t = 0; t < 3; t++) put(key, new THREE.ConeGeometry(7 - t * 1.6, 2.6, 4, 1), x, y0 + 1.3 + t * 3.2, z, Math.PI / 4);
         put("gold", new THREE.ConeGeometry(0.4, 2.2, 6), x, y0 + 11.5, z);
+        live = true;
       }
     }
     for (let i = 0; i < 16; i++) { // valley hills: near ones green, far ones hazy blue; a ring also closes the view behind the stupa
@@ -274,7 +276,7 @@ export function buildStreet(scene: THREE.Scene) {
   // prayer flags across the street (instanced, they flutter)
   const FLAG_COLORS = [0x1e5bb8, 0xf5f1e6, 0xd8262e, 0x2f9e44, 0xf4c20d].map((c) => new THREE.Color(c));
   const flagSpots: { p: THREE.Vector3; dir: THREE.Vector3; c: THREE.Color; ph: number; big?: boolean }[] = [];
-  for (let z = 0; z > -90; z -= 13) {
+  for (let z = 0; z > -60; z -= 13) {
     const a = new THREE.Vector3(-WALK + 0.2, 8.6 + rnd() * 1.5, z), b = new THREE.Vector3(WALK - 0.2, 8.2 + rnd() * 1.5, z - 4 - rnd() * 4);
     const mid = a.clone().lerp(b, 0.5); mid.y -= 1.4;
     const curve = new THREE.QuadraticBezierCurve3(a, mid, b);
@@ -285,7 +287,7 @@ export function buildStreet(scene: THREE.Scene) {
   // stupa flag lines (spire to the ground, like Boudha)
   for (let k = 0; k < 8; k++) {
     const ang = (k / 8) * Math.PI * 2;
-    const a = new THREE.Vector3(0, 21, SZ), b = new THREE.Vector3(Math.sin(ang) * 15, 3.4, SZ + Math.cos(ang) * 15);
+    const a = new THREE.Vector3(STX, 21, SZ), b = new THREE.Vector3(STX + Math.sin(ang) * 15, 3.4, SZ + Math.cos(ang) * 15);
     const curve = new THREE.QuadraticBezierCurve3(a, a.clone().lerp(b, 0.5).add(new THREE.Vector3(0, -2, 0)), b);
     scene.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 16, 0.02, 4, false), mats.wire));
     for (let i = 1; i < 22; i++) flagSpots.push({ p: curve.getPoint(i / 22), dir: curve.getTangent(i / 22), c: FLAG_COLORS[i % 5], ph: rnd() * 6, big: true });

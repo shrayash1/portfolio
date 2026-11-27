@@ -15,7 +15,7 @@ describe("chapter 1", () => {
     expect(chapter1.interactables.filter((i) => i.auto).every((i) => i.thought)).toBe(true);
     expect(chapter1.interactables.find((i) => i.id === "t-spawn")?.thought).toContain("Golden light");
     const gate = chapter1.interactables.find((i) => i.id === "school-gate")!;
-    expect(gate.position[0]).toBeCloseTo(3.8);
+    expect(gate.position).toEqual([0, 0.01, -62]);
     expect(gate.dialogue).toHaveLength(4);
     expect(chapter1.interactables.find((i) => i.id === "cyber-cafe")?.radius).toBeGreaterThanOrEqual(4.5);
     const tea = chapter1.interactables[0];
@@ -38,7 +38,7 @@ describe("chapter 1", () => {
     expect(chapter1.groundY?.(4, 0)).toBe(0.16);
     expect(chapter1.groundY?.(0.8, 0)).toBe(0.01);
     const b = chapter1.bounds;
-    expect([b.minX, b.maxX, b.minZ, b.maxZ].map((v) => Math.round(v * 100) / 100)).toEqual([-4.2, 4.2, -68, 14]);
+    expect([b.minX, b.maxX, b.minZ, b.maxZ].map((v) => Math.round(v * 100) / 100)).toEqual([-4.2, 4.2, -62, 14]);
     expect(chapter1.spawn.toArray()).toEqual([0.8, 0.16, 8]);
   });
 });
