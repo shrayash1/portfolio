@@ -45,7 +45,7 @@ export const chapter1: ChapterScene = {
       ],
     },
     {
-      id: "school-gate", label: "Go through the school gate", position: [0, 0.01, GATE_Z + 1.5], radius: 3.2, completes: "walk-to-school",
+      id: "school-gate", label: "Go through the Galaxy Public School gate", position: [0, 0.01, GATE_Z + 1.5], radius: 3.2, completes: "walk-to-school",
       dialogue: [
         { who: "Friend", text: "There you are! Did you go to the café again?" },
         { who: "You", text: "Maybe. You have to see it. I'm going to make games one day." },

@@ -170,7 +170,7 @@ export function buildStreet(scene: THREE.Scene) {
     for (let k = 0; k < 5; k++) put("leaf", new THREE.IcosahedronGeometry(1.3 + rnd() * 0.7, 1), x + (rnd() - 0.5) * 1.8, 3.6 + rnd() * 1.6, z + (rnd() - 0.5) * 1.8);
   }
 
-  // Sunrise School closes the end of the street (a T-junction): gate across the road, courtyard, two-storey building, flagpole
+  // Galaxy Public School closes the end of the street (a T-junction): gate across the road, courtyard, two-storey building, flagpole
   {
     const bw = 26, bd = 8, bh = 7, FZ = GATE_Z - 4.5; // building width (x), depth (z), height; z of its front wall
     const cz = FZ - bd / 2;
@@ -197,8 +197,8 @@ export function buildStreet(scene: THREE.Scene) {
     const signTex = boardTexture(512, 128, (c) => {
       c.fillStyle = "#2f5f9a"; c.fillRect(0, 0, 512, 128);
       c.strokeStyle = "#f4efe6"; c.lineWidth = 4; c.strokeRect(6, 6, 500, 116);
-      c.fillStyle = "#f4efe6"; c.font = "700 56px Arial, sans-serif"; c.textAlign = "center"; c.textBaseline = "middle";
-      c.fillText("Sunrise School", 256, 68);
+      c.fillStyle = "#f4efe6"; c.font = "700 42px Arial, sans-serif"; c.textAlign = "center"; c.textBaseline = "middle";
+      c.fillText("Galaxy Public School", 256, 68);
     });
     const board = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 1.1), new THREE.MeshStandardMaterial({ map: signTex, roughness: 0.8 }));
     board.position.set(0, 3.7, GATE_Z + 0.17); scene.add(board); // faces +z, toward the player

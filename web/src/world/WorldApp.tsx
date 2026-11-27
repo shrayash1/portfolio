@@ -3,8 +3,9 @@ import "./world.css";
 import { Game } from "./engine/game";
 import { defaultQuality } from "./engine/renderer";
 import { chapter1 } from "./chapters/ch1";
+import type { ChapterScene } from "./chapters/types";
 import { CHAPTERS } from "./story/chapters";
-import { loadProgress, pickChapter, saveProgress } from "./story/progress";
+import { loadProgress, nextChapter, pickChapter, saveProgress } from "./story/progress";
 import { store } from "./store";
 import { StartScreen } from "./ui/StartScreen";
 import { ChapterSelect } from "./ui/ChapterSelect";
@@ -12,7 +13,7 @@ import { Hud } from "./ui/Hud";
 import { PauseMenu, type Settings } from "./ui/PauseMenu";
 
 type Screen = "start" | "select" | "play";
-const SCENES: Record<number, typeof chapter1> = { 1: chapter1 };
+const SCENES: Record<number, ChapterScene> = { 1: chapter1 };
 
 export function WorldApp() {
   const [screen, setScreen] = useState<Screen>("start");
@@ -25,6 +26,7 @@ export function WorldApp() {
   const pauseRef = useRef<() => void>(() => {});
   const live = useRef(settings); live.current = settings;
   const ui = useSyncExternalStore(store.subscribe, store.get);
+  const next = nextChapter(chapterId, SCENES, CHAPTERS);
 
   useEffect(() => {
     if (screen !== "play" || !host.current) return;
@@ -32,7 +34,7 @@ export function WorldApp() {
     const pause = () => { g.pause(); setPaused(true); };
     pauseRef.current = pause;
     const g = new Game({
-      host: el, era: CHAPTERS[chapterId - 1].era,
+      host: el,
       onPause: pause,
       onComplete: () => saveProgress({ lastChapter: chapterId, done: [chapterId] }),
     });
@@ -65,7 +67,7 @@ export function WorldApp() {
       <div ref={host} className="gamehost" />
       {screen === "start" && <StartScreen onPlay={() => play(pickChapter(loadProgress().lastChapter, SCENES))} onSelect={() => setScreen("select")} />}
       {screen === "select" && <ChapterSelect done={loadProgress().done} onPick={play} onBack={() => setScreen("start")} />}
-      {screen === "play" && ui.loading && <div className="screen loading" role="status">Loading the street…</div>}
+      {screen === "play" && ui.loading && <div className="screen loading" role="status">Loading chapter…</div>}
       {screen === "play" && failed && (
         <main className="screen" role="alert">
           <p>{ui.note ?? "This browser can't show the 3D world."}</p>
@@ -77,11 +79,12 @@ export function WorldApp() {
       )}
       {screen === "play" && ui.complete && !paused && (
         <main className="screen endcard" role="dialog" aria-label="Chapter complete">
-          <p className="label">Chapter 1</p>
-          <h2 className="big small">Chapter 1 complete</h2>
-          <p className="sub">Chapter 2 is coming soon.</p>
+          <p className="label">Chapter {chapterId}</p>
+          <h2 className="big small">Chapter {chapterId} complete</h2>
+          {next ? <p className="sub">Next: {CHAPTERS[next - 1].en}.</p> : <p className="sub">The next chapter is coming soon.</p>}
           <nav className="menu">
-            <a className="btn primary" href="portfolio.html#work" autoFocus>See the games →</a>
+            {next && <button type="button" className="btn primary" autoFocus onClick={() => play(next)}>Continue to Chapter {next}</button>}
+            <a className={"btn" + (next ? "" : " primary")} href="portfolio.html#work" autoFocus={!next}>See the games →</a>
             <button type="button" className="btn" onClick={() => setScreen("select")}>Chapter select</button>
           </nav>
         </main>

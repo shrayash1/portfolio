@@ -26,3 +26,7 @@ export function saveProgress(p: Progress): void {
     /* storage unavailable: progress just isn't kept */
   }
 }
+
+/** The chapter after `id`, only if it is built (registered) and available; else null. */
+export const nextChapter = (id: number, scenes: Record<number, unknown>, chapters: { id: number; available: boolean }[]): number | null =>
+  scenes[id + 1] && chapters.find((c) => c.id === id + 1)?.available ? id + 1 : null;

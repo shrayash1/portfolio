@@ -6,8 +6,9 @@ import { clampDt, followCamera, pullInDistance } from "./camera";
 import { loadPlayer, loadNpc, type Character } from "./characters";
 import { Dialogue } from "../story/dialogue";
 import { Objectives } from "../story/objectives";
-import type { Era, Interactable } from "../story/types";
-import type { ChapterScene } from "../chapters/types";
+import { CHAPTERS } from "../story/chapters";
+import type { DialogueLine, Interactable } from "../story/types";
+import type { ChapterApi, ChapterScene } from "../chapters/types";
 import { store } from "../store";
 
 export class Game {
@@ -21,6 +22,7 @@ export class Game {
   private objectives!: Objectives;
   private dialogue: Dialogue | null = null;
   private pending: Interactable | null = null;
+  private dlgDone: (() => void) | null = null;
   private npcs: { c: Character; spec: ChapterScene["npcs"][number] }[] = [];
   private vel = new THREE.Vector3();
   private camLook = new THREE.Vector3();
@@ -31,7 +33,7 @@ export class Game {
   private onResize = () => { this.camera.aspect = innerWidth / innerHeight; this.camera.updateProjectionMatrix(); this.r.resize(); if (this.paused) this.render(); };
   private onWheel = (e: WheelEvent) => { this.dist = THREE.MathUtils.clamp(this.dist + e.deltaY * 0.004, 2.6, 9); };
 
-  constructor(private opts: { host: HTMLElement; era: Era; onPause?: () => void; onComplete?: () => void }) {}
+  constructor(private opts: { host: HTMLElement; onPause?: () => void; onComplete?: () => void }) {}
 
   get player() { return this.pc.root; }
 
@@ -45,7 +47,7 @@ export class Game {
     await chapter.build(this.scene);
     chapter.setLamps?.(lamps); // after build: the chapter only has its lamp materials once built
     if (this.disposed) return;
-    this.pc = await loadPlayer(this.opts.era, (note) => store.set({ note }));
+    this.pc = await loadPlayer(CHAPTERS[chapter.id - 1].era, (note) => store.set({ note }));
     if (this.disposed) return;
     this.pc.root.position.copy(chapter.spawn);
     this.scene.add(this.pc.root);
@@ -113,11 +115,30 @@ export class Game {
       store.set({ dialogue: line, last: this.dialogue.isLast() });
       if (!line) this.finish();
     } else if (this.pending) {
-      this.dialogue = new Dialogue(this.pending.dialogue ?? []);
+      const it = this.pending;
+      if (this.chapter.onInteract?.(it.id, this.api) === true) return;
+      void this.open(it.dialogue ?? [], it.completes);
+    }
+  }
+
+  // what a chapter's onInteract can do; moment/sequence are filled in by the cinematic layer
+  private api: ChapterApi = {
+    complete: (id) => this.complete(id),
+    moment: () => Promise.resolve(),
+    sequence: () => Promise.resolve(),
+    thought: (text) => { this.thoughtT = 4.5; store.set({ thought: text }); },
+    dialogue: (lines) => this.open(lines),
+    setTime: (name) => this.setTime(name),
+  };
+
+  private open(lines: DialogueLine[], completes?: string): Promise<void> {
+    return new Promise((res) => {
+      this.dialogue = new Dialogue(lines);
+      this.dlgDone = () => { if (completes) this.complete(completes); res(); };
       const line = this.dialogue.current();
       store.set({ dialogue: line, prompt: null, last: this.dialogue.isLast() });
       if (!line) this.finish();
-    }
+    });
   }
 
   private objectiveText() {
@@ -125,11 +146,16 @@ export class Game {
     return { objective: this.objectives.active()?.text ?? null, optional: opt?.text ?? null };
   }
 
-  private finish() {
-    if (this.pending?.completes) this.objectives.complete(this.pending.completes);
-    this.dialogue = null;
+  private complete(id: string) {
+    this.objectives.complete(id);
     store.set(this.objectiveText());
     if (this.objectives.allRequiredDone() && !this.completed) { this.completed = true; this.opts.onComplete?.(); store.set({ complete: true }); }
+  }
+
+  private finish() {
+    const done = this.dlgDone;
+    this.dialogue = null; this.dlgDone = null;
+    done?.();
   }
 
   step(dt: number) {
