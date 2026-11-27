@@ -24,27 +24,92 @@ function blobTexture() {
   });
 }
 
-// the street's motorbike as one geometry with vertex colours (front = -z, wheels on the ground at y 0), so a bike is one
-// draw call: a moving Mesh with bikeMaterial(), or merged into scenery with put(); Ch.2 reuses it for the ride
+// a motorbike as one geometry with vertex colours (front = -z, wheels on the ground at y 0), so a bike is one draw call:
+// a moving Mesh with bikeMaterial(), or merged into scenery with put(); Ch.2 reuses it for the ride
 export function motorbikeGeometry(body: number): THREE.BufferGeometry {
-  const dark = 0x1d1f24, steel = 0x9a948a, parts: THREE.BufferGeometry[] = [];
-  const m = new THREE.Matrix4(), e = new THREE.Euler(), q = new THREE.Quaternion(), one = new THREE.Vector3(1, 1, 1), c = new THREE.Color();
-  const part = (geo: THREE.BufferGeometry, color: number, x: number, y: number, z: number, rx = 0, ry = 0, rz = 0) => {
+  const dark = 0x1a1b1e, steel = 0xb9bdc3, alloy = 0x44474c, chrome = 0xd4d7db, parts: THREE.BufferGeometry[] = [];
+  const m = new THREE.Matrix4(), e = new THREE.Euler(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), c = new THREE.Color();
+  const part = (geo: THREE.BufferGeometry, color: number, x: number, y: number, z: number, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1) => {
     const g = geo.index ? geo.toNonIndexed() : geo.clone();
-    g.applyMatrix4(m.compose(new THREE.Vector3(x, y, z), q.setFromEuler(e.set(rx, ry, rz)), one));
+    g.applyMatrix4(m.compose(new THREE.Vector3(x, y, z), q.setFromEuler(e.set(rx, ry, rz)), sc.set(sx, sy, sz)));
     c.setHex(color);
-    g.setAttribute("color", new THREE.Float32BufferAttribute(Array.from({ length: g.attributes.position.count }, () => [c.r, c.g, c.b]).flat(), 3));
+    const a = new Float32Array(g.attributes.position.count * 3);
+    for (let i = 0; i < a.length; i += 3) a.set([c.r, c.g, c.b], i);
+    g.setAttribute("color", new THREE.BufferAttribute(a, 3));
     parts.push(g);
   };
-  const wheel = new THREE.TorusGeometry(0.28, 0.08, 8, 20);
-  for (const dz of [-0.62, 0.62]) part(wheel, dark, 0, 0.36, dz, 0, Math.PI / 2);
-  part(rbox(0.26, 0.32, 1.0, 0.08), body, 0, 0.62, 0.05); // tank and body
-  part(rbox(0.24, 0.1, 0.6, 0.04), dark, 0, 0.82, 0.25); // seat
-  part(new THREE.CylinderGeometry(0.02, 0.02, 0.7, 6), steel, 0, 1.0, -0.5, 0, 0, Math.PI / 2); // handlebar, across the bike
-  part(new THREE.CylinderGeometry(0.025, 0.025, 0.65, 6), steel, 0, 0.68, -0.56, 0.19); // front fork, wheel to bars
+  const tube = (r: number, len: number) => new THREE.CylinderGeometry(r, r, len, 8);
+  const R = 0.32, FZ = -0.68, RZ = 0.66; // wheel radius, front and rear axle z
+  // wheels: tyre, rim, five alloy spokes, hub; a brake disc on the front
+  for (const z of [FZ, RZ]) {
+    part(new THREE.TorusGeometry(R - 0.065, 0.065, 7, 22), dark, 0, R, z, 0, Math.PI / 2);
+    part(new THREE.TorusGeometry(0.2, 0.018, 4, 22), steel, 0, R, z, 0, Math.PI / 2);
+    for (let k = 0; k < 5; k++) part(new THREE.BoxGeometry(0.02, 0.4, 0.028), alloy, 0, R, z, (k / 5) * Math.PI);
+    part(new THREE.CylinderGeometry(0.055, 0.055, 0.13, 12), steel, 0, R, z, 0, 0, Math.PI / 2);
+  }
+  part(new THREE.CylinderGeometry(0.12, 0.12, 0.01, 12), chrome, 0.075, R, FZ, 0, 0, Math.PI / 2);
+  // fenders: arcs over the wheels, widened across the bike
+  part(new THREE.TorusGeometry(R + 0.03, 0.03, 4, 14, 1.6), body, 0, R, FZ, 0, Math.PI / 2, Math.PI / 2 - 0.8, 1, 1, 2.3);
+  part(new THREE.TorusGeometry(R + 0.03, 0.03, 4, 14, 1.3), body, 0, R, RZ, 0, Math.PI / 2, Math.PI / 2 - 0.25, 1, 1, 2.3);
+  // front fork, headlight, bars, grips, mirrors
+  for (const x of [-0.075, 0.075]) part(new THREE.CylinderGeometry(0.024, 0.032, 0.7, 8), steel, x, 0.66, -0.6, 0.24);
+  part(new THREE.CylinderGeometry(0.088, 0.07, 0.13, 16), dark, 0, 0.9, -0.63, Math.PI / 2);
+  part(new THREE.CylinderGeometry(0.076, 0.076, 0.012, 16), 0xfff2cf, 0, 0.9, -0.697, Math.PI / 2);
+  part(tube(0.016, 0.66), steel, 0, 1.04, -0.48, 0, 0, Math.PI / 2);
+  for (const x of [-0.3, 0.3]) {
+    part(tube(0.024, 0.12), dark, x, 1.04, -0.48, 0, 0, Math.PI / 2);
+    part(tube(0.008, 0.2), dark, x * 0.7, 1.13, -0.47);
+    part(new THREE.SphereGeometry(1, 8, 4), dark, x * 0.7, 1.24, -0.47, 0, 0, 0, 0.06, 0.035, 0.018);
+  }
+  // fuel tank, seat, side panel, tail with its light
+  part(new THREE.SphereGeometry(1, 14, 9), body, 0, 0.88, -0.2, 0.08, 0, 0, 0.17, 0.13, 0.3);
+  part(tube(0.03, 0.02), chrome, 0, 1.0, -0.24);
+  part(rbox(0.25, 0.08, 0.58, 0.035), dark, 0, 0.87, 0.26, -0.05);
+  part(rbox(0.24, 0.17, 0.3, 0.04), body, 0, 0.71, 0.2);
+  part(rbox(0.2, 0.11, 0.34, 0.05), body, 0, 0.84, 0.62, -0.12);
+  part(new THREE.BoxGeometry(0.11, 0.04, 0.03), 0xc8231c, 0, 0.83, 0.8);
+  // frame, engine with cooling fins, swingarm, shocks, footpegs
+  part(tube(0.025, 0.55), dark, 0, 0.69, -0.36, -0.54);
+  part(tube(0.025, 0.8), dark, 0, 0.86, -0.1, 1.72);
+  part(new THREE.BoxGeometry(0.26, 0.28, 0.34), alloy, 0, 0.5, -0.05);
+  for (let k = 0; k < 4; k++) part(new THREE.BoxGeometry(0.3, 0.018, 0.17), steel, 0, 0.66 + k * 0.03, -0.17);
+  part(new THREE.CylinderGeometry(0.11, 0.11, 0.04, 16), chrome, 0.14, 0.45, 0, 0, 0, Math.PI / 2);
+  for (const x of [-0.1, 0.1]) {
+    part(new THREE.BoxGeometry(0.03, 0.05, 0.64), alloy, x, 0.39, 0.36, 0.2);
+    part(tube(0.022, 0.4), 0xc9a032, x * 1.1, 0.6, 0.5, -0.5);
+    part(tube(0.012, 0.12), dark, x * 1.8, 0.4, 0.1, 0, 0, Math.PI / 2);
+  }
+  // exhaust: header pipe and silencer on the right
+  part(tube(0.024, 0.5), chrome, 0.14, 0.42, 0.0, 1.93);
+  part(new THREE.CylinderGeometry(0.048, 0.058, 0.56, 14), chrome, 0.17, 0.44, 0.42, Math.PI / 2 - 0.14);
+  part(new THREE.CylinderGeometry(0.03, 0.03, 0.01, 10), dark, 0.17, 0.48, 0.705, Math.PI / 2 - 0.14);
   return mergeGeometries(parts)!;
 }
-export const bikeMaterial = () => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.4, metalness: 0.3 });
+export const bikeMaterial = () => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.42, metalness: 0.35 });
+
+/** Ch.1's far city: three layers of house rows and temple tops either side of x = 0 (z 24 → -170), drawn through `put`
+ *  with keys far1 / far2 / far3 / gold. `skip(x, z)` leaves a spot out while still drawing its random numbers. */
+export function farCity(put: typeof rawPut, r2: () => number, skip: (x: number, z: number) => boolean = () => false) {
+  const BOX = new THREE.BoxGeometry(1, 1, 1);
+  for (const side of [-1, 1]) for (let layer = 0; layer < 3; layer++) {
+    const key = (["far1", "far2", "far3"] as const)[layer], x0 = 26 + layer * 24;
+    for (let z = 24; z > -170; ) {
+      const w = 7 + r2() * 5, d = 9 + r2() * 6, h = 9 + r2() * 8 + layer * 3, x = side * (x0 + d / 2 + r2() * 6);
+      const live = !skip(x, z);
+      if (live) put(key, BOX, x, h / 2, z - w / 2, 0, 0, 0, d, h, w - 0.5);
+      if (r2() < 0.45 && live) put(key, new THREE.ConeGeometry(Math.max(d, w) * 0.75, 3.2, 4, 1), x, h + 1.6, z - w / 2, Math.PI / 4, 0, 0, d / Math.max(d, w), 1, w / Math.max(d, w));
+      z -= w + r2() * 3;
+    }
+    // temple tops: stacked roofs with a gold finial, taller than the houses
+    for (let k = 0; k < 3; k++) {
+      const x = side * (x0 + 4 + r2() * 14), z = 10 - r2() * 150, y0 = 12 + layer * 3;
+      if (skip(x, z)) continue;
+      put(key, BOX, x, y0 / 2, z, 0, 0, 0, 7, y0, 7);
+      for (let t = 0; t < 3; t++) put(key, new THREE.ConeGeometry(7 - t * 1.6, 2.6, 4, 1), x, y0 + 1.3 + t * 3.2, z, Math.PI / 4);
+      put("gold", new THREE.ConeGeometry(0.4, 2.2, 6), x, y0 + 11.5, z);
+    }
+  }
+}
 
 export function buildStreet(scene: THREE.Scene) {
   let live = true; // the houses past the end of the street still draw their rnd() numbers (so nearer ones stay as approved) but are not built
@@ -267,26 +332,7 @@ export function buildStreet(scene: THREE.Scene) {
   {
     let sd = 99;
     const r2 = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
-    for (const side of [-1, 1]) for (let layer = 0; layer < 3; layer++) {
-      const key = (["far1", "far2", "far3"] as const)[layer], x0 = 26 + layer * 24;
-      for (let z = 24; z > -170; ) {
-        const w = 7 + r2() * 5, d = 9 + r2() * 6, h = 9 + r2() * 8 + layer * 3, x = side * (x0 + d / 2 + r2() * 6);
-        live = !(Math.abs(x - STX) < 24 && Math.abs(z - SZ) < 24);
-        put(key, BOX, x, h / 2, z - w / 2, 0, 0, 0, d, h, w - 0.5);
-        if (r2() < 0.45) put(key, new THREE.ConeGeometry(Math.max(d, w) * 0.75, 3.2, 4, 1), x, h + 1.6, z - w / 2, Math.PI / 4, 0, 0, d / Math.max(d, w), 1, w / Math.max(d, w));
-        live = true;
-        z -= w + r2() * 3;
-      }
-      // temple tops: stacked roofs with a gold finial, taller than the houses
-      for (let k = 0; k < 3; k++) {
-        const x = side * (x0 + 4 + r2() * 14), z = 10 - r2() * 150, y0 = 12 + layer * 3;
-        live = !(Math.abs(x - STX) < 24 && Math.abs(z - SZ) < 24);
-        put(key, BOX, x, y0 / 2, z, 0, 0, 0, 7, y0, 7);
-        for (let t = 0; t < 3; t++) put(key, new THREE.ConeGeometry(7 - t * 1.6, 2.6, 4, 1), x, y0 + 1.3 + t * 3.2, z, Math.PI / 4);
-        put("gold", new THREE.ConeGeometry(0.4, 2.2, 6), x, y0 + 11.5, z);
-        live = true;
-      }
-    }
+    farCity(put, r2, (x, z) => Math.abs(x - STX) < 24 && Math.abs(z - SZ) < 24);
     for (let i = 0; i < 16; i++) { // valley hills: near ones green, far ones hazy blue; a ring also closes the view behind the stupa
       const far = i % 2, a = (i / 16) * Math.PI * 2 + r2() * 0.3, dist = 150 + far * 120 + r2() * 60;
       const sx = 70 + r2() * 60, sy = 22 + r2() * 28 + far * 14;

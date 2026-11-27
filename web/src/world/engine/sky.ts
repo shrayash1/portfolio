@@ -9,6 +9,10 @@ export const TIMES = {
   dusk: { elev: -1.5, az: 230, sun: 0x9a7ac0, si: 0.5, hemi: 0.4, fog: 0x5b4870, dens: 0.0026, exp: 1.25, lamps: 1 },
 };
 
+export type Preset = (typeof TIMES)[TimeName];
+/** A time-of-day preset with a chapter's own tweaks (fog, exposure, light) laid over it. */
+export const preset = (name: TimeName, over?: Partial<Preset>): Preset => ({ ...TIMES[name], ...over });
+
 const SKY_PARAMS = { turbidity: 7, rayleigh: 2.2, mieCoefficient: 0.006, mieDirectionalG: 0.86 } as const;
 
 export function createSky(scene: THREE.Scene, renderer: THREE.WebGLRenderer) {
@@ -33,8 +37,8 @@ export function createSky(scene: THREE.Scene, renderer: THREE.WebGLRenderer) {
   const sunDir = new THREE.Vector3();
   let envRT: THREE.WebGLRenderTarget | undefined;
 
-  function setTime(name: TimeName): number {
-    const t = TIMES[name];
+  function setTime(name: TimeName, over?: Partial<Preset>): number {
+    const t = preset(name, over);
     sunDir.setFromSphericalCoords(1, THREE.MathUtils.degToRad(90 - t.elev), THREE.MathUtils.degToRad(t.az));
     sky.material.uniforms.sunPosition.value.copy(sunDir);
     sun.color.set(t.sun);

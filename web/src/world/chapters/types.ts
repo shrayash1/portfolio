@@ -1,5 +1,5 @@
 import type * as THREE from "three";
-import type { TimeName } from "../engine/sky";
+import type { Preset, TimeName } from "../engine/sky";
 import type { DialogueLine, Interactable, Objective } from "../story/types";
 
 export interface NpcSpec {
@@ -29,6 +29,7 @@ export interface ChapterApi {
 export interface ChapterScene {
   id: number;
   time: TimeName;
+  sky?: Partial<Record<TimeName, Partial<Preset>>>; // this chapter's own fog / exposure / light per time of day
   build(scene: THREE.Scene): Promise<void>;
   spawn: THREE.Vector3;
   bounds: { minX: number; maxX: number; minZ: number; maxZ: number };

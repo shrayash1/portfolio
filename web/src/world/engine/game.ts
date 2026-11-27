@@ -46,7 +46,7 @@ export class Game {
     this.r = r; this.chapter = chapter;
     store.set({ loading: true });
     this.sky = createSky(this.scene, r.renderer);
-    const lamps = this.sky.setTime(chapter.time);
+    const lamps = this.sky.setTime(chapter.time, chapter.sky?.[chapter.time]);
     await chapter.build(this.scene);
     chapter.setLamps?.(lamps); // after build: the chapter only has its lamp materials once built
     if (this.disposed) return;
@@ -70,12 +70,12 @@ export class Game {
     const { pos, look } = followCamera(this.player.position, this.yaw, this.pitch, this.dist);
     this.camera.position.copy(pos); this.camLook.copy(look);
     store.set({ loading: false, ...this.objectiveText() });
-    if (import.meta.env.DEV) (globalThis as unknown as { __world: unknown }).__world = { step: (dt: number) => { this.step(dt); this.render(); } };
+    if (import.meta.env.DEV) (globalThis as unknown as { __world: unknown }).__world = { game: this, step: (dt: number) => { this.step(dt); this.render(); } };
     this.step(1); this.render();
     this.resume();
   }
 
-  setTime(name: TimeName): void { this.chapter.setLamps?.(this.sky.setTime(name)); this.render(); }
+  setTime(name: TimeName): void { const lamps = this.sky.setTime(name, this.chapter.sky?.[name]); this.chapter.setLamps?.(lamps); this.render(); }
   setQuality(q: Quality): void { this.r.setQuality(q); this.render(); }
 
   pause() { this.paused = true; cancelAnimationFrame(this.raf); }

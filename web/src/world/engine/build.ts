@@ -16,14 +16,27 @@ export function put(key: string, geo: THREE.BufferGeometry, x: number, y: number
 export const rbox = (w: number, h: number, d: number, r = 0.08) =>
   new RoundedBoxGeometry(w, h, d, 2, Math.min(r, w / 2.1, h / 2.1, d / 2.1));
 
-const NO_CAST = ["ground", "road", "mountain", "snow", "far1", "far2", "far3", "hill", "hill2"], NO_RECEIVE = ["mountain", "snow", "bulb"];
+/** A non-indexed copy of geo with one vertex colour, for the vertex-coloured buckets (many colours, one draw call). */
+export function tint(geo: THREE.BufferGeometry, color: number): THREE.BufferGeometry {
+  const g = geo.index ? geo.toNonIndexed() : geo.clone(), c = new THREE.Color(color), n = g.getAttribute("position").count;
+  const a = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) a.set([c.r, c.g, c.b], i * 3);
+  g.setAttribute("color", new THREE.BufferAttribute(a, 3));
+  return g;
+}
 
-// one mesh per material, added to the scene; the buckets are emptied
+// flat or far things that never need to cast a shadow (each caster is drawn again in the shadow pass)
+const NO_CAST = ["ground", "road", "mountain", "snow", "far1", "far2", "far3", "hill", "hill2", "flat", "far", "glow", "pool", "foam", "k-floor", "k-screen", "k-glow", "k-glass"];
+const NO_RECEIVE = ["mountain", "snow", "bulb", "far", "glow", "k-glow", "k-screen"];
+
+// one mesh per material, added to the scene; the buckets are emptied. "key@area" merges apart from "key" (so a far-off
+// area is frustum-culled on its own) but uses mats[key] and key's shadow rules
 export function mergeBuckets(scene: THREE.Scene, mats: Record<string, THREE.Material>) {
   for (const key of Object.keys(buckets)) {
-    const mesh = new THREE.Mesh(mergeGeometries(buckets[key])!, mats[key]);
-    mesh.castShadow = !NO_CAST.includes(key);
-    mesh.receiveShadow = !NO_RECEIVE.includes(key);
+    const base = key.split("@")[0];
+    const mesh = new THREE.Mesh(mergeGeometries(buckets[key])!, mats[key] ?? mats[base]);
+    mesh.castShadow = !NO_CAST.includes(base);
+    mesh.receiveShadow = !NO_RECEIVE.includes(base);
     scene.add(mesh);
     delete buckets[key];
   }

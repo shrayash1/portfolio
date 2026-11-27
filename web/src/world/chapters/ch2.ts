@@ -47,7 +47,7 @@ export const RIDE: SequenceSpec = {
     { at: 5, who: "Friend", text: "Wave for the camera!" },
     { at: 10, who: "You", text: "Worth every bump on that road." },
   ],
-  onFrame(t01) { riders.forEach((g, k) => placeRider(g, t01, k)); },
+  onFrame(t01) { riders.forEach((g, k) => { g.visible = t01 < 1; placeRider(g, t01, k); }); }, // drawn only during the ride
 };
 
 function placeRider(g: THREE.Group, t01: number, k: number) {
@@ -58,24 +58,28 @@ function placeRider(g: THREE.Group, t01: number, k: number) {
 
 let campus: ReturnType<typeof buildCampus> | null = null;
 let chars: Character[] = [];
-let labDone = false, riding = false;
+let labDone = false, riding = false, visit = 0; // visit: which build() is current, so a stale rider load is dropped
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export const chapter2: ChapterScene = {
   id: 2,
   time: "morning",
+  // a clearer, crisper morning than the shared preset: less haze, less flat fill light, so the campus has contrast
+  sky: { morning: { hemi: 0.5, si: 4.6, fog: 0xc6d2dc, dens: 0.0012, exp: 0.58 } },
   colliders: [...roomBoxes(LAB), COLLEGE],
   async build(scene) {
-    labDone = false; riding = false; riders = []; chars = [];
+    const me = ++visit, myRiders: THREE.Group[] = [], myChars: Character[] = [];
+    labDone = false; riding = false; riders = myRiders; chars = myChars;
     campus = buildCampus(scene);
     // the two friends on their bikes, waiting off-map at the start of the falls road; a rider that fails to load is left out
     const mat = bikeMaterial();
     await Promise.all(["male-10", "male-06"].map((name, k) =>
       loadNpc(NPC(name), undefined, CLIP("driving"))
         .then((c) => {
+          if (me !== visit) return; // the player left (or came back) while this was loading
           const g = new THREE.Group(), bike = new THREE.Mesh(motorbikeGeometry(k ? 0x2f5f9a : 0xa83a2e), mat);
           bike.castShadow = true; c.root.position.y = RIDER_Y; g.add(bike, c.root);
-          placeRider(g, 0, k); scene.add(g); riders[k] = g; chars.push(c); // sparse if one fails: forEach skips the hole, k stays right
+          placeRider(g, 0, k); g.visible = false; scene.add(g); myRiders[k] = g; myChars.push(c); // sparse if one fails: forEach skips the hole, k stays right
         })
         .catch((e) => console.warn("rider failed to load", e))));
   },

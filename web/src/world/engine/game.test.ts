@@ -8,7 +8,8 @@ vi.mock("./input", () => ({
 vi.mock("./renderer", () => ({
   createRenderer: () => ({ ok: true, renderer: { dispose() {}, domElement: { addEventListener() {}, removeEventListener() {} } }, setQuality() {}, render() {}, resize() {} }),
 }));
-vi.mock("./sky", () => ({ createSky: () => ({ setTime: () => 0.5, followShadow() {}, sunDir: new THREE.Vector3() }) }));
+const sky = vi.hoisted(() => ({ calls: [] as unknown[][] }));
+vi.mock("./sky", () => ({ createSky: () => ({ setTime: (...a: unknown[]) => (sky.calls.push(a), 0.5), followShadow() {}, sunDir: new THREE.Vector3() }) }));
 const fake = () => ({ root: new THREE.Group(), setMotion() {}, play() {}, update() {} });
 vi.mock("./characters", () => ({ loadPlayer: vi.fn(async () => fake()), loadNpc: vi.fn(async () => fake()) }));
 
@@ -86,6 +87,16 @@ describe("Game", () => {
     g5.setTime("dusk");
     expect(setLamps).toHaveBeenCalledWith(0.5);
     expect(() => g5.setQuality("lite")).not.toThrow();
+  });
+
+  it("lights the sky with the chapter's own override for that time of day", async () => {
+    const g5b = new Game({ host: {} as HTMLElement });
+    await g5b.start({ ...chapter, sky: { golden: { exp: 0.5 }, dusk: { dens: 0.001 } } });
+    expect(sky.calls.at(-1)).toEqual(["golden", { exp: 0.5 }]);
+    g5b.setTime("dusk"); // also for a chapter without setLamps (an optional call skips its arguments)
+    expect(sky.calls.at(-1)).toEqual(["dusk", { dens: 0.001 }]);
+    g5b.setTime("morning");
+    expect(sky.calls.at(-1)).toEqual(["morning", undefined]);
   });
 
   it("calls setLamps only after build has run", async () => {

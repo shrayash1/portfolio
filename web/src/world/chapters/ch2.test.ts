@@ -6,6 +6,7 @@ vi.mock("./ch2-scene", async (orig) => ({ ...(await orig<typeof import("./ch2-sc
 vi.mock("../engine/characters", () => ({ loadNpc: vi.fn(() => Promise.reject(new Error("404"))) }));
 
 import { chapter2, RIDE } from "./ch2";
+import { loadNpc, type Character } from "../engine/characters";
 import { LAB } from "./ch2-scene";
 import { followCamera, pullInDistance, BODY_R } from "../engine/camera";
 import type { ChapterApi } from "./types";
@@ -153,6 +154,35 @@ describe("chapter 2", () => {
       const outDoor = cam.x > LAB.x + LAB.w / 2 && Math.abs(cam.z - LAB.z) < 3; // looking in through the open doorway is fine
       expect(inside || outDoor, `spot ${px},${pz} yaw ${k}/16 pitch ${pitch}`).toBe(true);
     }
+  });
+
+  it("a rider still loading from an earlier visit never joins the new play-through (Review Focus 1)", async () => {
+    const pending: ((c: Character) => void)[] = [];
+    for (let i = 0; i < 4; i++) vi.mocked(loadNpc).mockImplementationOnce(() => new Promise((res) => { pending.push(res); }));
+    const mk = (): Character => ({ root: new THREE.Group(), update: vi.fn(), play() {}, setMotion() {} });
+    const s1 = new THREE.Scene(), s2 = new THREE.Scene();
+    const b1 = chapter2.build(s1), b2 = chapter2.build(s2); // left during loading, came back
+    const old = [mk(), mk()], neu = [mk(), mk()];
+    pending[2](neu[0]); pending[3](neu[1]); pending[0](old[0]); pending[1](old[1]); // the old loads finish last
+    await b1; await b2;
+    chapter2.update!(0, 0.1);
+    for (const c of old) expect(c.update).not.toHaveBeenCalled();
+    for (const c of neu) expect(c.update).toHaveBeenCalled();
+    const inScene = (s: THREE.Scene, c: Character) => { let f = false; s.traverse((o) => { if (o === c.root) f = true; }); return f; };
+    expect(old.some((c) => inScene(s1, c) || inScene(s2, c))).toBe(false);
+    expect(neu.every((c) => inScene(s2, c))).toBe(true);
+    // the riders stay hidden (not drawn) until the ride, and again after it
+    const groups = neu.map((c) => c.root.parent!);
+    expect(groups.every((g) => !g.visible)).toBe(true);
+    RIDE.onFrame!(0.5);
+    expect(groups.every((g) => g.visible)).toBe(true);
+    RIDE.onFrame!(1);
+    expect(groups.every((g) => !g.visible)).toBe(true);
+  });
+
+  it("has its own clearer, higher-contrast morning", () => {
+    expect(chapter2.sky?.morning?.dens).toBeLessThan(0.0019);
+    expect(chapter2.sky?.morning?.hemi).toBeLessThan(0.75);
   });
 
   it("keeps the player in the campus and the lab", () => {

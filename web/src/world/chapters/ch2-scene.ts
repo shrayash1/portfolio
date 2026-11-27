@@ -1,10 +1,12 @@
 import * as THREE from "three";
-import { put, rbox, mergeBuckets } from "../engine/build";
-import { room, desk, monitor, chair, plant, windowLight, poster, canvasTexture, kitMats, type RoomSpec } from "../engine/kit";
-import { motorbikeGeometry, bikeMaterial } from "./ch1-street";
+import { put, rbox, mergeBuckets, tint } from "../engine/build";
+import { room, shell, desk, monitor, chair, plant, windowLight, poster, canvasTexture, kitMats, type RoomSpec } from "../engine/kit";
+import { broadleaf, heightfield, mountainRange, roadCut, grassRock, wave } from "../engine/nature";
+import { motorbikeGeometry, bikeMaterial, farCity } from "./ch1-street";
 
-// NCIT, Lalitpur: a campus lawn, the college block, the computer lab, the gate with the bikes;
-// and Simba Falls far off-map (x ≈ 400), seen only by the ride's camera
+// NCIT, Lalitpur: a campus lawn, the college block, the computer lab, the gate with the bikes, Lalitpur and the valley
+// rim beyond the wall; and Simba Falls far off-map (x ≈ 400), seen only by the ride's camera. Nearly everything is
+// vertex-coloured and merged: campus buckets plain ("vc"), the falls' with "@falls" so each area is culled on its own.
 export const Y = 0.025; // top of the paths and floors: where feet stand
 export const LAB: RoomSpec = { x: -9, z: -4, w: 10, d: 8, h: 3.4, t: 0.3, door: { side: "e", width: 1.8, height: 2.4 } }; // inner x -14..-4, z -8..0
 export const DESK_X = [-12.4, -10.5, -8.6, -6.7];
@@ -15,156 +17,158 @@ export const GATE_Z = 5.2, WALL_X = 14.7; // the gate is in the east compound wa
 // the hill road to Simba Falls, ending in the waterfall clearing
 export const ROAD = new THREE.CatmullRomCurve3([[400, 95], [410, 66], [397, 38], [404, 10], [416, -18], [408, -44], [401, -62], [400, -74]].map(([x, z]) => new THREE.Vector3(x, 0.03, z)));
 export const FALLS: [number, number, number] = [400, 9, -94]; // where the camera ends up looking
+const POOL_Z = FALLS[2] + 8;
 
 const BOX = new THREE.BoxGeometry(1, 1, 1);
+const smooth = (a: number, b: number, x: number) => { const t = THREE.MathUtils.clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+
+// the falls' hills: cut flat along the road, flattened around the pool, a plateau above the cliff behind the falls
+const cut = roadCut(ROAD, { flat: 5, rise: 18, height: 22, seed: 4 });
+export const fallsHeight = (x: number, z: number) => {
+  const h = cut(x, z) * smooth(11, 22, Math.hypot(x - FALLS[0], z - POOL_Z));
+  return Math.max(h, 27 * smooth(-95.5, -100, z) * (0.9 + 0.2 * wave(x, z, 9)) - 0.08);
+};
 
 export function buildCampus(scene: THREE.Scene) {
   let seed = 11;
   const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  const M = (color: number, o: THREE.MeshStandardMaterialParameters = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.85, metalness: 0, ...o });
+  const c = (key: string, geo: THREE.BufferGeometry, color: number, ...a: number[]) => put(key, tint(geo, color), ...(a as [number, number, number]));
   const mats: Record<string, THREE.Material> = {
-    ground: M(0x6f9a52, { roughness: 1 }), paving: M(0xc8bfae, { roughness: 0.8 }), asphalt: M(0x4a4a4c, { roughness: 0.9 }),
-    concrete: M(0xd8d3ca, { roughness: 0.75 }), band: M(0x9a958c, { roughness: 0.7 }), accent: M(0x1f4e8c, { roughness: 0.5 }),
-    glass: M(0x2a3b4c, { roughness: 0.06, metalness: 0.7 }), frame: M(0x2b2f35, { roughness: 0.4, metalness: 0.6 }),
-    brick: M(0x9a4632), cap: M(0xbdb5a6), hedge: M(0x3f6e3a, { roughness: 0.95 }), leaf: M(0x4f7d45), bark: M(0x5a3a22),
-    wood: M(0x7a5232, { roughness: 0.7 }), steel: M(0xb9bcc2, { roughness: 0.35, metalness: 0.8 }), bike: bikeMaterial(),
-    hill: M(0x5f7d4a, { roughness: 1 }), hill2: M(0x8a96a8, { roughness: 1 }), mountain: M(0x8d86ad, { roughness: 1 }), snow: M(0xf4f1ff, { roughness: 0.9 }),
-    road: M(0x57524c, { roughness: 0.92 }), dirt: M(0x8a7458, { roughness: 1 }), pine: M(0x2f5a3a, { roughness: 0.9 }),
-    rock: M(0x6b6660, { roughness: 0.95 }), cliff: M(0x5a544e, { roughness: 1 }), pool: M(0x2f6f7a, { roughness: 0.06, metalness: 0.2 }),
-    foam: M(0xf2f7fa, { roughness: 0.6, emissive: 0xdfefff, emissiveIntensity: 0.25 }),
-  };
-  const tree = (x: number, z: number, s = 1) => {
-    put("bark", new THREE.CylinderGeometry(0.15 * s, 0.24 * s, 3.2 * s, 8), x, 1.6 * s, z);
-    for (let k = 0; k < 7; k++) put("leaf", new THREE.IcosahedronGeometry((1.1 + rnd() * 0.7) * s, 1), x + (rnd() - 0.5) * 2 * s, (3.4 + rnd() * 1.8) * s, z + (rnd() - 0.5) * 2 * s);
-  };
-  const pine = (x: number, z: number, s = 1, y0 = 0) => {
-    put("bark", new THREE.CylinderGeometry(0.12 * s, 0.18 * s, 1.6 * s, 6), x, y0 + 0.8 * s, z);
-    put("pine", new THREE.ConeGeometry(1.5 * s, 3.6 * s, 7), x, y0 + 2.8 * s, z, rnd() * 3);
-    put("pine", new THREE.ConeGeometry(1.05 * s, 2.8 * s, 7), x, y0 + 4.4 * s, z, rnd() * 3);
+    ground: new THREE.MeshStandardMaterial({ color: 0x5e8a46, roughness: 1 }),
+    terrain: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }),
+    pool: new THREE.MeshStandardMaterial({ color: 0x2b6470, roughness: 0.05, metalness: 0.25 }),
+    bike: bikeMaterial(),
   };
 
   // ---------- campus ----------
   put("ground", new THREE.PlaneGeometry(1400, 1400), 200, 0, 0, 0, -Math.PI / 2); // reaches the falls too
-  put("paving", BOX, 0, Y / 2, -0.5, 0, 0, 0, 3, Y, 33); // main path, spawn → college
-  put("paving", BOX, -2.6, Y / 2, LAB.z, 0, 0, 0, 2.2, Y, 2.2); // to the lab door
-  put("paving", BOX, 8.1, Y / 2, GATE_Z, 0, 0, 0, 13.2, Y, 2.4); // to the gate
-  put("asphalt", BOX, 11.6, Y / 2 - 0.002, 9.1, 0, 0, 0, 4.8, Y, 2.8); // the bike parking
-  for (let z = 15; z > -16; z -= 1.5) put("band", BOX, 0, Y + 0.001, z, 0, 0, 0, 3, 0.002, 0.04); // paving joints
+  c("flat", BOX, 0x9d958a, 0, Y / 2, -0.5, 0, 0, 0, 3, Y, 33); // main path, spawn → college
+  c("flat", BOX, 0x9d958a, -2.6, Y / 2, LAB.z, 0, 0, 0, 2.2, Y, 2.2); // to the lab door
+  c("flat", BOX, 0x9d958a, 8.1, Y / 2, GATE_Z, 0, 0, 0, 13.2, Y, 2.4); // to the gate
+  c("flat", BOX, 0x3f4044, 11.6, Y / 2 - 0.002, 9.1, 0, 0, 0, 4.8, Y, 2.8); // the bike parking
+  for (let z = 15; z > -16; z -= 1.5) c("flat", BOX, 0x7f786d, 0, Y + 0.001, z, 0, 0, 0, 3, 0.002, 0.04); // paving joints
+  for (const s of [-1, 1]) c("flat", BOX, 0x8a847a, s * 1.56, 0.04, -0.5, 0, 0, 0, 0.12, 0.08, 33); // kerbs
 
   // the college block: three storeys, glass bands, an NCIT sign on the parapet
   {
-    const { min, max } = COLLEGE, fz = max.z, w = max.x - min.x, d = max.z - min.z, fh = 3.8;
-    put("concrete", rbox(w, 11.4, d, 0.12), 0, 5.7, (min.z + max.z) / 2);
-    put("accent", rbox(w + 0.3, 1.0, d + 0.3, 0.06), 0, 11.9, (min.z + max.z) / 2); // parapet band
-    put("band", BOX, 0, 0.3, fz + 0.03, 0, 0, 0, w + 0.05, 0.6, 0.08); // plinth
+    const { min, max } = COLLEGE, fz = max.z, w = max.x - min.x, d = max.z - min.z, fh = 3.8, cz = (min.z + max.z) / 2;
+    c("vc", rbox(w, 11.4, d, 0.12), 0xd8d3ca, 0, 5.7, cz);
+    c("vc", rbox(w + 0.3, 1.0, d + 0.3, 0.06), 0x1f4e8c, 0, 11.9, cz); // parapet band
+    c("vc", BOX, 0x8f8a80, 0, 0.3, fz + 0.03, 0, 0, 0, w + 0.05, 0.6, 0.08); // plinth
     for (let f = 0; f < 3; f++) {
       const y = f * fh + 2.0;
-      put("glass", BOX, 0, y, fz + 0.04, 0, 0, 0, w - 1.6, 2.2, 0.08);
-      put("frame", BOX, 0, y + 1.12, fz + 0.1, 0, 0, 0, w - 1.5, 0.08, 0.1);
-      put("frame", BOX, 0, y - 1.12, fz + 0.1, 0, 0, 0, w - 1.5, 0.08, 0.1);
-      for (let x = -w / 2 + 0.8; x <= w / 2 - 0.8 + 1e-6; x += 1.6) put("frame", BOX, x, y, fz + 0.1, 0, 0, 0, 0.07, 2.2, 0.1);
-      put("band", BOX, 0, f * fh + 3.55, fz + 0.12, 0, 0, 0, w + 0.05, 0.5, 0.25); // floor slab edge
+      c("k-glass", BOX, 0x2a3b4c, 0, y, fz + 0.04, 0, 0, 0, w - 1.6, 2.2, 0.08);
+      for (const dy of [-1.12, 1.12]) c("vc-metal", BOX, 0x2b2f35, 0, y + dy, fz + 0.1, 0, 0, 0, w - 1.5, 0.08, 0.1);
+      for (let x = -w / 2 + 0.8; x <= w / 2 - 0.8 + 1e-6; x += 1.6) c("vc-metal", BOX, 0x2b2f35, x, y, fz + 0.1, 0, 0, 0, 0.07, 2.2, 0.1);
+      c("vc", BOX, 0x9a958c, 0, f * fh + 3.55, fz + 0.12, 0, 0, 0, w + 0.05, 0.5, 0.25); // floor slab edge
     }
-    put("concrete", rbox(6, 0.3, 2.6, 0.05), 0, 3.25, fz + 1.3); // entrance canopy
-    for (const dx of [-2.6, 2.6]) put("concrete", new THREE.CylinderGeometry(0.14, 0.14, 3.1, 12), dx, 1.55, fz + 2.3);
-    put("frame", rbox(3.2, 2.6, 0.1, 0.02), 0, 1.3, fz + 0.06); // the glass doors' frame
-    for (const dx of [-0.8, 0.8]) put("glass", BOX, dx, 1.25, fz + 0.12, 0, 0, 0, 1.45, 2.3, 0.04);
-    for (const x of [-9, 6]) put("frame", rbox(2.4, 1.2, 1.6, 0.06), x, 12.0, (min.z + max.z) / 2); // rooftop units
-    const sign = canvasTexture(1024, 128, (c) => {
-      c.fillStyle = "#1f4e8c"; c.fillRect(0, 0, 1024, 128);
-      c.fillStyle = "#ffffff"; c.textBaseline = "middle";
-      c.font = "800 86px Arial, sans-serif"; c.fillText("NCIT", 24, 68);
-      c.font = "500 34px Arial, sans-serif"; c.fillStyle = "#dfe8f5"; c.fillText("Nepal College of Information Technology", 270, 68);
+    c("vc", rbox(6, 0.3, 2.6, 0.05), 0xd8d3ca, 0, 3.25, fz + 1.3); // entrance canopy
+    for (const dx of [-2.6, 2.6]) c("vc", new THREE.CylinderGeometry(0.14, 0.14, 3.1, 12), 0xd8d3ca, dx, 1.55, fz + 2.3);
+    c("vc-metal", rbox(3.2, 2.6, 0.1, 0.02), 0x2b2f35, 0, 1.3, fz + 0.06); // the glass doors' frame
+    for (const dx of [-0.8, 0.8]) c("k-glass", BOX, 0x2a3b4c, dx, 1.25, fz + 0.12, 0, 0, 0, 1.45, 2.3, 0.04);
+    for (const x of [-9, 6]) c("vc-metal", rbox(2.4, 1.2, 1.6, 0.06), 0x6d7076, x, 12.0, cz); // rooftop units
+    const sign = canvasTexture(1024, 128, (g) => {
+      g.fillStyle = "#1f4e8c"; g.fillRect(0, 0, 1024, 128);
+      g.fillStyle = "#ffffff"; g.textBaseline = "middle";
+      g.font = "800 86px Arial, sans-serif"; g.fillText("NCIT", 24, 68);
+      g.font = "500 34px Arial, sans-serif"; g.fillStyle = "#dfe8f5"; g.fillText("Nepal College of Information Technology", 270, 68);
     });
     poster(scene, 0, 11.9, fz + 0.17, 0, 7.6, 0.95, sign, 0.35);
-    for (const x0 of [-13.2, 1.8]) put("hedge", rbox(11.4, 0.8, 0.8, 0.3), x0 + 5.7, 0.4, -16.2); // hedges along the front
+    for (const x0 of [-13.2, 1.8]) c("vc", rbox(11.4, 0.8, 0.8, 0.3), 0x3f6e3a, x0 + 5.7, 0.4, -16.2); // hedges along the front
   }
 
-  // the computer lab: one room, an open doorway on its east side
+  // the computer lab: a room with an open doorway on its east side, dressed outside like the college block
   {
     room(LAB);
-    const x1 = LAB.x + LAB.w / 2, t = LAB.t!;
-    for (const [dz, h] of [[-1.0, 2.5], [1.0, 2.5]] as const) put("frame", BOX, x1 + t + 0.03, h / 2, LAB.z + dz, 0, 0, 0, 0.08, h, 0.12); // door frame
-    put("frame", BOX, x1 + t + 0.03, 2.46, LAB.z, 0, 0, 0, 0.08, 0.12, 2.1);
-    put("accent", BOX, LAB.x, LAB.h + t + 0.08, LAB.z, 0, 0, 0, LAB.w + 0.7, 0.16, LAB.d + 0.7); // roof edge
-    for (const x of [-12, -9, -6]) windowLight(x, 1.75, LAB.z + LAB.d / 2, Math.PI, 1.9, 1.2, t); // south wall windows
-    for (const z of [-6.2, -1.8]) windowLight(LAB.x - LAB.w / 2, 1.75, z, Math.PI / 2, 1.6, 1.2, t); // west wall windows
+    shell(LAB);
+    const x1 = LAB.x + LAB.w / 2, t = LAB.t!, ox = x1 + t + 0.03; // ox: the cladding's outer face
+    for (const dz of [-1.0, 1.0]) c("vc-metal", BOX, 0x2b2f35, ox + 0.04, 1.25, LAB.z + dz, 0, 0, 0, 0.08, 2.5, 0.12); // door frame
+    c("vc-metal", BOX, 0x2b2f35, ox + 0.04, 2.46, LAB.z, 0, 0, 0, 0.08, 0.12, 2.1);
+    c("flat", BOX, 0x8f8a80, ox + 0.5, 0.06, LAB.z, 0, 0, 0, 1.0, 0.12, 2.4); // doorstep
+    for (const x of [-12, -9, -6]) windowLight(x, 1.65, LAB.z + LAB.d / 2, Math.PI, 1.9, 1.2); // south wall windows
+    for (const z of [-6.2, -1.8]) windowLight(LAB.x - LAB.w / 2, 1.65, z, Math.PI / 2, 1.6, 1.2); // west wall windows
     for (const [row, x] of DESK_X.flatMap((x) => [ROW_A, ROW_B].map((r) => [r, x] as const))) {
       desk(x, row); monitor(x, row, 0, !(row === ROW_A && x === HERO_X)); chair(x, row + 0.75);
     }
     plant(LAB.x - LAB.w / 2 + 0.4, LAB.z - LAB.d / 2 + 0.4);
     plant(x1 - 0.4, LAB.z - LAB.d / 2 + 0.4, 1.2);
-    // the whiteboard, a poster, the lab sign over the door
-    const board = canvasTexture(512, 192, (c) => {
-      c.fillStyle = "#f6f6f2"; c.fillRect(0, 0, 512, 192);
-      c.strokeStyle = "#9aa0a8"; c.lineWidth = 6; c.strokeRect(3, 3, 506, 186);
-      c.fillStyle = "#2a55a8"; c.font = "600 30px 'Comic Sans MS', 'Segoe Print', cursive"; c.fillText("Lab 2: Game Loop", 24, 48);
-      c.fillStyle = "#333"; c.font = "24px 'Courier New', monospace";
-      ["while (running) {", "  input(); update(); draw();", "}"].forEach((l, i) => c.fillText(l, 34, 92 + i * 30));
-      c.fillStyle = "#c0392b"; c.font = "600 24px 'Segoe Print', cursive"; c.fillText("Due Friday!!", 340, 170);
+    // the whiteboard, a poster, the lab sign beside the door
+    const board = canvasTexture(512, 192, (g) => {
+      g.fillStyle = "#f2f1ea"; g.fillRect(0, 0, 512, 192);
+      g.strokeStyle = "#9aa0a8"; g.lineWidth = 6; g.strokeRect(3, 3, 506, 186);
+      g.fillStyle = "#2a55a8"; g.font = "600 30px 'Comic Sans MS', 'Segoe Print', cursive"; g.fillText("Lab 2: Game Loop", 24, 48);
+      g.fillStyle = "#333"; g.font = "24px 'Courier New', monospace";
+      ["while (running) {", "  input(); update(); draw();", "}"].forEach((l, i) => g.fillText(l, 34, 92 + i * 30));
+      g.fillStyle = "#c0392b"; g.font = "600 24px 'Segoe Print', cursive"; g.fillText("Due Friday!!", 340, 170);
     });
-    poster(scene, LAB.x, 1.6, LAB.z - LAB.d / 2 + 0.015, 0, 3.4, 1.28, board);
-    const hello = canvasTexture(192, 256, (c) => {
-      const g = c.createLinearGradient(0, 0, 0, 256); g.addColorStop(0, "#1b0f2e"); g.addColorStop(1, "#e8407e");
-      c.fillStyle = g; c.fillRect(0, 0, 192, 256);
-      c.fillStyle = "#fff6e6"; c.font = "800 30px Arial, sans-serif"; c.textAlign = "center";
-      c.fillText("HELLO,", 96, 110); c.fillText("WORLD", 96, 146);
-      c.font = "16px 'Courier New', monospace"; c.fillText("printf(\"...\");", 96, 200);
+    poster(scene, LAB.x, 1.6, LAB.z - LAB.d / 2 + 0.015, 0, 3.4, 1.28, board, 0, true);
+    const hello = canvasTexture(192, 256, (g) => {
+      const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, "#1b0f2e"); gr.addColorStop(1, "#e8407e");
+      g.fillStyle = gr; g.fillRect(0, 0, 192, 256);
+      g.fillStyle = "#fff6e6"; g.font = "800 30px Arial, sans-serif"; g.textAlign = "center";
+      g.fillText("HELLO,", 96, 110); g.fillText("WORLD", 96, 146);
+      g.font = "16px 'Courier New', monospace"; g.fillText("printf(\"...\");", 96, 200);
     });
-    poster(scene, LAB.x - LAB.w / 2 + 0.015, 1.7, LAB.z, Math.PI / 2, 0.9, 1.2, hello);
-    const labSign = canvasTexture(256, 64, (c) => {
-      c.fillStyle = "#1f4e8c"; c.fillRect(0, 0, 256, 64);
-      c.fillStyle = "#fff"; c.font = "600 30px Arial, sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("Computer Lab 2", 128, 34);
+    poster(scene, LAB.x - LAB.w / 2 + 0.015, 1.7, LAB.z, Math.PI / 2, 0.9, 1.2, hello, 0, true);
+    const labSign = canvasTexture(256, 96, (g) => {
+      g.fillStyle = "#1f4e8c"; g.fillRect(0, 0, 256, 96);
+      g.fillStyle = "#fff"; g.textAlign = "center"; g.textBaseline = "middle";
+      g.font = "700 30px Arial, sans-serif"; g.fillText("Computer Lab", 128, 38);
+      g.font = "500 20px Arial, sans-serif"; g.fillStyle = "#dfe8f5"; g.fillText("Room 2 · Ground floor", 128, 70);
     });
-    poster(scene, x1 + t + 0.02, 2.95, LAB.z, Math.PI / 2, 1.8, 0.45, labSign, 0.2);
+    poster(scene, ox + 0.01, 1.75, LAB.z + 1.65, Math.PI / 2, 0.9, 0.34, labSign, 0.15);
     // the one glowing screen: the square that jumps
-    const game = canvasTexture(256, 148, (c) => {
-      c.fillStyle = "#0e1a2e"; c.fillRect(0, 0, 256, 148);
-      c.fillStyle = "#29d17a"; c.fillRect(0, 112, 256, 36);
-      c.fillStyle = "#1f9e5c"; for (let x = 0; x < 256; x += 32) c.fillRect(x, 112, 16, 6);
-      c.fillStyle = "#ffd447"; c.fillRect(92, 50, 30, 30);
-      c.fillStyle = "rgba(255,212,71,.35)"; c.fillRect(92, 84, 30, 4); c.fillRect(92, 94, 30, 3);
-      c.fillStyle = "#e8407e"; c.fillRect(190, 88, 18, 24);
-      c.fillStyle = "#ffffff"; c.font = "700 14px 'Courier New', monospace"; c.fillText("SCORE 0001", 10, 20);
+    const game = canvasTexture(256, 148, (g) => {
+      g.fillStyle = "#0e1a2e"; g.fillRect(0, 0, 256, 148);
+      g.fillStyle = "#29d17a"; g.fillRect(0, 112, 256, 36);
+      g.fillStyle = "#1f9e5c"; for (let x = 0; x < 256; x += 32) g.fillRect(x, 112, 16, 6);
+      g.fillStyle = "#ffd447"; g.fillRect(92, 50, 30, 30);
+      g.fillStyle = "rgba(255,212,71,.35)"; g.fillRect(92, 84, 30, 4); g.fillRect(92, 94, 30, 3);
+      g.fillStyle = "#e8407e"; g.fillRect(190, 88, 18, 24);
+      g.fillStyle = "#ffffff"; g.font = "700 14px 'Courier New', monospace"; g.fillText("SCORE 0001", 10, 20);
     });
     const hero = new THREE.Mesh(new THREE.PlaneGeometry(0.57, 0.33), new THREE.MeshBasicMaterial({ map: game, color: new THREE.Color(1.5, 1.5, 1.5), toneMapped: false }));
     hero.position.set(HERO_X, 1.03, ROW_A - 0.181); scene.add(hero);
     const glow = new THREE.PointLight(0x9fd8ff, 1.4, 3, 2); glow.position.set(HERO_X, 1.1, ROW_A + 0.2);
     // warm room light under the ceiling panels (the roof shades the room from the sun)
-    const warm = [-2.5, 2.5].map((dx) => { const l = new THREE.PointLight(0xffd7a8, 7, 10, 1.6); l.position.set(LAB.x + dx, LAB.h - 0.4, LAB.z); return l; });
+    const warm = [-2.5, 2.5].map((dx) => { const l = new THREE.PointLight(0xffd2a0, 8, 10, 1.6); l.position.set(LAB.x + dx, LAB.h - 0.4, LAB.z); return l; });
     scene.add(glow, ...warm);
   }
 
   // the compound wall and the gate
   {
-    const wall = (x: number, z: number, sx: number, sz: number) => { put("brick", BOX, x, 0.9, z, 0, 0, 0, sx, 1.8, sz); put("cap", BOX, x, 1.85, z, 0, 0, 0, sx + 0.1, 0.1, sz + 0.1); };
+    const wall = (x: number, z: number, sx: number, sz: number) => {
+      c("vc", BOX, 0x9a4632, x, 0.9, z, 0, 0, 0, sx, 1.8, sz);
+      c("vc", BOX, 0xbdb5a6, x, 1.85, z, 0, 0, 0, sx + 0.1, 0.1, sz + 0.1);
+    };
     wall(WALL_X, (-17 + GATE_Z - 1.4) / 2, 0.3, GATE_Z - 1.4 + 17); wall(WALL_X, (GATE_Z + 1.4 + 17.4) / 2, 0.3, 17.4 - GATE_Z - 1.4);
     wall(0, 17.4, WALL_X * 2, 0.3); wall(-WALL_X, 0.2, 0.3, 34.4);
-    for (const dz of [-1.6, 1.6]) { put("brick", rbox(0.7, 3.2, 0.7, 0.05), WALL_X, 1.6, GATE_Z + dz); put("cap", rbox(0.85, 0.2, 0.85, 0.04), WALL_X, 3.3, GATE_Z + dz); }
-    put("accent", rbox(0.4, 0.5, 3.9, 0.05), WALL_X, 3.7, GATE_Z);
-    const gateSign = canvasTexture(512, 64, (c) => {
-      c.fillStyle = "#1f4e8c"; c.fillRect(0, 0, 512, 64);
-      c.fillStyle = "#fff"; c.font = "700 34px Arial, sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("NCIT · Balkumari, Lalitpur", 256, 34);
+    for (const dz of [-1.6, 1.6]) { c("vc", rbox(0.7, 3.2, 0.7, 0.05), 0x9a4632, WALL_X, 1.6, GATE_Z + dz); c("vc", rbox(0.85, 0.2, 0.85, 0.04), 0xbdb5a6, WALL_X, 3.3, GATE_Z + dz); }
+    c("vc", rbox(0.4, 0.5, 3.9, 0.05), 0x1f4e8c, WALL_X, 3.7, GATE_Z);
+    const gateSign = canvasTexture(512, 64, (g) => {
+      g.fillStyle = "#1f4e8c"; g.fillRect(0, 0, 512, 64);
+      g.fillStyle = "#fff"; g.font = "700 34px Arial, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("NCIT · Balkumari, Lalitpur", 256, 34);
     });
     poster(scene, WALL_X - 0.21, 3.7, GATE_Z, -Math.PI / 2, 3.7, 0.46, gateSign, 0.2);
     // five parked motorbikes (the friends' and yours)
-    [0xa83a2e, 0x1b1b22, 0x2f5f9a, 0xe9e4da, 0x1b1b22].forEach((c, i) => put("bike", motorbikeGeometry(c), 9.8 + i * 0.9, Y, 9.1 + (i % 2) * 0.15, 0.08 * (i - 2)));
+    [0xa83a2e, 0x1b1b22, 0x2f5f9a, 0xe9e4da, 0x1b1b22].forEach((col, i) => put("bike", motorbikeGeometry(col), 9.8 + i * 0.9, Y, 9.1 + (i % 2) * 0.15, 0.08 * (i - 2)));
   }
 
-  // lawn: trees, a bench
-  for (const [x, z, s] of [[-6.5, 9, 1], [-11, 13, 1.15], [-11.5, 5, 0.9], [5.5, 12.5, 1.1], [6.5, -2.5, 1], [9.5, -11, 1.2], [-2.8, -12.5, 0.85], [12, -4, 0.95]]) tree(x, z, s);
-  put("wood", rbox(1.8, 0.08, 0.45, 0.02), -4.6, 0.45, 10.5, Math.PI / 2);
-  for (const dz of [-0.7, 0.7]) put("steel", BOX, -4.6, 0.22, 10.5 + dz, 0, 0, 0, 0.45, 0.44, 0.06);
+  // the lawn: broad-leaf trees and a bench
+  for (const [x, z, s] of [[-6.5, 9, 1], [-11, 13, 1.15], [-11.5, 5, 0.9], [5.5, 12.5, 1.1], [6.5, -2.5, 1], [9.5, -11, 1.2], [-2.8, -12.5, 0.85], [12, -4, 0.95]]) broadleaf("vc", x, 0, z, s, rnd);
+  c("vc", rbox(1.8, 0.08, 0.45, 0.02), 0x7a5232, -4.6, 0.45, 10.5, Math.PI / 2);
+  for (const dz of [-0.7, 0.7]) c("vc-metal", BOX, 0x9ea4ac, -4.6, 0.22, 10.5 + dz, 0, 0, 0, 0.45, 0.44, 0.06);
 
-  // Lalitpur beyond the wall: valley hills and the far Himalayas
-  for (let i = 0; i < 16; i++) {
-    const far = i % 2, a = (i / 16) * Math.PI * 2 + rnd() * 0.3, dist = 130 + far * 110 + rnd() * 50, sx = 60 + rnd() * 50;
-    put(far ? "hill2" : "hill", new THREE.SphereGeometry(1, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), Math.sin(a) * dist, -1, Math.cos(a) * dist, 0, 0, 0, sx, 20 + rnd() * 26 + far * 14, sx);
-  }
-  for (let i = 0; i < 10; i++) {
-    const x = -700 + i * 150 + (rnd() - 0.5) * 80, z = -520 - rnd() * 120, h = 240 + rnd() * 180, r = 150 + rnd() * 80;
-    put("mountain", new THREE.ConeGeometry(r, h, 7, 1), x, h / 2 - 5, z, rnd() * 3);
-    put("snow", new THREE.ConeGeometry(r * 0.34, h * 0.34, 7, 1), x, h - h * 0.17 - 4.5, z, rnd() * 3);
+  // Lalitpur beyond the wall (Ch.1's layered city), the valley rim, the far Himalayas
+  {
+    const FAR: Record<string, number> = { far1: 0x8a5a48, far2: 0x9a7a72, far3: 0xa896a4, gold: 0xd9a937 };
+    let sd = 99;
+    farCity((key, geo, ...a) => put("far", tint(geo, FAR[key]), ...a), () => (sd = (sd * 16807) % 2147483647) / 2147483647);
+    put("far", heightfield(0, -40, 640, 640, 64, 64, (x, z) => {
+      const r = Math.hypot(x, z + 40);
+      return r < 150 ? -2 : smooth(150, 270, r) * (38 + 48 * wave(x, z, 2)) + 6 * wave(z * 3, x * 3, 6) - 2;
+    }, (y, steep, x, z) => new THREE.Color(0x4f7a3e).lerp(new THREE.Color(0x7b8f5a), wave(x * 2, z * 2, 1)).lerp(new THREE.Color(0x6c6a5e), steep > 0.45 ? 0.6 : 0).getHex()), 0, 0, 0);
+    put("far", mountainRange(100, -640, 2400, 260, 380, 5), 0, 0, 0);
   }
 
   // ---------- Simba Falls (off-map) ----------
@@ -183,49 +187,51 @@ export function buildCampus(scene: THREE.Scene) {
       if (g.attributes.normal.getY(0) < 0) { idx.reverse(); g.setIndex(idx); g.computeVertexNormals(); } // face up
       return g;
     };
-    put("dirt", ribbon(3.6, 0.015), 0, 0, 0);
-    put("road", ribbon(2.4, 0.03), 0, 0, 0);
-    for (let i = 0; i <= 16; i++) for (const s of [-1, 1]) { // the hills the road winds through
-      const u = i / 16, p = ROAD.getPointAt(u), t = ROAD.getTangentAt(u), off = s * (30 + rnd() * 16), sx = 18 + rnd() * 12;
-      put("hill", new THREE.SphereGeometry(1, 14, 9, 0, Math.PI * 2, 0, Math.PI / 2), p.x + t.z * off, -1, p.z - t.x * off, 0, 0, 0, sx, 12 + rnd() * 16, sx);
+    c("flat@falls", ribbon(3.6, 0.015), 0x8a7458, 0, 0, 0);
+    c("flat@falls", ribbon(2.4, 0.03), 0x4e4b47, 0, 0, 0);
+    put("terrain@falls", heightfield(400, -10, 150, 250, 75, 125, fallsHeight, grassRock(4)), 0, 0, 0);
+    for (let i = 0; i < 46; i++) { // trees on the slopes either side of the road
+      const u = rnd() * 0.9, p = ROAD.getPointAt(u), t = ROAD.getTangentAt(u), off = (rnd() < 0.5 ? -1 : 1) * (6 + rnd() * 14);
+      const x = p.x + t.z * off, z = p.z - t.x * off;
+      broadleaf("vc@falls", x, fallsHeight(x, z) - 0.2, z, 0.9 + rnd() * 0.7, rnd);
     }
-    for (let i = 0; i < 70; i++) { // pines along the road
-      const u = rnd() * 0.92, p = ROAD.getPointAt(u), t = ROAD.getTangentAt(u), off = (rnd() < 0.5 ? -1 : 1) * (5 + rnd() * 12);
-      pine(p.x + t.z * off, p.z - t.x * off, 0.8 + rnd() * 0.6);
+    for (let i = 0; i < 10; i++) { // boulders on the cut
+      const u = rnd(), p = ROAD.getPointAt(u), t = ROAD.getTangentAt(u), off = (rnd() < 0.5 ? -1 : 1) * (4.6 + rnd() * 2), x = p.x + t.z * off, z = p.z - t.x * off;
+      c("vc@falls", new THREE.DodecahedronGeometry(0.5 + rnd() * 0.9, 1), 0x77706a, x, Math.max(0, fallsHeight(x, z)) + 0.2, z, rnd() * 3, rnd() * 3, 0, 1, 0.7, 1);
     }
     // the clearing: a pool, rocks, the cliff and the falling water
     const [fx, , fz] = FALLS;
-    put("pool", new THREE.CircleGeometry(9, 40), fx, 0.04, fz + 8, 0, -Math.PI / 2);
+    put("pool@falls", new THREE.CircleGeometry(9, 40), fx, 0.04, POOL_Z, 0, -Math.PI / 2);
     for (let k = 0; k < 18; k++) {
       const a = (k / 18) * Math.PI * 2, r = 9 + rnd() * 1.2;
       if (Math.sin(a) > 0.55) continue; // leave the near side open, toward the road
-      put("rock", new THREE.DodecahedronGeometry(0.6 + rnd() * 1.1, 0), fx + Math.cos(a) * r, 0.3, fz + 8 - Math.sin(a) * r, rnd() * 3, rnd() * 3, 0, 1, 0.7, 1);
+      c("vc@falls", new THREE.DodecahedronGeometry(0.6 + rnd() * 1.1, 1), [0x6b6660, 0x7a736a, 0x5e5953][k % 3], fx + Math.cos(a) * r, 0.3, POOL_Z - Math.sin(a) * r, rnd() * 3, rnd() * 3, 0, 1, 0.7, 1);
     }
-    put("cliff", rbox(56, 26, 10, 0.8), fx, 13, fz - 6);
+    c("vc@falls", rbox(56, 26, 10, 0.8), 0x5a544e, fx, 13, fz - 6);
     for (let k = 0; k < 14; k++) {
       const r = 3.5 + rnd() * 3.5, x = fx + (k % 2 ? 1 : -1) * (4 + r + rnd() * 18); // clear of the water
-      put("cliff", new THREE.DodecahedronGeometry(r, 0), x, 2 + rnd() * 24, fz - 1.2 + rnd() * 1.5, rnd() * 3, rnd() * 3, 0, 1, 1.2, 0.6);
+      c("vc@falls", new THREE.DodecahedronGeometry(r, 1), [0x5a544e, 0x635c55, 0x514c47][k % 3], x, 2 + rnd() * 24, fz - 1.2 + rnd() * 1.5, rnd() * 3, rnd() * 3, 0, 1, 1.2, 0.6);
     }
-    for (let k = 0; k < 16; k++) pine(fx + (rnd() - 0.5) * 54, fz - 4 - rnd() * 6, 0.9 + rnd() * 0.5, 26);
-    put("foam", new THREE.CircleGeometry(3.4, 24), fx, 0.06, fz + 1.6, 0, -Math.PI / 2, 0, 1.3, 1, 1);
-    for (let k = 0; k < 8; k++) put("foam", new THREE.IcosahedronGeometry(0.5 + rnd() * 0.5, 1), fx + (rnd() - 0.5) * 5, 0.2, fz + 1 + rnd() * 1.5);
+    for (let k = 0; k < 12; k++) { const x = fx + (rnd() - 0.5) * 54, z = fz - 8 - rnd() * 20; broadleaf("vc@falls", x, fallsHeight(x, z) - 0.2, z, 0.9 + rnd() * 0.5, rnd); }
+    c("vc@falls", new THREE.CircleGeometry(3.4, 24), 0xf2f7fa, fx, 0.06, fz + 1.6, 0, -Math.PI / 2, 0, 1.3, 1, 1); // foam
+    for (let k = 0; k < 8; k++) c("vc@falls", new THREE.IcosahedronGeometry(0.5 + rnd() * 0.5, 1), 0xf2f7fa, fx + (rnd() - 0.5) * 5, 0.2, fz + 1 + rnd() * 1.5);
   }
 
-  mergeBuckets(scene, { ...mats, ...kitMats() });
+  mergeBuckets(scene, { ...kitMats(), ...mats });
 
   // the water: a plane with streaks scrolling down, and a little mist at the bottom
   const [fx, , fz] = FALLS;
-  const streaks = canvasTexture(128, 256, (c) => {
-    c.fillStyle = "rgba(225,240,250,0.85)"; c.fillRect(0, 0, 128, 256);
-    for (let i = 0; i < 70; i++) { c.fillStyle = `rgba(255,255,255,${0.4 + rnd() * 0.6})`; c.fillRect(rnd() * 128, rnd() * 256, 1 + rnd() * 3, 20 + rnd() * 60); }
-    for (let i = 0; i < 20; i++) { c.fillStyle = "rgba(150,190,210,0.5)"; c.fillRect(rnd() * 128, rnd() * 256, 1 + rnd() * 2, 30 + rnd() * 50); }
+  const streaks = canvasTexture(128, 256, (g) => {
+    g.fillStyle = "rgba(225,240,250,0.85)"; g.fillRect(0, 0, 128, 256);
+    for (let i = 0; i < 70; i++) { g.fillStyle = `rgba(255,255,255,${0.4 + rnd() * 0.6})`; g.fillRect(rnd() * 128, rnd() * 256, 1 + rnd() * 3, 20 + rnd() * 60); }
+    for (let i = 0; i < 20; i++) { g.fillStyle = "rgba(150,190,210,0.5)"; g.fillRect(rnd() * 128, rnd() * 256, 1 + rnd() * 2, 30 + rnd() * 50); }
   });
   streaks.wrapS = streaks.wrapT = THREE.RepeatWrapping; streaks.repeat.set(1, 3);
   const water = new THREE.Mesh(new THREE.PlaneGeometry(6, 24), new THREE.MeshStandardMaterial({ map: streaks, transparent: true, roughness: 0.15, emissive: 0xcfe8ff, emissiveIntensity: 0.3, depthWrite: false }));
   water.position.set(fx, 12.4, fz - 0.6); scene.add(water);
-  const blob = canvasTexture(64, 64, (c) => {
-    const g = c.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(1, "rgba(255,255,255,0)");
-    c.fillStyle = g; c.fillRect(0, 0, 64, 64);
+  const blob = canvasTexture(64, 64, (g) => {
+    const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(1, "rgba(255,255,255,0)");
+    g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
   });
   const mist = [0, 0.33, 0.66].map((off) => {
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: blob, transparent: true, depthWrite: false, opacity: 0 }));
