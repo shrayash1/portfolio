@@ -2,6 +2,6 @@ Animations and rig: Mesh2Motion (https://mesh2motion.org), CC0. Player avatars: 
 
 NPC models npcs/base.glb and npcs/mannequin-female.glb: Mesh2Motion human variations, CC0 (art assets are CC0 per the README), https://github.com/Mesh2Motion/mesh2motion-app/tree/main/static/assets/human/variations
 
-NPC models npcs/female-08, female-09, female-31, male-05, male-06, male-10, male-15, male-32 (.glb): Mesh2Motion human variations "PSX" set by elbolilloduro, CC0, https://app.mesh2motion.org/api/rigs/human/variations
+NPC models npcs/female-08, female-09, male-05, male-06, male-10, male-15 (.glb): Mesh2Motion human variations "PSX" set by elbolilloduro, CC0, https://app.mesh2motion.org/api/rigs/human/variations
 Street dog animals/dog.glb and animals/dog-sleep.glb: Mesh2Motion fox rig "Dog" variation and "Sleep" animation, CC0, https://app.mesh2motion.org/api/rigs/fox/variations
 Extra human clips clips/*.glb (driving, sitting-idle, sitting-writing, sitting-talking, cheer-two-arms, clapping, idle-talkingphone): Mesh2Motion human animations (some from Quaternius), CC0, https://app.mesh2motion.org

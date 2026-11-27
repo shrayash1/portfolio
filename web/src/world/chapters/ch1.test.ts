@@ -31,7 +31,7 @@ describe("chapter 1", () => {
     expect(chapter1.npcs).toHaveLength(5);
     expect(chapter1.npcs.filter((n) => n.motion === "walk")).toHaveLength(2);
     expect(chapter1.npcs.map((n) => n.motion).sort()).toEqual(["idle", "idle", "talk", "walk", "walk"]);
-    expect(new Set(chapter1.npcs.map((n) => n.url))).toEqual(new Set(["male-32", "male-05", "female-08", "male-10", "female-31"].map((n) => `journey/npcs/${n}.glb`)));
+    expect(new Set(chapter1.npcs.map((n) => n.url))).toEqual(new Set(["male-06", "male-15", "female-08", "male-10", "male-05"].map((n) => `journey/npcs/${n}.glb`)));
   });
 
   it("walks on the sidewalks and the road", () => {

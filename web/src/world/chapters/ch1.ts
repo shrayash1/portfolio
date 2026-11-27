@@ -68,10 +68,10 @@ export const chapter1: ChapterScene = {
     { id: "t-stupa", label: "", position: [-2, 0.01, -30], radius: 5, auto: true, thought: "The stupa's eyes watch over the whole street. Feels like they're watching me too." },
   ],
   npcs: [
-    { url: NPC("male-32"), position: [-3.6, 0.16, TEA_Z], rotationY: Math.PI / 2, motion: "talk" }, // the tea-shop dai
-    { url: NPC("male-05"), position: [-3.9, 0.16, -42], rotationY: Math.PI / 2, motion: "walk", patrol: { axis: "z", range: 8 } },
+    { url: NPC("male-06"), position: [-3.6, 0.16, TEA_Z], rotationY: Math.PI / 2, motion: "talk" }, // the tea-shop dai
+    { url: NPC("male-15"), position: [-3.9, 0.16, -42], rotationY: Math.PI / 2, motion: "walk", patrol: { axis: "z", range: 8 } },
     { url: NPC("female-08"), position: [3.8, 0.16, -26], rotationY: -Math.PI / 2, motion: "walk", patrol: { axis: "z", range: 6 } },
     { url: NPC("male-10"), position: [3.7, 0.16, -8.7], rotationY: -Math.PI / 2, motion: "idle" },
-    { url: NPC("female-31"), position: [2.3, 0.16, GATE_Z - 1.2], rotationY: Math.PI, motion: "idle" }, // the school friend
+    { url: NPC("male-05"), position: [2.3, 0.16, GATE_Z - 1.2], rotationY: Math.PI, motion: "idle" }, // the school friend
   ],
 };
