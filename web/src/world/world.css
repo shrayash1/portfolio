@@ -77,7 +77,7 @@ kbd { font: 8px/1 var(--pixel); background: var(--ink); color: var(--night); bor
 
 /* pause */
 .scrim { position: fixed; inset: 0; z-index: 6; display: grid; place-items: center; background: rgba(20, 12, 30, .55); padding: 16px; overflow-y: auto; touch-action: pan-y; }
-.pause { display: flex; flex-direction: column; gap: 10px; width: min(92vw, 420px); max-height: calc(100dvh - 32px); overflow-y: auto; border-radius: 16px; padding: 20px; text-align: center; }
+.pause { box-sizing: border-box; margin-inline: auto; display: flex; flex-direction: column; gap: 10px; width: min(92vw, 420px); max-height: calc(100dvh - 32px); overflow-y: auto; border-radius: 16px; padding: 20px; text-align: center; }
 .setting { display: flex; flex-direction: column; gap: 6px; align-items: center; margin-top: 4px; }
 .seg { display: flex; flex-wrap: wrap; justify-content: center; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
 .seg button { min-height: 44px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; font-weight: 600; font-size: 13px; cursor: pointer; }
@@ -101,7 +101,7 @@ kbd { font: 8px/1 var(--pixel); background: var(--ink); color: var(--night); bor
 @media (hover: none), (max-width: 640px) {
   .help { display: none; }
   .pausebtn { display: block; } .ring { display: block; } .lookhint { display: block; }
-  .objective { right: auto; left: max(16px, env(safe-area-inset-left, 0px)); top: calc(112px + env(safe-area-inset-top, 0px)); max-width: 56vw; font-size: 13px; padding: 8px 12px; }
+  .objective { right: auto; left: max(16px, env(safe-area-inset-left, 0px)); top: calc(132px + env(safe-area-inset-top, 0px)); max-width: 56vw; font-size: 13px; padding: 8px 12px; }
   .dialogue { bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
   .label { font-size: 9px; }
 }

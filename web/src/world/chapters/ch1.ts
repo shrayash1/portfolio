@@ -43,7 +43,7 @@ export const chapter1: ChapterScene = {
     },
   ],
   npcs: [
-    { url: BASE, position: [-3.6, 0.16, TEA_Z], rotationY: Math.PI / 2, motion: "talk", tint: { Main: 0xe6d5b0 } },
+    { url: BASE, position: [-3.6, 0.16, TEA_Z], rotationY: Math.PI / 2, motion: "talk", tint: { Main: 0x8a3b2a } },
     { url: BASE, position: [-3.9, 0.16, -51], rotationY: Math.PI / 2, motion: "walk", tint: { Main: 0x5d7f86 }, patrol: { axis: "z", range: 8 } },
     { url: FEMALE, position: [3.8, 0.16, -63], rotationY: -Math.PI / 2, motion: "walk", tint: { "M_Main.001": 0xa64a42, "M_Joints.001": 0x8a5a3c }, patrol: { axis: "z", range: 8 } },
     { url: BASE, position: [3.7, 0.16, -8.7], rotationY: -Math.PI / 2, motion: "idle", tint: { Main: 0x6f7a55 } },
