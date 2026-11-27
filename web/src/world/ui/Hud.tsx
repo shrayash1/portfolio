@@ -27,7 +27,7 @@ export function Hud({ chapter, subtitles, onTalk, onPause }: { chapter: ChapterI
       <div className={"card" + (card ? "" : " gone")} aria-hidden={!card}>
         <span className="label">Chapter {chapter.id}</span>
         <b>{chapter.en}</b>
-        <span className="dv">{chapter.dv} · {chapter.place}</span>
+        <span className="dv" lang="ne">{chapter.dv} · {chapter.place}</span>
       </div>
       {s.objective && (
         <div className="panel objective"><span className="label">Objective</span>{s.objective}{s.optional && <span className="opt">{s.optional}</span>}</div>
@@ -36,11 +36,12 @@ export function Hud({ chapter, subtitles, onTalk, onPause }: { chapter: ChapterI
       {s.prompt && !s.dialogue && (
         <div className="prompt" role="status"><kbd>E</kbd>{s.prompt}</div>
       )}
+      {s.thought && !s.dialogue && <div className="thought" role="status">{s.thought}</div>}
       {s.dialogue && (
-        <div className="panel dialogue" role="status">
-          <span className="who">{s.dialogue.who}</span>
+        <div className={"panel dialogue" + (s.dialogue.who === "You" ? " you" : "")} role="status">
+          {s.dialogue.who !== "You" && <span className="who">{s.dialogue.who}</span>}
           {subtitles && <p>{s.dialogue.text}</p>}
-          <span className="next"><kbd>E</kbd>Next</span>
+          <span className="next"><kbd>E</kbd>{s.last ? "Close" : "Next"}</span>
         </div>
       )}
       <div className="panel help">
@@ -49,10 +50,9 @@ export function Hud({ chapter, subtitles, onTalk, onPause }: { chapter: ChapterI
       </div>
       <button type="button" className="tbtn pausebtn" aria-label="Pause" onClick={onPause}>II</button>
       <div className="ring" aria-hidden="true"><i ref={knob} /></div>
-      <span className="lookhint">Drag to look</span>
+      {!s.dialogue && <span className="lookhint">Drag to look</span>}
       <div className="touchbtns">
         {(s.prompt || s.dialogue) && <button type="button" className="tbtn talk" onClick={onTalk}>Talk</button>}
-        <button type="button" className="tbtn" aria-label="Jump">Jump</button>
       </div>
     </div>
   );

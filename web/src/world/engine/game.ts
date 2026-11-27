@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { createRenderer, type Quality } from "./renderer";
 import { createSky, type TimeName } from "./sky";
 import { createInput } from "./input";
-import { clampDt, followCamera } from "./camera";
+import { clampDt, followCamera, pullInDistance } from "./camera";
 import { loadPlayer, loadNpc, type Character } from "./characters";
 import { Dialogue } from "../story/dialogue";
 import { Objectives } from "../story/objectives";
@@ -25,8 +25,10 @@ export class Game {
   private vel = new THREE.Vector3();
   private camLook = new THREE.Vector3();
   private yaw = 0; private pitch = 0.16; private dist = 4.4;
+  private fired = new Set<string>(); private thoughtT = 0; private completed = false;
+  private ray = new THREE.Ray(); private head = new THREE.Vector3(); private camDir = new THREE.Vector3(); private hitP = new THREE.Vector3();
   private t = 0; private last = 0; private raf = 0; private paused = false; private disposed = false;
-  private onResize = () => { this.camera.aspect = innerWidth / innerHeight; this.camera.updateProjectionMatrix(); this.r.resize(); };
+  private onResize = () => { this.camera.aspect = innerWidth / innerHeight; this.camera.updateProjectionMatrix(); this.r.resize(); if (this.paused) this.render(); };
   private onWheel = (e: WheelEvent) => { this.dist = THREE.MathUtils.clamp(this.dist + e.deltaY * 0.004, 2.6, 9); };
 
   constructor(private opts: { host: HTMLElement; era: Era; onPause?: () => void; onComplete?: () => void }) {}
@@ -48,8 +50,9 @@ export class Game {
     this.pc.root.position.copy(chapter.spawn);
     this.scene.add(this.pc.root);
     for (const spec of chapter.npcs) {
-      const c = await loadNpc(spec.url, spec.tint);
+      const c = await loadNpc(spec.url, spec.tint).catch(() => null); // a missing NPC model just leaves that NPC out
       if (this.disposed) return;
+      if (!c) continue;
       c.root.position.set(...spec.position); c.root.rotation.y = spec.rotationY;
       c.play(spec.motion);
       if (spec.motion === "walk") c.setMotion(1.1);
@@ -67,8 +70,8 @@ export class Game {
     this.resume();
   }
 
-  setTime(name: TimeName): void { this.chapter.setLamps?.(this.sky.setTime(name)); }
-  setQuality(q: Quality): void { this.r.setQuality(q); }
+  setTime(name: TimeName): void { this.chapter.setLamps?.(this.sky.setTime(name)); this.render(); }
+  setQuality(q: Quality): void { this.r.setQuality(q); this.render(); }
 
   pause() { this.paused = true; cancelAnimationFrame(this.raf); }
   resume() { this.input?.state(); /* drop one-shot keys (the Esc that closed the menu) */ this.paused = false; this.last = performance.now(); cancelAnimationFrame(this.raf); this.raf = requestAnimationFrame(this.loop); }
@@ -80,7 +83,17 @@ export class Game {
     this.input?.dispose();
     this.r?.renderer.domElement.removeEventListener("wheel", this.onWheel);
     removeEventListener("resize", this.onResize);
+    this.scene.traverse((o) => {
+      const m = o as THREE.Mesh;
+      m.geometry?.dispose();
+      for (const mat of ([] as THREE.Material[]).concat(m.material ?? [])) {
+        for (const v of Object.values(mat)) if (v instanceof THREE.Texture) v.dispose();
+        mat.dispose();
+      }
+    });
     this.r?.renderer.dispose();
+    this.r?.composer?.dispose();
+    this.r?.renderer.forceContextLoss?.();
   }
 
   private loop = (now: number) => {
@@ -97,12 +110,12 @@ export class Game {
   interact() {
     if (this.dialogue) {
       const line = this.dialogue.next();
-      store.set({ dialogue: line });
+      store.set({ dialogue: line, last: this.dialogue.isLast() });
       if (!line) this.finish();
     } else if (this.pending) {
       this.dialogue = new Dialogue(this.pending.dialogue ?? []);
       const line = this.dialogue.current();
-      store.set({ dialogue: line, prompt: null });
+      store.set({ dialogue: line, prompt: null, last: this.dialogue.isLast() });
       if (!line) this.finish();
     }
   }
@@ -116,11 +129,12 @@ export class Game {
     if (this.pending?.completes) this.objectives.complete(this.pending.completes);
     this.dialogue = null;
     store.set(this.objectiveText());
-    if (this.objectives.allRequiredDone()) this.opts.onComplete?.();
+    if (this.objectives.allRequiredDone() && !this.completed) { this.completed = true; this.opts.onComplete?.(); store.set({ complete: true }); }
   }
 
   step(dt: number) {
     this.t += dt;
+    if (this.thoughtT > 0 && (this.thoughtT -= dt) <= 0) store.set({ thought: null });
     const inp = this.input.state();
     this.yaw -= inp.lookDX * 0.005;
     this.pitch = THREE.MathUtils.clamp(this.pitch + inp.lookDY * 0.003, -0.15, 0.7);
@@ -133,7 +147,7 @@ export class Game {
     const fw = new THREE.Vector3(-Math.sin(this.yaw), 0, -Math.cos(this.yaw)), rt = new THREE.Vector3(Math.cos(this.yaw), 0, -Math.sin(this.yaw));
     const want = talking ? new THREE.Vector3() : fw.multiplyScalar(inp.move.y).add(rt.multiplyScalar(inp.move.x));
     if (want.lengthSq() > 1) want.normalize();
-    this.vel.lerp(want.multiplyScalar(2.2 * (inp.run ? 2.1 : 1)), 1 - Math.exp(-dt * 10));
+    this.vel.lerp(want.multiplyScalar(2.6 * (inp.run ? 2.7 : 1)), 1 - Math.exp(-dt * 10));
     const p = this.player.position, b = this.chapter.bounds;
     p.addScaledVector(this.vel, dt);
     p.x = THREE.MathUtils.clamp(p.x, b.minX, b.maxX);
@@ -163,14 +177,33 @@ export class Game {
       let best = Infinity;
       for (const it of this.chapter.interactables) {
         const d = Math.hypot(p.x - it.position[0], p.z - it.position[2]);
-        if (d <= (it.radius ?? 2.2) && d < best) { best = d; this.pending = it; }
+        if (d > (it.radius ?? 2.2)) continue;
+        if (it.auto) { // an inner thought: shown once, never blocks
+          if (!this.fired.has(it.id)) { this.fired.add(it.id); this.thoughtT = 4.5; store.set({ thought: it.thought ?? null }); }
+          continue;
+        }
+        if (it.completes && this.objectives.isDone(it.completes)) continue; // done: no more prompt
+        if (d < best) { best = d; this.pending = it; }
       }
       const prompt = this.pending?.label ?? null;
       if (prompt !== store.get().prompt) store.set({ prompt });
     }
 
     const { pos, look } = followCamera(p, this.yaw, this.pitch, this.dist);
-    this.camera.position.lerp(pos, 1 - Math.exp(-dt * 8));
+    // one ray from the head toward the wanted camera spot: if a wall box is in the way, sit just in front of it
+    let rate = 8;
+    const cols = this.chapter.colliders;
+    if (cols?.length) {
+      const head = this.head.set(p.x, p.y + 1.6, p.z), dir = this.camDir.subVectors(pos, head), len = dir.length();
+      if (len > 0.01) {
+        this.ray.set(head, dir.divideScalar(len));
+        let hit: number | null = null;
+        for (const b of cols) { const h = this.ray.intersectBox(b, this.hitP); if (h) { const dd = h.distanceTo(head); if (hit === null || dd < hit) hit = dd; } }
+        const nl = pullInDistance(hit, len);
+        if (nl < len) { pos.copy(head).addScaledVector(dir, nl); rate = 24; }
+      }
+    }
+    this.camera.position.lerp(pos, 1 - Math.exp(-dt * rate));
     this.camLook.lerp(look, 1 - Math.exp(-dt * 10));
     this.camera.lookAt(this.camLook);
     this.sky.followShadow(p);

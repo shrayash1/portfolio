@@ -70,6 +70,10 @@ kbd { font: 8px/1 var(--pixel); background: var(--ink); color: var(--night); bor
 .help { left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); font-size: 12px; line-height: 1.6; max-width: min(460px, calc(100vw - 32px)); padding: 8px 12px; }
 .help b { color: var(--accent); }
 .dialogue ~ .help { display: none; }
+.dialogue.you p, .thought { font-style: italic; }
+.dialogue.you p { margin-top: 0; }
+.thought { left: 50%; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: min(560px, 90vw); text-align: center; font-size: 17px; line-height: 1.45; text-shadow: 0 1px 4px rgba(27, 15, 46, .95), 0 0 18px rgba(27, 15, 46, .8); }
+.endcard { background: rgba(20, 12, 30, .78); z-index: 7; }
 .touchbtns { right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); display: none; flex-direction: column; gap: 12px; pointer-events: auto; }
 .tbtn { min-width: 64px; min-height: 64px; border-radius: 50%; background: var(--panel); border: 2px solid var(--line); backdrop-filter: blur(6px); font: 600 18px/1 var(--display); text-transform: uppercase; touch-action: manipulation; }
 .tbtn.talk { border-color: var(--accent); }
@@ -102,6 +106,17 @@ kbd { font: 8px/1 var(--pixel); background: var(--ink); color: var(--night); bor
   .help { display: none; }
   .pausebtn { display: block; } .ring { display: block; } .lookhint { display: block; }
   .objective { right: auto; left: max(16px, env(safe-area-inset-left, 0px)); top: calc(132px + env(safe-area-inset-top, 0px)); max-width: 56vw; font-size: 13px; padding: 8px 12px; }
-  .dialogue { bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
+  .dialogue { bottom: calc(14px + env(safe-area-inset-bottom, 0px)); width: calc(100vw - 32px - 88px); left: max(16px, env(safe-area-inset-left, 0px)); transform: none; }
+  .thought { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); width: calc(100vw - 32px - 88px); left: max(16px, env(safe-area-inset-left, 0px)); transform: none; font-size: 15px; }
   .label { font-size: 9px; }
+}
+
+/* short landscape phones: shrink the title card and objective so nothing overlaps the dialogue */
+@media (max-height: 500px) {
+  .card { display: none; }
+  .objective { top: calc(14px + env(safe-area-inset-top, 0px)); left: max(16px, env(safe-area-inset-left, 0px)); max-width: 40vw; }
+  .dialogue { width: min(560px, calc(100vw - 260px)); left: 50%; transform: translateX(-50%); }
+  .dialogue p { font-size: 14px; margin: 2px 0 4px; }
+  .thought { bottom: 70px; width: min(520px, calc(100vw - 260px)); left: 50%; transform: translateX(-50%); }
+  .lookhint { bottom: 110px; }
 }

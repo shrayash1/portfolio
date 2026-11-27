@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { loadProgress, saveProgress } from "./progress";
+import { loadProgress, pickChapter, saveProgress } from "./progress";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -23,4 +23,10 @@ it("saveProgress keeps chapters done earlier", () => {
   saveProgress({ lastChapter: 1, done: [1] });
   saveProgress({ lastChapter: 2, done: [2] });
   expect(loadProgress()).toEqual({ lastChapter: 2, done: [1, 2] });
+});
+
+it("pickChapter falls back to 1 for an unknown saved chapter", () => {
+  expect(pickChapter(1, { 1: {} })).toBe(1);
+  expect(pickChapter(9, { 1: {} })).toBe(1);
+  expect(pickChapter(2, { 1: {}, 2: {} })).toBe(2);
 });

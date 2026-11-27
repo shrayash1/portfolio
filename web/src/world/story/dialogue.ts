@@ -9,6 +9,9 @@ export class Dialogue {
   current(): DialogueLine | null {
     return this.done ? null : this.lines[this.i];
   }
+  isLast(): boolean {
+    return this.i + 1 >= this.lines.length;
+  }
   next(): DialogueLine | null {
     if (this.i + 1 >= this.lines.length) {
       this.done = true;

@@ -4,7 +4,7 @@ import { Game } from "./engine/game";
 import { defaultQuality } from "./engine/renderer";
 import { chapter1 } from "./chapters/ch1";
 import { CHAPTERS } from "./story/chapters";
-import { loadProgress, saveProgress } from "./story/progress";
+import { loadProgress, pickChapter, saveProgress } from "./story/progress";
 import { store } from "./store";
 import { StartScreen } from "./ui/StartScreen";
 import { ChapterSelect } from "./ui/ChapterSelect";
@@ -42,10 +42,12 @@ export function WorldApp() {
       if (game.current !== g) return; // left or switched chapter while loading
       if (!el.querySelector("canvas")) setFailed(true); // no WebGL: the note says why
       else { g.setQuality(live.current.quality); g.setTime(live.current.time); }
+    }).catch(() => {
+      if (game.current === g) { store.set({ loading: false }); setFailed(true); } // a load error must not leave the loading screen up forever
     });
     return () => {
-      g.dispose(); game.current = null; el.replaceChildren();
-      store.set({ objective: null, optional: null, prompt: null, dialogue: null, note: null, loading: false });
+      g.dispose(); game.current = null; pauseRef.current = () => {}; el.replaceChildren();
+      store.set({ objective: null, optional: null, prompt: null, dialogue: null, note: null, loading: false, thought: null, last: false, complete: false });
       setPaused(false);
     };
   }, [screen, chapterId]);
@@ -61,17 +63,28 @@ export function WorldApp() {
   return (
     <>
       <div ref={host} className="gamehost" />
-      {screen === "start" && <StartScreen onPlay={() => play(loadProgress().lastChapter)} onSelect={() => setScreen("select")} />}
-      {screen === "select" && <ChapterSelect onPick={play} onBack={() => setScreen("start")} />}
+      {screen === "start" && <StartScreen onPlay={() => play(pickChapter(loadProgress().lastChapter, SCENES))} onSelect={() => setScreen("select")} />}
+      {screen === "select" && <ChapterSelect done={loadProgress().done} onPick={play} onBack={() => setScreen("start")} />}
       {screen === "play" && ui.loading && <div className="screen loading" role="status">Loading the street…</div>}
       {screen === "play" && failed && (
         <main className="screen" role="alert">
-          <p className="dv">{ui.note ?? "This browser can't show the 3D world."}</p>
+          <p>{ui.note ?? "This browser can't show the 3D world."}</p>
           <a className="btn primary" href="index.html">Back to the website</a>
         </main>
       )}
       {screen === "play" && !failed && !ui.loading && (
         <Hud chapter={CHAPTERS[chapterId - 1]} subtitles={settings.subtitles} onTalk={() => game.current?.interact()} onPause={() => pauseRef.current()} />
+      )}
+      {screen === "play" && ui.complete && !paused && (
+        <main className="screen endcard" role="dialog" aria-label="Chapter complete">
+          <p className="label">Chapter 1</p>
+          <h2 className="big small">Chapter 1 complete</h2>
+          <p className="sub">Chapter 2 is coming soon.</p>
+          <nav className="menu">
+            <a className="btn primary" href="portfolio.html#work" autoFocus>See the games →</a>
+            <button type="button" className="btn" onClick={() => setScreen("select")}>Chapter select</button>
+          </nav>
+        </main>
       )}
       {screen === "play" && paused && (
         <PauseMenu settings={settings} onSettings={change} onResume={resume} onSelect={() => setScreen("select")} />

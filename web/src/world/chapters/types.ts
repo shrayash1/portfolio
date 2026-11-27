@@ -20,6 +20,7 @@ export interface ChapterScene {
   interactables: Interactable[];
   objectives: Objective[];
   npcs: NpcSpec[];
+  colliders?: THREE.Box3[]; // static wall boxes the camera must not pass through
   setLamps?(level: number): void; // 0 = lamps off (day), 1 = fully lit (dusk)
   update?(t: number, dt: number): void; // per-frame scenery, e.g. fluttering flags
   groundY?(x: number, z: number): number; // feet height at a spot; defaults to spawn.y

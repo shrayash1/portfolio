@@ -60,7 +60,8 @@ function build(model: THREE.Object3D, clips: THREE.AnimationClip[]): Character {
     root, play,
     setMotion(speed) {
       play(speed < 0.25 ? "idle" : speed < 3 ? "walk" : "jog");
-      if (current === actions.walk) current.timeScale = speed / 1.6;
+      if (current === actions.walk) current.timeScale = speed / 1.8;
+      if (current === actions.jog) current.timeScale = Math.max(1, speed / 4.5);
     },
     update: (dt) => mixer.update(dt),
   };

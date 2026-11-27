@@ -10,8 +10,14 @@ describe("chapter 1", () => {
     ]);
   });
 
-  it("has the three interactables", () => {
-    expect(chapter1.interactables.map((i) => i.id)).toEqual(["tea-shop", "cyber-cafe", "school-gate"]);
+  it("has the three talk spots and the auto thoughts", () => {
+    expect(chapter1.interactables.filter((i) => !i.auto).map((i) => i.id)).toEqual(["tea-shop", "cyber-cafe", "school-gate"]);
+    expect(chapter1.interactables.filter((i) => i.auto).every((i) => i.thought)).toBe(true);
+    expect(chapter1.interactables.find((i) => i.id === "t-spawn")?.thought).toContain("Golden light");
+    const gate = chapter1.interactables.find((i) => i.id === "school-gate")!;
+    expect(gate.position[0]).toBeCloseTo(3.8);
+    expect(gate.dialogue).toHaveLength(4);
+    expect(chapter1.interactables.find((i) => i.id === "cyber-cafe")?.radius).toBeGreaterThanOrEqual(4.5);
     const tea = chapter1.interactables[0];
     expect(tea.dialogue?.[0].who).toBe("Tea-shop owner");
     expect(tea.dialogue?.[0].text).toContain("Running late again?");
@@ -21,10 +27,10 @@ describe("chapter 1", () => {
     expect(chapter1.interactables.find((i) => i.id === "school-gate")?.completes).toBe("walk-to-school");
   });
 
-  it("places four NPCs from the two CC0 models", () => {
-    expect(chapter1.npcs).toHaveLength(4);
+  it("places five NPCs from the two CC0 models", () => {
+    expect(chapter1.npcs).toHaveLength(5);
     expect(chapter1.npcs.filter((n) => n.motion === "walk")).toHaveLength(2);
-    expect(chapter1.npcs.map((n) => n.motion).sort()).toEqual(["idle", "talk", "walk", "walk"]);
+    expect(chapter1.npcs.map((n) => n.motion).sort()).toEqual(["idle", "idle", "talk", "walk", "walk"]);
     expect(new Set(chapter1.npcs.map((n) => n.url))).toEqual(new Set(["journey/npcs/base.glb", "journey/npcs/mannequin-female.glb"]));
   });
 
@@ -32,7 +38,7 @@ describe("chapter 1", () => {
     expect(chapter1.groundY?.(4, 0)).toBe(0.16);
     expect(chapter1.groundY?.(0.8, 0)).toBe(0.01);
     const b = chapter1.bounds;
-    expect([b.minX, b.maxX, b.minZ, b.maxZ].map((v) => Math.round(v * 100) / 100)).toEqual([-4.2, 4.2, -143, 14]);
+    expect([b.minX, b.maxX, b.minZ, b.maxZ].map((v) => Math.round(v * 100) / 100)).toEqual([-4.2, 4.2, -68, 14]);
     expect(chapter1.spawn.toArray()).toEqual([0.8, 0.16, 8]);
   });
 });

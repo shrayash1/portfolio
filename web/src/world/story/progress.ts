@@ -15,6 +15,9 @@ export function loadProgress(): Progress {
   return { lastChapter: 1, done: [] };
 }
 
+/** Saved progress may name a chapter that no longer exists: fall back to chapter 1. */
+export const pickChapter = (id: number, scenes: Record<number, unknown>): number => (scenes[id] ? id : 1);
+
 export function saveProgress(p: Progress): void {
   const done = [...new Set([...loadProgress().done, ...p.done])].sort((a, b) => a - b); // never forget a finished chapter
   try {

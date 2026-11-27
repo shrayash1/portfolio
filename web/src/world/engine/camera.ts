@@ -2,6 +2,11 @@ import * as THREE from "three";
 
 export const clampDt = (dt: number) => Math.min(dt, 0.05);
 
+/** How far from the head the camera may sit: unchanged when nothing is in the way, else just in front of the wall (never closer than 0.8 m). */
+export function pullInDistance(hit: number | null, desired: number): number {
+  return hit === null || hit >= desired ? desired : Math.min(desired, Math.max(0.8, hit - 0.3));
+}
+
 // third-person camera behind the player's shoulder, looking a little ahead of them
 export function followCamera(player: THREE.Vector3, yaw: number, pitch: number, dist: number) {
   const pos = new THREE.Vector3(

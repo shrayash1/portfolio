@@ -30,6 +30,7 @@ export function PauseMenu({ settings, onSettings, onResume, onSelect }: { settin
         <h2 className="big small">Paused</h2>
         <button type="button" className="btn primary" onClick={onResume} autoFocus>Resume</button>
         <button type="button" className="btn" onClick={onSelect}>Chapter select</button>
+        <a className="btn" href="portfolio.html#work">See the games →</a>
         <a className="btn" href="index.html">Back to the website</a>
         <Seg label="Quality" value={settings.quality} onChange={(quality) => set({ quality })} options={[["high", "High"], ["lite", "Lite"]]} />
         <Seg label="Time of day" value={settings.time} onChange={(time) => set({ time })} options={[["morning", "Morning"], ["golden", "Golden hour"], ["dusk", "Dusk"]]} />

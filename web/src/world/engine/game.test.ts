@@ -10,7 +10,7 @@ vi.mock("./renderer", () => ({
 }));
 vi.mock("./sky", () => ({ createSky: () => ({ setTime: () => 0.5, followShadow() {}, sunDir: new THREE.Vector3() }) }));
 const fake = () => ({ root: new THREE.Group(), setMotion() {}, play() {}, update() {} });
-vi.mock("./characters", () => ({ loadPlayer: async () => fake(), loadNpc: async () => fake() }));
+vi.mock("./characters", () => ({ loadPlayer: async () => fake(), loadNpc: vi.fn(async () => fake()) }));
 
 vi.stubGlobal("innerWidth", 800);
 vi.stubGlobal("innerHeight", 600);
@@ -21,6 +21,7 @@ vi.stubGlobal("cancelAnimationFrame", () => {});
 vi.stubGlobal("document", { hidden: false });
 
 import { Game } from "./game";
+import { loadNpc } from "./characters";
 import { store } from "../store";
 import type { ChapterScene } from "../chapters/types";
 
@@ -98,5 +99,42 @@ describe("Game", () => {
     inp.move = { x: 1, y: 0 };
     for (let i = 0; i < 100; i++) g.step(0.05);
     expect(g.player.position.x).toBeLessThanOrEqual(1);
+  });
+
+  it("starts without an NPC whose model fails to load", async () => {
+    vi.mocked(loadNpc).mockRejectedValueOnce(new Error("404"));
+    const g6 = new Game({ host: {} as HTMLElement, era: "school" });
+    await g6.start({ ...chapter, npcs: [{ url: "x.glb", position: [0, 0, 0], rotationY: 0, motion: "idle" }] });
+    expect(store.get().loading).toBe(false);
+  });
+
+  it("fires an auto thought once, not again on re-entry", async () => {
+    const g7 = new Game({ host: {} as HTMLElement, era: "school" });
+    store.set({ thought: null });
+    await g7.start({ ...chapter, interactables: [{ id: "th", label: "", position: [0, 0, 0], auto: true, thought: "hm" }] });
+    expect(store.get().thought).toBe("hm");
+    store.set({ thought: null });
+    g7.step(0.016);
+    expect(store.get().thought).toBeNull();
+    inp.move = { x: 1, y: 0 };
+    for (let i = 0; i < 40; i++) g7.step(0.05);
+    inp.move = { x: -1, y: 0 };
+    for (let i = 0; i < 40; i++) g7.step(0.05);
+    expect(store.get().thought).toBeNull();
+  });
+
+  it("marks the chapter complete once and stops re-prompting a finished spot", () => {
+    const onComplete = vi.fn();
+    store.set({ complete: false });
+    const g8 = new Game({ host: {} as HTMLElement, era: "school", onComplete });
+    return g8.start({ ...chapter, objectives: [{ id: "o1", text: "Meet A" }] }).then(() => {
+      g8.step(0.016);
+      inp.interact = true; g8.step(0.016); inp.interact = false;
+      inp.interact = true; g8.step(0.016); inp.interact = false;
+      expect(onComplete).toHaveBeenCalledTimes(1);
+      expect(store.get().complete).toBe(true);
+      g8.step(0.016);
+      expect(store.get().prompt).toBeNull();
+    });
   });
 });

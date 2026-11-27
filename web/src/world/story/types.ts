@@ -28,4 +28,6 @@ export interface Interactable {
   radius?: number; // defaults to 2.2 where used
   dialogue?: DialogueLine[];
   completes?: string; // objective id completed when triggered
+  auto?: boolean; // fires its `thought` once when the player first walks into range (no key press)
+  thought?: string;
 }

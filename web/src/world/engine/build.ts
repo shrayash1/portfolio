@@ -16,7 +16,7 @@ export function put(key: string, geo: THREE.BufferGeometry, x: number, y: number
 export const rbox = (w: number, h: number, d: number, r = 0.08) =>
   new RoundedBoxGeometry(w, h, d, 2, Math.min(r, w / 2.1, h / 2.1, d / 2.1));
 
-const NO_CAST = ["ground", "road", "mountain", "snow"], NO_RECEIVE = ["mountain", "snow", "bulb"];
+const NO_CAST = ["ground", "road", "mountain", "snow", "far1", "far2", "far3", "hill", "hill2"], NO_RECEIVE = ["mountain", "snow", "bulb"];
 
 // one mesh per material, added to the scene; the buckets are emptied
 export function mergeBuckets(scene: THREE.Scene, mats: Record<string, THREE.Material>) {
