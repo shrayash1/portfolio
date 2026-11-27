@@ -6,7 +6,7 @@ vi.mock("./input", () => ({
   createInput: () => ({ state: () => ({ ...inp }), consumeLook() {}, dispose() {} }),
 }));
 vi.mock("./renderer", () => ({
-  createRenderer: () => ({ ok: true, renderer: { domElement: { addEventListener() {}, removeEventListener() {} } }, setQuality() {}, render() {}, resize() {} }),
+  createRenderer: () => ({ ok: true, renderer: { dispose() {}, domElement: { addEventListener() {}, removeEventListener() {} } }, setQuality() {}, render() {}, resize() {} }),
 }));
 vi.mock("./sky", () => ({ createSky: () => ({ setTime: () => 0, followShadow() {}, sunDir: new THREE.Vector3() }) }));
 const fake = () => ({ root: new THREE.Group(), setMotion() {}, play() {}, update() {} });
@@ -49,6 +49,23 @@ describe("Game", () => {
     inp.interact = true; g.step(0.016); inp.interact = false;
     expect(store.get().dialogue).toBeNull();
     expect(store.get().objective).toBe("Then B");
+  });
+
+  it("lifts the player onto the sidewalk using groundY", async () => {
+    const g2 = new Game({ host: {} as HTMLElement, era: "school" });
+    await g2.start({ ...chapter, bounds: { minX: -5, maxX: 5, minZ: -5, maxZ: 5 }, groundY: (x) => (Math.abs(x) > 3.2 ? 0.16 : 0.01) });
+    g2.step(0.016);
+    expect(g2.player.position.y).toBe(0.01);
+    inp.move = { x: 1, y: 0 };
+    for (let i = 0; i < 100; i++) g2.step(0.05);
+    expect(g2.player.position.y).toBe(0.16);
+  });
+
+  it("does not start after dispose", async () => {
+    const g3 = new Game({ host: {} as HTMLElement, era: "school" });
+    const p = g3.start({ ...chapter, build: async () => { g3.dispose(); } });
+    await p;
+    expect((g3 as unknown as { pc?: unknown }).pc).toBeUndefined();
   });
 
   it("clamps the player to the chapter bounds", () => {

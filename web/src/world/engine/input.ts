@@ -17,7 +17,8 @@ export function createInput(el: HTMLElement) {
 
   const onKeyDown = (e: KeyboardEvent) => {
     const k = e.key.toLowerCase();
-    if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(k)) e.preventDefault();
+    // only swallow scroll keys when the game has focus, so focused HUD buttons keep working
+    if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(k) && (e.target === document.body || e.target === el)) e.preventDefault();
     if (k === "e" && !e.repeat) interact = true;
     if (k === "escape" && !e.repeat) pause = true;
     keys.add(k);

@@ -19,4 +19,5 @@ export interface ChapterScene {
   interactables: Interactable[];
   objectives: Objective[];
   npcs: NpcSpec[];
+  groundY?(x: number, z: number): number; // feet height at a spot; defaults to spawn.y
 }

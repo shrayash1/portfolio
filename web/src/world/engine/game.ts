@@ -25,7 +25,7 @@ export class Game {
   private vel = new THREE.Vector3();
   private camLook = new THREE.Vector3();
   private yaw = 0; private pitch = 0.16; private dist = 4.4;
-  private t = 0; private last = 0; private raf = 0; private paused = false;
+  private t = 0; private last = 0; private raf = 0; private paused = false; private disposed = false;
   private onResize = () => { this.camera.aspect = innerWidth / innerHeight; this.camera.updateProjectionMatrix(); this.r.resize(); };
   private onWheel = (e: WheelEvent) => { this.dist = THREE.MathUtils.clamp(this.dist + e.deltaY * 0.004, 2.6, 9); };
 
@@ -41,11 +41,14 @@ export class Game {
     this.sky = createSky(this.scene, r.renderer);
     this.sky.setTime(chapter.time);
     await chapter.build(this.scene);
+    if (this.disposed) return;
     this.pc = await loadPlayer(this.opts.era, (note) => store.set({ note }));
+    if (this.disposed) return;
     this.pc.root.position.copy(chapter.spawn);
     this.scene.add(this.pc.root);
     for (const spec of chapter.npcs) {
       const c = await loadNpc(spec.url);
+      if (this.disposed) return;
       c.root.position.set(...spec.position); c.root.rotation.y = spec.rotationY;
       c.play(spec.motion);
       if (spec.motion === "walk") c.setMotion(1.1);
@@ -67,6 +70,8 @@ export class Game {
   resume() { this.paused = false; this.last = performance.now(); cancelAnimationFrame(this.raf); this.raf = requestAnimationFrame(this.loop); }
 
   dispose() {
+    this.disposed = true;
+    delete (globalThis as { __world?: unknown }).__world;
     this.pause();
     this.input?.dispose();
     this.r?.renderer.domElement.removeEventListener("wheel", this.onWheel);
@@ -122,6 +127,7 @@ export class Game {
     p.addScaledVector(this.vel, dt);
     p.x = THREE.MathUtils.clamp(p.x, b.minX, b.maxX);
     p.z = THREE.MathUtils.clamp(p.z, b.minZ, b.maxZ);
+    p.y = this.chapter.groundY?.(p.x, p.z) ?? this.chapter.spawn.y;
     const speed = this.vel.length();
     if (speed > 0.15) {
       let d = Math.atan2(-this.vel.x, -this.vel.z) - this.player.rotation.y;

@@ -41,3 +41,15 @@ it("lifting the stick finger leaves the look finger working", () => {
   expect(input.state().lookDX).toBe(0);
   input.dispose();
 });
+
+it("only prevents default for scroll keys aimed at the body or the game element", () => {
+  const el = document.createElement("div");
+  document.body.append(el);
+  const input = createInput(el);
+  const btn = document.createElement("button");
+  document.body.append(btn);
+  const press = (t: Element) => { const e = new KeyboardEvent("keydown", { key: " ", bubbles: true, cancelable: true }); t.dispatchEvent(e); return e.defaultPrevented; };
+  expect(press(btn)).toBe(false);
+  expect(press(el)).toBe(true);
+  input.dispose();
+});
