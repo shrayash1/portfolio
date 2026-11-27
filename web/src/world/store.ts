@@ -1,8 +1,9 @@
 import type { DialogueLine } from "./story/types";
+import type { Moment } from "./chapters/types";
 
-export type UiState = { objective: string | null; optional: string | null; prompt: string | null; dialogue: DialogueLine | null; note: string | null; loading: boolean; thought: string | null; last: boolean; complete: boolean };
+export type UiState = { objective: string | null; optional: string | null; prompt: string | null; dialogue: DialogueLine | null; note: string | null; loading: boolean; thought: string | null; last: boolean; complete: boolean; moment: Moment | null; subtitle: { who: string; text: string } | null; rec: { title: string } | null; cinema: boolean };
 
-let state: UiState = { objective: null, optional: null, prompt: null, dialogue: null, note: null, loading: false, thought: null, last: false, complete: false };
+let state: UiState = { objective: null, optional: null, prompt: null, dialogue: null, note: null, loading: false, thought: null, last: false, complete: false, moment: null, subtitle: null, rec: null, cinema: false };
 const subs = new Set<(s: UiState) => void>();
 
 export const store = {

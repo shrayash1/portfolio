@@ -120,3 +120,29 @@ kbd { font: 8px/1 var(--pixel); background: var(--ink); color: var(--night); bor
   .thought { bottom: 70px; width: min(520px, calc(100vw - 260px)); left: 50%; transform: translateX(-50%); }
   .lookhint { bottom: 110px; }
 }
+
+/* Cinematic moment card + sequence overlay */
+.moment { z-index: 8; }
+.momentimg { max-width: min(440px, 80vw); max-height: 34vh; border-radius: 12px; border: 1px solid var(--line); }
+.moment.launch { background: radial-gradient(90% 70% at 50% 50%, rgba(255, 179, 71, .55), transparent 70%), radial-gradient(90% 70% at 50% 115%, rgba(255, 107, 90, .55), transparent 70%), linear-gradient(#1b0f2e, #2a1a3e); animation: wash 2.4s ease-in-out infinite alternate; }
+.moment.billboard { box-shadow: inset 0 0 0 6px var(--accent); }
+.moment.wall { box-shadow: inset 0 0 0 6px #e8407e; }
+.caps { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.caps i { position: absolute; top: -40px; width: 38px; height: 8px; background: var(--accent); border-radius: 2px; animation: fall linear infinite; }
+.caps i::before { content: ""; position: absolute; left: 6px; top: -9px; width: 26px; height: 10px; background: inherit; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.caps i:nth-child(3n) { background: #fff6e6; }
+.caps i:nth-child(3n+1) { background: #e8407e; }
+@keyframes fall { to { transform: translateY(110vh) rotate(300deg); } }
+@keyframes wash { to { filter: hue-rotate(25deg) brightness(1.15); } }
+.cinema { position: fixed; inset: 0; z-index: 4; cursor: pointer; }
+.cinema .bar { position: absolute; left: 0; right: 0; height: 12vh; background: #000; }
+.cinema .bar.top { top: 0; }
+.cinema .bar.bottom { bottom: 0; }
+.rec { position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); top: calc(12vh + 14px); display: flex; align-items: center; gap: 8px; font: 600 22px/1 var(--display); letter-spacing: .08em; text-shadow: 0 1px 4px rgba(0, 0, 0, .8); }
+.rec i { width: 12px; height: 12px; border-radius: 50%; background: #ff3b3b; animation: blink 1s steps(2) infinite; }
+.rec b { font-weight: 500; opacity: .85; margin-left: 6px; }
+@keyframes blink { 50% { opacity: .15; } }
+.sublines { position: absolute; left: 50%; bottom: calc(12vh + 14px); transform: translateX(-50%); width: min(720px, 90vw); margin: 0; text-align: center; font-size: 17px; line-height: 1.45; text-shadow: 0 1px 4px #000; }
+.sublines b { font: 600 20px/1 var(--display); text-transform: uppercase; color: var(--accent); margin-right: 6px; }
+.skiphint { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); bottom: 3vh; font-size: 11px; opacity: .6; transform: translateY(50%); }
+@media (prefers-reduced-motion: reduce) { .caps i, .rec i, .moment.launch { animation: none; } }

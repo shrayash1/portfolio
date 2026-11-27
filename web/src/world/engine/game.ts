@@ -8,7 +8,8 @@ import { Dialogue } from "../story/dialogue";
 import { Objectives } from "../story/objectives";
 import { CHAPTERS } from "../story/chapters";
 import type { DialogueLine, Interactable } from "../story/types";
-import type { ChapterApi, ChapterScene } from "../chapters/types";
+import type { ChapterApi, ChapterScene, Moment, SequenceSpec } from "../chapters/types";
+import { sampleSequence } from "./sequence";
 import { store } from "../store";
 
 export class Game {
@@ -23,6 +24,8 @@ export class Game {
   private dialogue: Dialogue | null = null;
   private pending: Interactable | null = null;
   private dlgDone: (() => void) | null = null;
+  private seq: { spec: SequenceSpec; t: number; done: () => void } | null = null;
+  private momentDone: (() => void) | null = null;
   private npcs: { c: Character; spec: ChapterScene["npcs"][number] }[] = [];
   private vel = new THREE.Vector3();
   private camLook = new THREE.Vector3();
@@ -80,6 +83,7 @@ export class Game {
 
   dispose() {
     this.disposed = true;
+    this.endSeq(); this.endMoment(); // resolve anything a chapter is awaiting; both skip the store once disposed
     delete (globalThis as { __world?: unknown }).__world;
     this.pause();
     this.input?.dispose();
@@ -124,12 +128,46 @@ export class Game {
   // what a chapter's onInteract can do; moment/sequence are filled in by the cinematic layer
   private api: ChapterApi = {
     complete: (id) => this.complete(id),
-    moment: () => Promise.resolve(),
-    sequence: () => Promise.resolve(),
+    moment: (m) => this.showMoment(m),
+    sequence: (s) => this.playSequence(s),
     thought: (text) => { if (this.disposed) return; this.thoughtT = 4.5; store.set({ thought: text }); },
     dialogue: (lines) => (this.disposed ? Promise.resolve() : this.open(lines)),
     setTime: (name) => { if (!this.disposed) this.setTime(name); },
   };
+
+  private showMoment(m: Moment): Promise<void> {
+    if (this.disposed) return Promise.resolve();
+    this.endMoment();
+    return new Promise((res) => { this.momentDone = res; store.set({ moment: m, prompt: null }); });
+  }
+
+  private playSequence(spec: SequenceSpec): Promise<void> {
+    if (this.disposed || !spec.points.length || spec.duration <= 0) return Promise.resolve();
+    this.endSeq();
+    return new Promise((res) => {
+      this.seq = { spec, t: 0, done: res };
+      store.set({ cinema: true, rec: spec.rec ? { title: spec.title ?? "" } : null, subtitle: null, prompt: null });
+    });
+  }
+
+  /** Resolves the open moment card (the Continue button / Enter). */
+  continueMoment() { this.endMoment(); }
+  /** Ends a running sequence early (Esc or a tap on the overlay). */
+  skip() { if (this.seq) { this.seq.spec.onFrame?.(1); this.endSeq(); } }
+
+  private endMoment() {
+    const d = this.momentDone; this.momentDone = null;
+    if (!d) return;
+    if (!this.disposed) store.set({ moment: null });
+    d();
+  }
+
+  private endSeq() {
+    const q = this.seq; this.seq = null;
+    if (!q) return;
+    if (!this.disposed) store.set({ cinema: false, rec: null, subtitle: null });
+    q.done();
+  }
 
   private open(lines: DialogueLine[], completes?: string): Promise<void> {
     return new Promise((res) => {
@@ -166,11 +204,12 @@ export class Game {
     this.yaw -= inp.lookDX * 0.005;
     this.pitch = THREE.MathUtils.clamp(this.pitch + inp.lookDY * 0.003, -0.15, 0.7);
     this.input.consumeLook();
-    if (inp.pause) this.opts.onPause?.();
-    if (inp.interact) this.interact();
+    const busy = !!this.seq || !!this.momentDone; // a sequence or moment card owns the screen: no walking, no talking
+    if (inp.pause) { if (this.seq) this.skip(); else this.opts.onPause?.(); }
+    if (inp.interact && !busy) this.interact();
 
     // movement is relative to the camera, and frozen while someone is talking
-    const talking = !!this.dialogue;
+    const talking = !!this.dialogue || busy;
     const fw = new THREE.Vector3(-Math.sin(this.yaw), 0, -Math.cos(this.yaw)), rt = new THREE.Vector3(Math.cos(this.yaw), 0, -Math.sin(this.yaw));
     const want = talking ? new THREE.Vector3() : fw.multiplyScalar(inp.move.y).add(rt.multiplyScalar(inp.move.x));
     if (want.lengthSq() > 1) want.normalize();
@@ -216,6 +255,15 @@ export class Game {
       if (prompt !== store.get().prompt) store.set({ prompt });
     }
 
+    if (this.seq) { // rail camera; the follow camera later eases back from wherever this ends
+      const q = this.seq, f = sampleSequence(q.spec, (q.t += dt));
+      this.camera.position.copy(f.pos); this.camLook.copy(f.look); this.camera.lookAt(f.look);
+      q.spec.onFrame?.(f.t01);
+      if (f.line?.text !== store.get().subtitle?.text) store.set({ subtitle: f.line });
+      if (f.t01 >= 1) this.endSeq();
+      this.sky.followShadow(p);
+      return;
+    }
     const { pos, look } = followCamera(p, this.yaw, this.pitch, this.dist);
     // one ray from the head toward the wanted camera spot: if a wall box is in the way, sit just in front of it
     let rate = 8;

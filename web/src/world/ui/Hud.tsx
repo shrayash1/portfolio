@@ -29,11 +29,11 @@ export function Hud({ chapter, subtitles, onTalk, onPause }: { chapter: ChapterI
         <b>{chapter.en}</b>
         <span className="dv" lang="ne">{chapter.dv} · {chapter.place}</span>
       </div>
-      {s.objective && (
+      {s.objective && !s.cinema && (
         <div className="panel objective"><span className="label">Objective</span>{s.objective}{s.optional && <span className="opt">{s.optional}</span>}</div>
       )}
       {s.note && <div className="panel note" role="status">{s.note}</div>}
-      {s.prompt && !s.dialogue && (
+      {s.prompt && !s.dialogue && !s.cinema && (
         <div className="prompt" role="status"><kbd>E</kbd>{s.prompt}</div>
       )}
       {s.thought && !s.dialogue && <div className="thought" role="status">{s.thought}</div>}

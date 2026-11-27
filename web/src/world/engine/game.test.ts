@@ -193,8 +193,6 @@ describe("Game", () => {
     api.thought("hm");
     expect(store.get().thought).toBe("hm");
     expect(() => api.setTime("dusk")).not.toThrow();
-    await expect(api.moment({ title: "x" })).resolves.toBeUndefined();
-    await expect(api.sequence({ points: [], look: [], duration: 1 })).resolves.toBeUndefined();
   });
 
   it("a disposed game's api does nothing", async () => {
@@ -214,5 +212,113 @@ describe("Game", () => {
     expect(onComplete).not.toHaveBeenCalled();
     expect(store.get().complete).toBe(false);
     expect(store.get().thought).toBeNull();
+  });
+
+  describe("cinema", () => {
+    const seq = (extra = {}) => ({ points: [[0, 2, 5], [0, 2, -5]] as [number, number, number][], look: [[0, 1, 0]] as [number, number, number][], duration: 4, ...extra });
+    const boot = async (extra = {}, opts = {}) => {
+      let api!: import("../chapters/types").ChapterApi;
+      const gg = new Game({ host: {} as HTMLElement, ...opts });
+      await gg.start({ ...chapter, ...extra, onInteract: (_id, a) => { api = a; return true; } });
+      gg.step(0.016);
+      inp.interact = true; gg.step(0.016); inp.interact = false;
+      return { gg, api };
+    };
+    it("plays a sequence: letterbox, subtitle, REC, frozen player, resolves at the end", async () => {
+      const { gg, api } = await boot();
+      let done = false; const frames: number[] = [];
+      void api.sequence(seq({ rec: true, title: "Vlog", lines: [{ at: 1, who: "Me", text: "hi" }], onFrame: (t: number) => frames.push(t) })).then(() => { done = true; });
+      expect(store.get().cinema).toBe(true);
+      expect(store.get().rec).toEqual({ title: "Vlog" });
+      inp.move = { x: 1, y: 0 };
+      const x0 = gg.player.position.x;
+      gg.step(1.5);
+      inp.move = { x: 0, y: 0 };
+      expect(gg.player.position.x).toBe(x0);
+      expect(store.get().subtitle).toEqual({ who: "Me", text: "hi" });
+      gg.step(3);
+      await Promise.resolve();
+      expect(done).toBe(true);
+      expect(frames[frames.length - 1]).toBe(1);
+      expect(store.get()).toMatchObject({ cinema: false, rec: null, subtitle: null });
+    });
+    it("Esc skips: resolves, controls return, no pause menu", async () => {
+      const onPause = vi.fn();
+      const { gg, api } = await boot({}, { onPause });
+      let done = false;
+      void api.sequence(seq()).then(() => { done = true; });
+      gg.step(1);
+      inp.pause = true; gg.step(0.016); inp.pause = false;
+      await Promise.resolve();
+      expect(done).toBe(true);
+      expect(onPause).not.toHaveBeenCalled();
+      expect(store.get().cinema).toBe(false);
+      inp.move = { x: 1, y: 0 };
+      const x0 = gg.player.position.x;
+      for (let i = 0; i < 5; i++) gg.step(0.05);
+      inp.move = { x: 0, y: 0 };
+      expect(gg.player.position.x).not.toBe(x0);
+    });
+    it("tap skip() ends it too, and the camera glides back (no jump)", async () => {
+      const { gg, api } = await boot();
+      let done = false;
+      void api.sequence(seq()).then(() => { done = true; });
+      gg.step(2);
+      const cam = (gg as unknown as { camera: THREE.PerspectiveCamera }).camera;
+      gg.skip(); await Promise.resolve();
+      expect(done).toBe(true);
+      const before = cam.position.clone();
+      gg.step(0.016);
+      expect(cam.position.distanceTo(before)).toBeLessThan(1);
+    });
+    it("a paused game does not advance the sequence", async () => {
+      const cbs: FrameRequestCallback[] = [];
+      vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => (cbs.push(cb), 1));
+      try {
+        const { gg, api } = await boot();
+        const frames: number[] = [];
+        void api.sequence(seq({ onFrame: (t: number) => frames.push(t) }));
+        gg.resume();
+        cbs[cbs.length - 1](16); cbs[cbs.length - 1](32);
+        const n = frames.length;
+        expect(n).toBeGreaterThan(0);
+        gg.pause();
+        cbs[cbs.length - 1](5000); cbs[cbs.length - 1](9000);
+        expect(frames.length).toBe(n);
+        gg.resume();
+        cbs[cbs.length - 1](9016); cbs[cbs.length - 1](9032);
+        expect(frames[frames.length - 1]).toBeLessThan(0.1); // resumed where it left off, not jumped by the pause
+      } finally { vi.stubGlobal("requestAnimationFrame", () => 1); }
+    });
+    it("a moment resolves on continue; input is ignored meanwhile", async () => {
+      const { gg, api } = await boot();
+      let done = false;
+      void api.moment({ title: "Grad", kind: "graduation" }).then(() => { done = true; });
+      expect(store.get().moment).toEqual({ title: "Grad", kind: "graduation" });
+      inp.move = { x: 1, y: 0 };
+      const x0 = gg.player.position.x;
+      gg.step(0.5);
+      inp.move = { x: 0, y: 0 };
+      expect(gg.player.position.x).toBe(x0);
+      gg.continueMoment(); await Promise.resolve();
+      expect(done).toBe(true);
+      expect(store.get().moment).toBeNull();
+    });
+    it("dispose resolves a running sequence and moment without touching the store", async () => {
+      const { gg, api } = await boot();
+      let a = false, b = false, c = false;
+      void api.sequence(seq()).then(() => { a = true; });
+      gg.step(1);
+      gg.dispose(); await Promise.resolve();
+      expect(a).toBe(true);
+      store.set({ cinema: true, moment: { title: "x" } });
+      void api.moment({ title: "late" }).then(() => { b = true; });
+      void api.sequence(seq()).then(() => { c = true; });
+      await Promise.resolve();
+      expect(b && c).toBe(true);
+      expect(store.get().cinema).toBe(true);
+      expect(store.get().moment).toEqual({ title: "x" });
+      store.set({ cinema: false, moment: null });
+    });
   });
 });
