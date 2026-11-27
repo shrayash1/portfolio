@@ -1,1 +1,3 @@
 Animations and rig: Mesh2Motion (https://mesh2motion.org), CC0. Player avatars: Shrayash Pradhan (Avaturn).
+
+NPC models npcs/base.glb and npcs/mannequin-female.glb: Mesh2Motion human variations, CC0 (art assets are CC0 per the README), https://github.com/Mesh2Motion/mesh2motion-app/tree/main/static/assets/human/variations

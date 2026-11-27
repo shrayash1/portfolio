@@ -8,7 +8,7 @@ vi.mock("./input", () => ({
 vi.mock("./renderer", () => ({
   createRenderer: () => ({ ok: true, renderer: { dispose() {}, domElement: { addEventListener() {}, removeEventListener() {} } }, setQuality() {}, render() {}, resize() {} }),
 }));
-vi.mock("./sky", () => ({ createSky: () => ({ setTime: () => 0, followShadow() {}, sunDir: new THREE.Vector3() }) }));
+vi.mock("./sky", () => ({ createSky: () => ({ setTime: () => 0.5, followShadow() {}, sunDir: new THREE.Vector3() }) }));
 const fake = () => ({ root: new THREE.Group(), setMotion() {}, play() {}, update() {} });
 vi.mock("./characters", () => ({ loadPlayer: async () => fake(), loadNpc: async () => fake() }));
 
@@ -66,6 +66,15 @@ describe("Game", () => {
     const p = g3.start({ ...chapter, build: async () => { g3.dispose(); } });
     await p;
     expect((g3 as unknown as { pc?: unknown }).pc).toBeUndefined();
+  });
+
+  it("calls the optional setLamps and update hooks", async () => {
+    const setLamps = vi.fn(), update = vi.fn();
+    const g4 = new Game({ host: {} as HTMLElement, era: "school" });
+    await g4.start({ ...chapter, setLamps, update });
+    expect(setLamps).toHaveBeenCalledWith(0.5);
+    g4.step(0.25);
+    expect(update).toHaveBeenLastCalledWith(expect.any(Number), 0.25);
   });
 
   it("clamps the player to the chapter bounds", () => {

@@ -39,7 +39,7 @@ export class Game {
     this.r = r; this.chapter = chapter;
     store.set({ loading: true });
     this.sky = createSky(this.scene, r.renderer);
-    this.sky.setTime(chapter.time);
+    chapter.setLamps?.(this.sky.setTime(chapter.time));
     await chapter.build(this.scene);
     if (this.disposed) return;
     this.pc = await loadPlayer(this.opts.era, (note) => store.set({ note }));
@@ -135,6 +135,7 @@ export class Game {
       this.player.rotation.y += d * (1 - Math.exp(-dt * 12));
     }
     this.pc.setMotion(speed); this.pc.update(dt);
+    this.chapter.update?.(this.t, dt);
 
     for (const { c, spec } of this.npcs) {
       if (spec.patrol) {
