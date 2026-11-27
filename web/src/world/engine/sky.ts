@@ -3,10 +3,10 @@ import { Sky } from "three/examples/jsm/objects/Sky.js";
 
 export type TimeName = "morning" | "golden" | "dusk";
 
-const TIMES = {
-  morning: { elev: 30, az: 150, sun: 0xfff0dc, si: 4.2, hemi: 0.75, fog: 0xe6d6c4, dens: 0.0019, exp: 0.62 },
-  golden: { elev: 10, az: 188, sun: 0xffb46e, si: 5.2, hemi: 0.6, fog: 0xeaa97c, dens: 0.0022, exp: 0.68 },
-  dusk: { elev: -1.5, az: 230, sun: 0x9a7ac0, si: 0.5, hemi: 0.4, fog: 0x5b4870, dens: 0.0026, exp: 1.0 },
+export const TIMES = {
+  morning: { elev: 30, az: 150, sun: 0xfff0dc, si: 4.2, hemi: 0.75, fog: 0xe6d6c4, dens: 0.0019, exp: 0.62, lamps: 0 },
+  golden: { elev: 10, az: 188, sun: 0xffb46e, si: 5.2, hemi: 0.6, fog: 0xeaa97c, dens: 0.0022, exp: 0.68, lamps: 0 },
+  dusk: { elev: -1.5, az: 230, sun: 0x9a7ac0, si: 0.5, hemi: 0.4, fog: 0x5b4870, dens: 0.0026, exp: 1.0, lamps: 1 },
 };
 
 const SKY_PARAMS = { turbidity: 7, rayleigh: 2.2, mieCoefficient: 0.006, mieDirectionalG: 0.86 } as const;
@@ -33,7 +33,7 @@ export function createSky(scene: THREE.Scene, renderer: THREE.WebGLRenderer) {
   const sunDir = new THREE.Vector3();
   let envRT: THREE.WebGLRenderTarget | undefined;
 
-  function setTime(name: TimeName) {
+  function setTime(name: TimeName): number {
     const t = TIMES[name];
     sunDir.setFromSphericalCoords(1, THREE.MathUtils.degToRad(90 - t.elev), THREE.MathUtils.degToRad(t.az));
     sky.material.uniforms.sunPosition.value.copy(sunDir);
@@ -52,6 +52,9 @@ export function createSky(scene: THREE.Scene, renderer: THREE.WebGLRenderer) {
     envRT?.dispose();
     envRT = pmrem.fromScene(envScene);
     scene.environment = envRT.texture;
+    s2.geometry.dispose();
+    s2.material.dispose();
+    return t.lamps;
   }
 
   // keep the shadow box around the player

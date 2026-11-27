@@ -49,11 +49,12 @@ export function createRenderer(canvasHost: HTMLElement): RendererResult {
 
   const composer = new EffectComposer(r);
   let quality: Quality = defaultQuality(matchMedia("(hover: none)").matches);
+  let materialsDirty = false;
   let built: { scene: THREE.Scene; camera: THREE.Camera } | null = null;
 
   // passes need the scene and camera, so they are built on first render (and rebuilt if either changes)
   function buildPasses(scene: THREE.Scene, camera: THREE.Camera) {
-    while (composer.passes.length) composer.removePass(composer.passes[0]);
+    for (const p of composer.passes.splice(0)) p.dispose?.();
     const w = innerWidth, h = innerHeight;
     composer.addPass(new RenderPass(scene, camera));
     // soft contact shadows in corners and under objects (ambient occlusion) for depth
@@ -67,15 +68,22 @@ export function createRenderer(canvasHost: HTMLElement): RendererResult {
     composer.addPass(new UnrealBloomPass(new THREE.Vector2(w, h), 0.28, 0.6, 0.86));
     composer.addPass(new OutputPass());
     built = { scene, camera };
+    syncComposer();
+  }
+
+  function syncComposer() {
+    composer.setPixelRatio(r.getPixelRatio());
+    composer.setSize(innerWidth, innerHeight);
   }
 
   function resize() {
     r.setPixelRatio(quality === "high" ? Math.min(devicePixelRatio, 2) : 1);
     r.setSize(innerWidth, innerHeight);
-    composer.setSize(innerWidth, innerHeight);
+    syncComposer();
   }
 
   function setQuality(q: Quality) {
+    if (q !== quality) materialsDirty = true;
     quality = q;
     r.shadowMap.enabled = q === "high";
     resize();
@@ -90,6 +98,13 @@ export function createRenderer(canvasHost: HTMLElement): RendererResult {
     setQuality,
     resize,
     render(scene, camera) {
+      if (materialsDirty) {
+        materialsDirty = false;
+        scene.traverse((o) => {
+          const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
+          if (m) for (const x of Array.isArray(m) ? m : [m]) x.needsUpdate = true;
+        });
+      }
       if (quality === "lite") return r.render(scene, camera);
       if (!built || built.scene !== scene || built.camera !== camera) buildPasses(scene, camera);
       composer.render();
