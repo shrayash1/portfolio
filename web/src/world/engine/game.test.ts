@@ -108,6 +108,25 @@ describe("Game", () => {
     expect(store.get().loading).toBe(false);
   });
 
+  it("plays an NPC's own looping clip instead of its motion", async () => {
+    const npc = { ...fake(), play: vi.fn() };
+    vi.mocked(loadNpc).mockResolvedValueOnce(npc);
+    const g6b = new Game({ host: {} as HTMLElement });
+    await g6b.start({ ...chapter, npcs: [{ url: "x.glb", position: [0, 0, 0], rotationY: 0, motion: "talk", clip: "journey/clips/sitting-writing.glb" }] });
+    expect(vi.mocked(loadNpc)).toHaveBeenLastCalledWith("x.glb", undefined, "journey/clips/sitting-writing.glb");
+    expect(npc.play).not.toHaveBeenCalled();
+  });
+
+  it("walls (colliders) stop the player", async () => {
+    const wall = new THREE.Box3(new THREE.Vector3(-5, 0, -1.2), new THREE.Vector3(5, 3, -1));
+    const g6c = new Game({ host: {} as HTMLElement });
+    await g6c.start({ ...chapter, colliders: [wall] });
+    inp.move = { x: 0, y: 1 };
+    for (let i = 0; i < 100; i++) g6c.step(0.05);
+    inp.move = { x: 0, y: 0 };
+    expect(g6c.player.position.z).toBeGreaterThan(-0.5);
+  });
+
   it("fires an auto thought once, not again on re-entry", async () => {
     const g7 = new Game({ host: {} as HTMLElement });
     store.set({ thought: null });

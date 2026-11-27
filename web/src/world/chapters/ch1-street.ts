@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { put as rawPut, rbox, mergeBuckets } from "../engine/build";
 
 // Kathmandu street at golden hour, ported from the approved look test (seed 7, same layout)
@@ -22,6 +23,28 @@ function blobTexture() {
     c.fillStyle = g; c.fillRect(0, 0, 64, 64);
   });
 }
+
+// the street's motorbike as one geometry with vertex colours (front = -z, wheels on the ground at y 0), so a bike is one
+// draw call: a moving Mesh with bikeMaterial(), or merged into scenery with put(); Ch.2 reuses it for the ride
+export function motorbikeGeometry(body: number): THREE.BufferGeometry {
+  const dark = 0x1d1f24, steel = 0x9a948a, parts: THREE.BufferGeometry[] = [];
+  const m = new THREE.Matrix4(), e = new THREE.Euler(), q = new THREE.Quaternion(), one = new THREE.Vector3(1, 1, 1), c = new THREE.Color();
+  const part = (geo: THREE.BufferGeometry, color: number, x: number, y: number, z: number, rx = 0, ry = 0, rz = 0) => {
+    const g = geo.index ? geo.toNonIndexed() : geo.clone();
+    g.applyMatrix4(m.compose(new THREE.Vector3(x, y, z), q.setFromEuler(e.set(rx, ry, rz)), one));
+    c.setHex(color);
+    g.setAttribute("color", new THREE.Float32BufferAttribute(Array.from({ length: g.attributes.position.count }, () => [c.r, c.g, c.b]).flat(), 3));
+    parts.push(g);
+  };
+  const wheel = new THREE.TorusGeometry(0.28, 0.08, 8, 20);
+  for (const dz of [-0.62, 0.62]) part(wheel, dark, 0, 0.36, dz, 0, Math.PI / 2);
+  part(rbox(0.26, 0.32, 1.0, 0.08), body, 0, 0.62, 0.05); // tank and body
+  part(rbox(0.24, 0.1, 0.6, 0.04), dark, 0, 0.82, 0.25); // seat
+  part(new THREE.CylinderGeometry(0.02, 0.02, 0.7, 6), steel, 0, 1.0, -0.5, 0, 0, Math.PI / 2); // handlebar, across the bike
+  part(new THREE.CylinderGeometry(0.025, 0.025, 0.65, 6), steel, 0, 0.68, -0.56, 0.19); // front fork, wheel to bars
+  return mergeGeometries(parts)!;
+}
+export const bikeMaterial = () => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.4, metalness: 0.3 });
 
 export function buildStreet(scene: THREE.Scene) {
   let live = true; // the houses past the end of the street still draw their rnd() numbers (so nearer ones stay as approved) but are not built
@@ -313,16 +336,11 @@ export function buildStreet(scene: THREE.Scene) {
     flags.instanceMatrix.needsUpdate = true;
   }
 
-  // a few parked motorbikes (the sleeping street dog is loaded in ch1.ts)
+  // a few parked motorbikes (the sleeping street dog is loaded in ch1.ts): one mesh each, coloured per vertex
+  const bikeMat = bikeMaterial();
   for (const [x, z, c] of [[2.7, -8, 0xa83a2e], [2.75, -9.4, 0x1b1b22], [-2.7, -33, 0x2f5f9a]]) {
-    const b = new THREE.Group();
-    const wheel = new THREE.TorusGeometry(0.28, 0.08, 8, 20);
-    for (const dz of [-0.62, 0.62]) { const w = new THREE.Mesh(wheel, mats.tank); w.position.set(0, 0.36, dz); w.rotation.y = Math.PI / 2; b.add(w); }
-    const bd = new THREE.Mesh(rbox(0.26, 0.32, 1.0, 0.08), M(c, { roughness: 0.35, metalness: 0.3 })); bd.position.set(0, 0.62, 0.05); b.add(bd);
-    const st = new THREE.Mesh(rbox(0.24, 0.1, 0.6, 0.04), mats.tank); st.position.set(0, 0.82, 0.25); b.add(st);
-    const hb = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.7, 6), mats.concrete); hb.rotation.x = Math.PI / 2; hb.rotation.y = Math.PI / 2; hb.position.set(0, 1.0, -0.5); b.add(hb);
-    b.children.forEach((m) => (m.castShadow = true));
-    b.position.set(x, 0.01, z); b.rotation.y = 0.15; scene.add(b);
+    const b = new THREE.Mesh(motorbikeGeometry(c), bikeMat);
+    b.castShadow = true; b.position.set(x, 0.01, z); b.rotation.y = 0.15; scene.add(b);
   }
 
   return { glass: mats.glass, bulb: mats.bulb, updateFlags, colliders };

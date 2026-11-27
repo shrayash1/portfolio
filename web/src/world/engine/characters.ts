@@ -45,12 +45,24 @@ function prepare(url: string): Promise<Prepared> {
   return p;
 }
 
-function build(model: THREE.Object3D, clips: THREE.AnimationClip[]): Character {
+// extra looping clips (sitting, driving, cheering...), loaded once per URL
+const loops = new Map<string, Promise<THREE.AnimationClip>>();
+function loadLoop(url: string): Promise<THREE.AnimationClip> {
+  let p = loops.get(url);
+  if (!p) {
+    p = loader.loadAsync(url).then((g) => g.animations[0]);
+    p.catch(() => loops.delete(url));
+    loops.set(url, p);
+  }
+  return p;
+}
+
+function build(model: THREE.Object3D, clips: THREE.AnimationClip[], loop?: THREE.AnimationClip): Character {
   model.rotation.y = Math.PI; // the rig faces +z; the player group faces -z
   const root = new THREE.Group(); root.add(model);
   const mixer = new THREE.AnimationMixer(model);
   const actions = Object.fromEntries(NAMES.map((n, i) => [n, mixer.clipAction(clips[i])])) as Record<Motion, THREE.AnimationAction>;
-  let current = actions.idle; current.play();
+  let current = loop ? mixer.clipAction(loop) : actions.idle; current.play();
   const play = (name: Motion) => {
     const next = actions[name];
     if (next === current) return;
@@ -77,8 +89,9 @@ export async function loadPlayer(era: Era, onNote: (text: string) => void): Prom
   }
 }
 
-export async function loadNpc(url: string, tint?: Record<string, number>): Promise<Character> {
-  const { model, clips } = await prepare(url);
+/** An NPC; with `clip` (a URL in journey/clips/) it loops that clip from the start instead of idle. */
+export async function loadNpc(url: string, tint?: Record<string, number>, clip?: string): Promise<Character> {
+  const [{ model, clips, shared }, loop] = await Promise.all([prepare(url), clip ? loadLoop(clip) : undefined]);
   // each NPC gets its own skeleton; the clips address bones by name, so they carry over
   const copy = cloneSkinned(model);
   if (tint) {
@@ -94,7 +107,7 @@ export async function loadNpc(url: string, tint?: Record<string, number>): Promi
       if (m.material.length === 1) m.material = m.material[0];
     });
   }
-  return build(copy, clips);
+  return build(copy, clips, shared ? loop : undefined); // ponytail: loops are Mesh2Motion-rig only; retarget them if a non-M2M NPC ever needs one
 }
 
 // an animal (or any model) looping one clip made for its own rig, e.g. the Mesh2Motion dog asleep

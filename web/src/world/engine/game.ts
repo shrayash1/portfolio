@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { createRenderer, type Quality } from "./renderer";
 import { createSky, type TimeName } from "./sky";
 import { createInput } from "./input";
-import { clampDt, followCamera, pullInDistance } from "./camera";
+import { BODY_R, clampDt, followCamera, pullInDistance, pushOut } from "./camera";
 import { loadPlayer, loadNpc, type Character } from "./characters";
 import { Dialogue } from "../story/dialogue";
 import { Objectives } from "../story/objectives";
@@ -55,12 +55,12 @@ export class Game {
     this.pc.root.position.copy(chapter.spawn);
     this.scene.add(this.pc.root);
     for (const spec of chapter.npcs) {
-      const c = await loadNpc(spec.url, spec.tint).catch(() => null); // a missing NPC model just leaves that NPC out
+      const c = await loadNpc(spec.url, spec.tint, spec.clip).catch(() => null); // a missing NPC model just leaves that NPC out
       if (this.disposed) return;
       if (!c) continue;
       c.root.position.set(...spec.position); c.root.rotation.y = spec.rotationY;
-      c.play(spec.motion);
-      if (spec.motion === "walk") c.setMotion(1.1);
+      if (!spec.clip) c.play(spec.motion); // a clip NPC already loops its own clip
+      if (spec.motion === "walk" && !spec.clip) c.setMotion(1.1);
       this.scene.add(c.root); this.npcs.push({ c, spec });
     }
     this.objectives = new Objectives(chapter.objectives);
@@ -218,6 +218,7 @@ export class Game {
     p.addScaledVector(this.vel, dt);
     p.x = THREE.MathUtils.clamp(p.x, b.minX, b.maxX);
     p.z = THREE.MathUtils.clamp(p.z, b.minZ, b.maxZ);
+    if (this.chapter.colliders?.length) pushOut(p, this.chapter.colliders, BODY_R); // walls block the body too, not just the camera
     p.y = this.chapter.groundY?.(p.x, p.z) ?? this.chapter.spawn.y;
     const speed = this.vel.length();
     if (speed > 0.15) {
@@ -261,7 +262,7 @@ export class Game {
       q.spec.onFrame?.(f.t01);
       if (f.line?.text !== store.get().subtitle?.text) store.set({ subtitle: f.line });
       if (f.t01 >= 1) this.endSeq();
-      this.sky.followShadow(p);
+      this.sky.followShadow(f.look); // shadows where the rail camera looks (a sequence may be far from the player)
       return;
     }
     const { pos, look } = followCamera(p, this.yaw, this.pitch, this.dist);

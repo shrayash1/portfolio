@@ -9,6 +9,7 @@ export interface NpcSpec {
   motion: "idle" | "talk" | "walk";
   tint?: Record<string, number>; // material name -> flat colour, so shared models look like different people
   patrol?: { axis: "z"; range: number };
+  clip?: string; // a looping clip from journey/clips/ (e.g. sitting-writing) played instead of `motion`
 }
 
 export type Moment = { title: string; sub?: string; image?: string; kind?: "graduation" | "launch" | "billboard" | "wall" };
