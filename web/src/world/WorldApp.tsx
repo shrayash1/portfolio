@@ -3,6 +3,7 @@ import "./world.css";
 import { Game } from "./engine/game";
 import { defaultQuality } from "./engine/renderer";
 import { chapter1 } from "./chapters/ch1";
+import { chapter2 } from "./chapters/ch2";
 import type { ChapterScene } from "./chapters/types";
 import { CHAPTERS } from "./story/chapters";
 import { loadProgress, nextChapter, pickChapter, saveProgress } from "./story/progress";
@@ -15,7 +16,7 @@ import { Cinema } from "./ui/Cinema";
 import { PauseMenu, type Settings } from "./ui/PauseMenu";
 
 type Screen = "start" | "select" | "play";
-const SCENES: Record<number, ChapterScene> = { 1: chapter1 };
+const SCENES: Record<number, ChapterScene> = { 1: chapter1, 2: chapter2 };
 
 export function WorldApp() {
   const [screen, setScreen] = useState<Screen>("start");
