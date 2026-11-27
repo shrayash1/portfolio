@@ -134,7 +134,7 @@ kbd { font: 8px/1 var(--pixel); background: var(--ink); color: var(--night); bor
 .caps i:nth-child(3n+1) { background: #e8407e; }
 @keyframes fall { to { transform: translateY(110vh) rotate(300deg); } }
 @keyframes wash { to { filter: hue-rotate(25deg) brightness(1.15); } }
-.cinema { position: fixed; inset: 0; z-index: 4; cursor: pointer; }
+.cinema { position: fixed; inset: 0; z-index: 1; /* under the HUD (z 2, click-through) so its pause button still works */ cursor: pointer; }
 .cinema .bar { position: absolute; left: 0; right: 0; height: 12vh; background: #000; }
 .cinema .bar.top { top: 0; }
 .cinema .bar.bottom { bottom: 0; }
@@ -146,3 +146,5 @@ kbd { font: 8px/1 var(--pixel); background: var(--ink); color: var(--night); bor
 .sublines b { font: 600 20px/1 var(--display); text-transform: uppercase; color: var(--accent); margin-right: 6px; }
 .skiphint { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); bottom: 3vh; font-size: 11px; opacity: .6; transform: translateY(50%); }
 @media (prefers-reduced-motion: reduce) { .caps i, .rec i, .moment.launch { animation: none; } }
+
+.hud.cinema .card, .hud.cinema .help, .hud.cinema .lookhint, .hud.cinema .touchbtns { display: none; }

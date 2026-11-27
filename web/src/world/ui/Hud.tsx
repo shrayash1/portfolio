@@ -23,7 +23,7 @@ export function Hud({ chapter, subtitles, onTalk, onPause }: { chapter: ChapterI
     return () => { removeEventListener("pointerdown", down); removeEventListener("pointermove", move); removeEventListener("pointerup", up); removeEventListener("pointercancel", up); };
   }, []);
   return (
-    <div className="hud">
+    <div className={"hud" + (s.cinema ? " cinema" : "")}>
       <div className={"card" + (card ? "" : " gone")} aria-hidden={!card}>
         <span className="label">Chapter {chapter.id}</span>
         <b>{chapter.en}</b>
