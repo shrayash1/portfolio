@@ -196,4 +196,23 @@ describe("Game", () => {
     await expect(api.moment({ title: "x" })).resolves.toBeUndefined();
     await expect(api.sequence({ points: [], look: [], duration: 1 })).resolves.toBeUndefined();
   });
+
+  it("a disposed game's api does nothing", async () => {
+    const onComplete = vi.fn();
+    store.set({ complete: false, thought: null });
+    let api!: import("../chapters/types").ChapterApi;
+    const g14 = new Game({ host: {} as HTMLElement, onComplete });
+    await g14.start({ ...chapter, objectives: [{ id: "o1", text: "Meet A" }], onInteract: (_id, a) => { api = a; return true; } });
+    g14.step(0.016);
+    inp.interact = true; g14.step(0.016); inp.interact = false;
+    g14.dispose();
+    api.complete("o1"); api.thought("late");
+    await expect(api.dialogue([{ who: "A", text: "x" }])).resolves.toBeUndefined();
+    await expect(api.moment({ title: "x" })).resolves.toBeUndefined();
+    await expect(api.sequence({ points: [], look: [], duration: 1 })).resolves.toBeUndefined();
+    expect(() => api.setTime("dusk")).not.toThrow();
+    expect(onComplete).not.toHaveBeenCalled();
+    expect(store.get().complete).toBe(false);
+    expect(store.get().thought).toBeNull();
+  });
 });

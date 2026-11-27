@@ -126,9 +126,9 @@ export class Game {
     complete: (id) => this.complete(id),
     moment: () => Promise.resolve(),
     sequence: () => Promise.resolve(),
-    thought: (text) => { this.thoughtT = 4.5; store.set({ thought: text }); },
-    dialogue: (lines) => this.open(lines),
-    setTime: (name) => this.setTime(name),
+    thought: (text) => { if (this.disposed) return; this.thoughtT = 4.5; store.set({ thought: text }); },
+    dialogue: (lines) => (this.disposed ? Promise.resolve() : this.open(lines)),
+    setTime: (name) => { if (!this.disposed) this.setTime(name); },
   };
 
   private open(lines: DialogueLine[], completes?: string): Promise<void> {
@@ -147,6 +147,7 @@ export class Game {
   }
 
   private complete(id: string) {
+    if (this.disposed) return;
     this.objectives.complete(id);
     store.set(this.objectiveText());
     if (this.objectives.allRequiredDone() && !this.completed) { this.completed = true; this.opts.onComplete?.(); store.set({ complete: true }); }
