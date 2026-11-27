@@ -278,6 +278,7 @@ section { position: relative; padding-block: clamp(90px, 13vw, 170px); }
 
 /* ---------- CH.04 games: pinned stage + cartridge library ---------- */
 .pin { position: relative; }
+.pin.nopin .pin-stage { position: static; min-height: 0; } /* phones: no pinned scroll, games are picked by tapping */
 .pin-stage { position: sticky; top: 0; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding-block: 76px 20px; }
 .pin-stage > .wrap { width: 100%; min-width: 0; } /* lets the shelf scroll inside the screen instead of widening the page */
 .library, .rack { min-width: 0; max-width: 100%; }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { MOTION } from "../shared/motion";
+import { MOTION, TOUCH } from "../shared/motion";
 import { clamp, scrollToY } from "../shared/scroll";
 import { Chapter } from "./sections";
 import { GAMES } from "./data";
@@ -7,7 +7,8 @@ import { GAMES } from "./data";
 const N = GAMES.length;
 
 /**
- * Games: the section pins while you scroll, and each step of scrolling pulls the next cartridge out of the library.
+ * Games: with a mouse, the section pins while you scroll and each step of scrolling pulls the next cartridge out of the library.
+ * On phones and tablets there is no pin: visitors pick a game with the arrows or the shelf (scroll-driven swapping felt shaky there).
  * The cartridge hovers over a console, ready to insert; inserting lights up the play links.
  */
 export function Games() {
@@ -27,12 +28,17 @@ export function Games() {
     return [pin.getBoundingClientRect().top + scrollY, pin.offsetHeight - innerHeight] as const;
   };
   const goGame = (i: number) => {
+    if (TOUCH) { setGi(clamp(i, 0, N - 1)); return; }
     const [top, range] = pinRange();
     scrollToY(top + (range * clamp(i, 0, N - 1)) / (N - 1) + 1);
   };
 
   // scroll position → which game is out
   useEffect(() => {
+    // the first cartridge slides out when the chapter comes into view
+    const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { setOut(true); io.disconnect(); } }), { threshold: 0.4 });
+    io.observe(wrapRef.current!);
+    if (TOUCH) return () => io.disconnect();
     pinRef.current!.style.height = `calc(100vh + ${(N - 1) * 55}vh)`;
     // React skips the render when the game hasn't changed, so no frame throttle is needed
     const onScroll = () => {
@@ -41,9 +47,6 @@ export function Games() {
     };
     addEventListener("scroll", onScroll, { passive: true });
     onScroll();
-    // the first cartridge slides out when the chapter comes into view
-    const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { setOut(true); io.disconnect(); } }), { threshold: 0.4 });
-    io.observe(wrapRef.current!);
     return () => { removeEventListener("scroll", onScroll); io.disconnect(); };
   }, []);
 
@@ -77,9 +80,9 @@ export function Games() {
     <section id="work" data-ch="04" data-name="Games" style={{ paddingBottom: 0 }}>
       <div className="wrap">
         <Chapter en="Games" dv="खेल" ch="CH.04" />
-        <p className="lead">Mobile and web games for kids and casual players, published on Google Play, the App Store and the web. Scroll to pull each cartridge from the library, then insert it to play.</p>
+        <p className="lead">Mobile and web games for kids and casual players, published on Google Play, the App Store and the web. {TOUCH ? "Pick a cartridge from the library" : "Scroll to pull each cartridge from the library"}, then insert it to play.</p>
       </div>
-      <div className="pin" ref={pinRef}>
+      <div className={`pin${TOUCH ? " nopin" : ""}`} ref={pinRef}>
         <div className="pin-stage">
           <div className="wrap">
             <div className="stage">
@@ -124,7 +127,7 @@ export function Games() {
               </div>
               <div className="plank" />
             </div>
-            <p className="scrollhint">Scroll to pull the next cartridge, or pick one from the shelf</p>
+            <p className="scrollhint">{TOUCH ? "Tap a cartridge on the shelf, or use the arrows" : "Scroll to pull the next cartridge, or pick one from the shelf"}</p>
           </div>
         </div>
       </div>
