@@ -13,6 +13,7 @@ import { ChapterSelect } from "./ui/ChapterSelect";
 import { Hud } from "./ui/Hud";
 import { Moment } from "./ui/Moment";
 import { Cinema } from "./ui/Cinema";
+import { MiniGame } from "./ui/MiniGame";
 import { PauseMenu, type Settings } from "./ui/PauseMenu";
 
 type Screen = "start" | "select" | "play";
@@ -52,7 +53,7 @@ export function WorldApp() {
     });
     return () => {
       g.dispose(); game.current = null; pauseRef.current = () => {}; el.replaceChildren();
-      store.set({ objective: null, optional: null, prompt: null, dialogue: null, note: null, loading: false, thought: null, last: false, complete: false, moment: null, subtitle: null, rec: null, cinema: false });
+      store.set({ objective: null, optional: null, prompt: null, dialogue: null, note: null, loading: false, thought: null, last: false, complete: false, moment: null, subtitle: null, rec: null, cinema: false, miniGame: false });
       setPaused(false);
     };
   }, [screen, chapterId]);
@@ -82,6 +83,7 @@ export function WorldApp() {
       )}
       {screen === "play" && !failed && !ui.loading && <Cinema onSkip={() => game.current?.skip()} />}
       {screen === "play" && !failed && !ui.loading && <Moment onContinue={() => game.current?.continueMoment()} />}
+      {screen === "play" && !failed && !ui.loading && ui.miniGame && <MiniGame onDone={(won) => game.current?.endMiniGame(won)} />}
       {screen === "play" && ui.complete && !paused && (
         <main className="screen endcard" role="dialog" aria-label="Chapter complete">
           <p className="label">Chapter {chapterId}</p>

@@ -7,12 +7,13 @@ vi.mock("../engine/characters", () => ({ loadNpc: vi.fn(() => Promise.reject(new
 
 import { chapter2, RIDE } from "./ch2";
 import { loadNpc, type Character } from "../engine/characters";
-import { LAB } from "./ch2-scene";
-import { followCamera, pullInDistance, BODY_R } from "../engine/camera";
+import { LAB, DESK_X, ROW_A, ROW_B, HERO_X } from "./ch2-scene";
+import { followCamera, pullInDistance, pushOut, BODY_R } from "../engine/camera";
+import { roomBoxes } from "../engine/kit";
 import type { ChapterApi } from "./types";
 
 const it_ = (id: string) => chapter2.interactables.find((i) => i.id === id)!;
-const fakeApi = () => {
+const fakeApi = (wins = true) => {
   const log: string[] = [];
   const api = {
     complete: vi.fn((id: string) => { log.push(`complete:${id}`); }),
@@ -21,6 +22,7 @@ const fakeApi = () => {
     thought: vi.fn((t: string) => { log.push(`thought:${t}`); }),
     dialogue: vi.fn(async (lines: { text: string }[]) => { log.push(`dialogue:${lines[0].text}`); }),
     setTime: vi.fn(),
+    miniGame: vi.fn(async () => { log.push("miniGame"); return wins; }),
   };
   return { api: api as unknown as ChapterApi & typeof api, log };
 };
@@ -76,7 +78,7 @@ describe("chapter 2", () => {
     const { api, log } = fakeApi();
     expect(chapter2.onInteract?.("lab-pc", api)).toBe(true);
     await flush();
-    expect(log).toEqual(["dialogue:Okay… a square that jumps. That counts as a game, right?", "complete:lab"]);
+    expect(log).toEqual(["dialogue:Okay… a square that jumps. That counts as a game, right?", "miniGame", "dialogue:It works. It actually works!", "complete:lab"]);
     log.length = 0;
     expect(chapter2.onInteract?.("gate-friend", api)).toBe(true);
     await flush();
@@ -97,6 +99,33 @@ describe("chapter 2", () => {
       "thought:Five years ago it was a square that jumped. Now it's a degree.",
       "complete:ride",
     ]);
+  });
+
+  it("quitting the mini game leaves the lab unfinished: try again at the computer", async () => {
+    const { api, log } = fakeApi(false);
+    chapter2.onInteract?.("lab-pc", api); await flush();
+    expect(log).toEqual(["dialogue:Okay… a square that jumps. That counts as a game, right?", "miniGame"]);
+    expect(api.complete).not.toHaveBeenCalled();
+    chapter2.onInteract?.("gate-friend", api); await flush();
+    expect(api.sequence).not.toHaveBeenCalled();
+  });
+
+  it("the desk rows are solid, with free aisles to the glowing computer and the classmate (F1)", () => {
+    const cols = chapter2.colliders!, furniture = cols.length - roomBoxes(LAB).length - 1;
+    expect(furniture).toBeLessThanOrEqual(4); // one box per desk row (+ plants), not one per chair
+    for (const row of [ROW_A, ROW_B]) {
+      const p = new THREE.Vector3(DESK_X[1], 0.025, row);
+      pushOut(p, cols, BODY_R);
+      expect(Math.abs(p.z - row)).toBeGreaterThan(0.9); // pushed out of the row
+    }
+    const aisle = new THREE.Vector3(HERO_X, 0.025, (ROW_A + ROW_B) / 2 - 0.3);
+    pushOut(aisle, cols, BODY_R);
+    expect(aisle.toArray()).toEqual([HERO_X, 0.025, (ROW_A + ROW_B) / 2 - 0.3]);
+    for (const id of ["lab-pc", "classmate"]) {
+      const spot = it_(id), p = new THREE.Vector3(...spot.position);
+      pushOut(p, cols, BODY_R);
+      expect(Math.hypot(p.x - spot.position[0], p.z - spot.position[2])).toBeLessThan(spot.radius! - 0.3);
+    }
   });
 
   it("a new play-through starts with the gate locked again", async () => {

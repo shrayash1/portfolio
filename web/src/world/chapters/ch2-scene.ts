@@ -12,6 +12,14 @@ export const LAB: RoomSpec = { x: -9, z: -4, w: 10, d: 8, h: 3.4, t: 0.3, door: 
 export const DESK_X = [-12.4, -10.5, -8.6, -6.7];
 export const ROW_A = -6.6, ROW_B = -2.2; // desk centres (z); every desk faces -z, its chair 0.75 m behind it
 export const HERO_X = DESK_X[2]; // the glowing computer, row A
+// solid lab furniture for the body and camera: each desk row (desks + chairs, out to the walls behind and to the west)
+// is one box, plus the big plant by the door; the aisle between the rows and the east end stay free
+const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
+export const LAB_FURNITURE = [
+  new THREE.Box3(V(LAB.x - LAB.w / 2, 0, LAB.z - LAB.d / 2), V(Math.max(...DESK_X) + 0.75, 1.3, ROW_A + 1.01)),
+  new THREE.Box3(V(LAB.x - LAB.w / 2, 0, ROW_B - 0.375), V(Math.max(...DESK_X) + 0.75, 1.3, LAB.z + LAB.d / 2)),
+  new THREE.Box3(V(LAB.x + LAB.w / 2 - 0.65, 0, LAB.z - LAB.d / 2), V(LAB.x + LAB.w / 2, 1.1, LAB.z - LAB.d / 2 + 0.65)),
+];
 export const COLLEGE = new THREE.Box3(new THREE.Vector3(-14, 0, -28), new THREE.Vector3(14, 12.4, -17));
 export const GATE_Z = 5.2, WALL_X = 14.7; // the gate is in the east compound wall
 // the hill road to Simba Falls, ending in the waterfall clearing

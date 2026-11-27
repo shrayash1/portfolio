@@ -26,6 +26,7 @@ export class Game {
   private dlgDone: (() => void) | null = null;
   private seq: { spec: SequenceSpec; t: number; done: () => void } | null = null;
   private momentDone: (() => void) | null = null;
+  private miniDone: ((won: boolean) => void) | null = null;
   private npcs: { c: Character; spec: ChapterScene["npcs"][number] }[] = [];
   private vel = new THREE.Vector3();
   private camLook = new THREE.Vector3();
@@ -83,7 +84,7 @@ export class Game {
 
   dispose() {
     this.disposed = true;
-    this.endSeq(); this.endMoment(); // resolve anything a chapter is awaiting; both skip the store once disposed
+    this.endSeq(); this.endMoment(); this.endMiniGame(false); // resolve anything a chapter is awaiting; all skip the store once disposed
     delete (globalThis as { __world?: unknown }).__world;
     this.pause();
     this.input?.dispose();
@@ -133,7 +134,20 @@ export class Game {
     thought: (text) => { if (this.disposed) return; this.thoughtT = 4.5; store.set({ thought: text }); },
     dialogue: (lines) => (this.disposed ? Promise.resolve() : this.open(lines)),
     setTime: (name) => { if (!this.disposed) this.setTime(name); },
+    miniGame: () => {
+      if (this.disposed) return Promise.resolve(false);
+      this.endMiniGame(false);
+      return new Promise((res) => { this.miniDone = res; store.set({ miniGame: true, prompt: null }); });
+    },
   };
+
+  /** Closes the mini game overlay: won (it was beaten) or not (Quit / Esc). */
+  endMiniGame(won: boolean) {
+    const d = this.miniDone; this.miniDone = null;
+    if (!d) return;
+    if (!this.disposed) store.set({ miniGame: false });
+    d(won);
+  }
 
   private showMoment(m: Moment): Promise<void> {
     if (this.disposed) return Promise.resolve();
@@ -204,8 +218,8 @@ export class Game {
     this.yaw -= inp.lookDX * 0.005;
     this.pitch = THREE.MathUtils.clamp(this.pitch + inp.lookDY * 0.003, -0.15, 0.7);
     this.input.consumeLook();
-    const busy = !!this.seq || !!this.momentDone; // a sequence or moment card owns the screen: no walking, no talking
-    if (inp.pause) { if (this.seq) this.skip(); else this.opts.onPause?.(); }
+    const busy = !!this.seq || !!this.momentDone || !!this.miniDone; // a sequence, moment card or mini game owns the screen: no walking, no talking
+    if (inp.pause) { if (this.seq) this.skip(); else if (this.miniDone) this.endMiniGame(false); else this.opts.onPause?.(); }
     if (inp.interact && !busy) this.interact();
 
     // movement is relative to the camera, and frozen while someone is talking

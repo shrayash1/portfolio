@@ -334,6 +334,32 @@ describe("Game", () => {
       expect(done).toBe(true);
       expect(store.get().moment).toBeNull();
     });
+    it("a mini game owns the screen until won or quit; Esc quits it without the pause menu", async () => {
+      const onPause = vi.fn();
+      const { gg, api } = await boot({}, { onPause });
+      let r: boolean | null = null;
+      void api.miniGame().then((v) => { r = v; });
+      expect(store.get().miniGame).toBe(true);
+      inp.move = { x: 1, y: 0 };
+      const x0 = gg.player.position.x;
+      gg.step(0.5);
+      inp.move = { x: 0, y: 0 };
+      expect(gg.player.position.x).toBe(x0);
+      inp.pause = true; gg.step(0.016); inp.pause = false;
+      await Promise.resolve();
+      expect(r).toBe(false);
+      expect(onPause).not.toHaveBeenCalled();
+      expect(store.get().miniGame).toBe(false);
+      void api.miniGame().then((v) => { r = v; });
+      gg.endMiniGame(true); await Promise.resolve();
+      expect(r).toBe(true);
+      expect(store.get().miniGame).toBe(false);
+      void api.miniGame().then((v) => { r = v; });
+      gg.dispose(); await Promise.resolve();
+      expect(r).toBe(false); // dispose resolves it as a quit
+      await expect(api.miniGame()).resolves.toBe(false);
+      store.set({ miniGame: false });
+    });
     it("dispose resolves a running sequence and moment without touching the store", async () => {
       const { gg, api } = await boot();
       let a = false, b = false, c = false;

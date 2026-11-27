@@ -24,6 +24,7 @@ export interface ChapterApi {
   thought(text: string): void;
   dialogue(lines: DialogueLine[]): Promise<void>;
   setTime(name: TimeName): void;
+  miniGame(): Promise<boolean>; // the lab PC's "square that jumps": true on a win, false on Quit / Esc
 }
 
 export interface ChapterScene {

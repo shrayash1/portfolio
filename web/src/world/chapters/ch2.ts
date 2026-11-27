@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import type { ChapterScene, SequenceSpec, Moment } from "./types";
 import type { DialogueLine } from "../story/types";
-import { buildCampus, LAB, COLLEGE, DESK_X, ROW_A, ROW_B, HERO_X, GATE_Z, ROAD, FALLS, Y } from "./ch2-scene";
+import { buildCampus, LAB, LAB_FURNITURE, COLLEGE, DESK_X, ROW_A, ROW_B, HERO_X, GATE_Z, ROAD, FALLS, Y } from "./ch2-scene";
 import { motorbikeGeometry, bikeMaterial } from "./ch1-street";
 import { roomBoxes } from "../engine/kit";
 import { loadNpc, type Character } from "../engine/characters";
@@ -66,7 +66,7 @@ export const chapter2: ChapterScene = {
   time: "morning",
   // a clearer, crisper morning than the shared preset: less haze, less flat fill light, so the campus has contrast
   sky: { morning: { hemi: 0.5, si: 4.6, fog: 0xc6d2dc, dens: 0.0012, exp: 0.58 } },
-  colliders: [...roomBoxes(LAB), COLLEGE],
+  colliders: [...roomBoxes(LAB), ...LAB_FURNITURE, COLLEGE],
   async build(scene) {
     const me = ++visit, myRiders: THREE.Group[] = [], myChars: Character[] = [];
     labDone = false; riding = false; riders = myRiders; chars = myChars;
@@ -105,8 +105,13 @@ export const chapter2: ChapterScene = {
     { id: "t-lab", label: "", position: [LAB.x + LAB.w / 2 + 1, Y, LAB.z], radius: 1.6, auto: true, thought: "The lab smells like warm computers." },
   ],
   onInteract(id, api) {
-    if (id === "lab-pc") {
-      void api.dialogue(LAB_LINES).then(() => { labDone = true; api.complete("lab"); });
+    if (id === "lab-pc") { // say the first line, play the square that jumps; a win says the second line and finishes the lab
+      void (async () => {
+        await api.dialogue([LAB_LINES[0]]);
+        if (!(await api.miniGame())) return; // quit: try again at the computer
+        await api.dialogue([LAB_LINES[1]]);
+        labDone = true; api.complete("lab");
+      })();
       return true;
     }
     if (id !== "gate-friend") return;
