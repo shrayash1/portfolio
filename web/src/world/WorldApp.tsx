@@ -70,7 +70,7 @@ export function WorldApp() {
     <>
       <div ref={host} className="gamehost" />
       {screen === "start" && <StartScreen onPlay={() => play(pickChapter(loadProgress().lastChapter, SCENES))} onSelect={() => setScreen("select")} />}
-      {screen === "select" && <ChapterSelect done={loadProgress().done} onPick={play} onBack={() => setScreen("start")} />}
+      {screen === "select" && <ChapterSelect done={loadProgress().done} ready={Object.keys(SCENES).map(Number)} onPick={play} onBack={() => setScreen("start")} />}
       {screen === "play" && ui.loading && <div className="screen loading" role="status">Loading chapter…</div>}
       {screen === "play" && failed && (
         <main className="screen" role="alert">
